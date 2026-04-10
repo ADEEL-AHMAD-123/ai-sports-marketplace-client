@@ -1,0 +1,29 @@
+// Badge.module.scss
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  font-family: var(--font-body);
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.accent  { background: var(--color-accent-dim);  color: var(--color-accent);  border: 1px solid rgba(var(--color-accent-rgb), 0.25); }
+.over    { background: var(--color-accent-dim);  color: var(--color-accent);  border: 1px solid rgba(var(--color-accent-rgb), 0.25); }
+.under   { background: var(--color-danger-dim);  color: var(--color-danger);  border: 1px solid rgba(var(--color-danger-rgb), 0.25); }
+.danger  { background: var(--color-danger-dim);  color: var(--color-danger);  border: 1px solid rgba(var(--color-danger-rgb), 0.25); }
+.warning { background: rgba(255, 171, 0, 0.12);  color: var(--color-warning); border: 1px solid rgba(255, 171, 0, 0.25); }
+.info    { background: rgba(68, 138, 255, 0.12); color: var(--color-info);    border: 1px solid rgba(68, 138, 255, 0.25); }
+.neutral { background: var(--color-bg-elevated); color: var(--color-text-secondary); border: 1px solid var(--color-bg-border); }

@@ -1,0 +1,59 @@
+// Modal.module.scss
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: var(--color-overlay);
+  @include flex-center;
+  padding: 16px;
+  @include glass;
+}
+
+.modal {
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-bg-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-modal);
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  @include scrollbar-thin;
+}
+
+.sm  { max-width: 400px; }
+.md  { max-width: 560px; }
+.lg  { max-width: 720px; }
+.xl  { max-width: 900px; }
+
+.header {
+  @include flex-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--color-bg-border);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  width: 28px;
+  height: 28px;
+  @include flex-center;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast), color var(--transition-fast);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-bg-hover);
+    color: var(--color-text-primary);
+  }
+}
+
+.body { padding: 24px; }

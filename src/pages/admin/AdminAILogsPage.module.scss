@@ -1,0 +1,65 @@
+/* AdminAILogsPage.module.scss */
+.page { max-width: 900px; }
+.header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; }
+.title  { font-size: 1.75rem; margin-bottom: 4px; }
+.sub    { font-size: 0.875rem; color: var(--color-text-secondary); }
+.total  { font-family: var(--font-mono); font-size: 0.875rem; color: var(--color-text-muted); white-space: nowrap; }
+
+.skeletons { display: flex; flex-direction: column; gap: 12px; }
+
+.logList { display: flex; flex-direction: column; gap: 12px; }
+
+.logCard {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-bg-border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color var(--transition-fast);
+  &:hover { border-color: rgba(var(--color-accent-rgb), 0.2); }
+}
+
+.logHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.logMeta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.logPlayer { font-weight: 600; color: var(--color-text-primary); font-size: 0.9375rem; }
+.logStat   { font-size: 0.8125rem; color: var(--color-text-secondary); font-family: var(--font-mono); }
+.logSport  { font-size: 0.6875rem; color: var(--color-text-muted); font-family: var(--font-mono); text-transform: uppercase; }
+.logRight  { display: flex; align-items: center; gap: 10px; }
+.logDate   { font-size: 0.75rem; color: var(--color-text-muted); white-space: nowrap; }
+
+.logStats  { display: flex; gap: 8px; flex-wrap: wrap; }
+.logChip   { background: var(--color-bg-elevated); border: 1px solid var(--color-bg-border); border-radius: var(--radius-full); padding: 2px 10px; font-size: 0.75rem; font-family: var(--font-mono); color: var(--color-text-secondary); }
+
+.logPreview { background: var(--color-bg-elevated); border-radius: var(--radius-md); padding: 12px; }
+.previewLabel { font-size: 0.6875rem; font-weight: 600; color: var(--color-accent); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+.previewText  { font-size: 0.875rem; color: var(--color-text-secondary); line-height: 1.6; }
+
+.pagination { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 20px; font-size: 0.875rem; color: var(--color-text-secondary); }
+
+.empty { text-align: center; padding: 48px 24px; color: var(--color-text-muted); font-size: 0.9375rem; }
+
+/* Full log modal */
+.logModalContent { display: flex; flex-direction: column; gap: 20px; }
+.logSection { display: flex; flex-direction: column; gap: 8px; }
+.logSectionLabel { font-size: 0.875rem; font-weight: 600; color: var(--color-text-secondary); }
+.logPre {
+  background: var(--color-bg-base);
+  border: 1px solid var(--color-bg-border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--color-text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 300px;
+  overflow-y: auto;
+  line-height: 1.6;
+
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-bg-border) transparent;
+  &::-webkit-scrollbar { width: 5px; }
+  &::-webkit-scrollbar-thumb { background: var(--color-bg-border); border-radius: 99px; }
+}

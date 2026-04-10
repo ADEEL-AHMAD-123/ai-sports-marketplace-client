@@ -1,0 +1,68 @@
+/* AdminUsersPage.module.scss */
+.page { max-width: 1100px; }
+.header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 20px; }
+.title  { font-size: 1.75rem; }
+.total  { font-family: var(--font-mono); font-size: 0.875rem; color: var(--color-text-muted); }
+
+.toolbar { margin-bottom: 16px; }
+.searchInput { max-width: 360px; }
+
+.skeletons { display: flex; flex-direction: column; gap: 8px; }
+
+.tableWrap { overflow-x: auto; border: 1px solid var(--color-bg-border); border-radius: var(--radius-lg); }
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  th {
+    text-align: left;
+    padding: 12px 16px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: var(--color-bg-elevated);
+    border-bottom: 1px solid var(--color-bg-border);
+  }
+
+  td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--color-bg-border);
+    color: var(--color-text-primary);
+    vertical-align: middle;
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--color-bg-hover); }
+}
+
+.nameCell  { font-weight: 500; white-space: nowrap; }
+.emailCell { color: var(--color-text-secondary); font-size: 0.8125rem; }
+.dateCell  { font-family: var(--font-mono); font-size: 0.8125rem; color: var(--color-text-muted); white-space: nowrap; }
+.creditsCell { white-space: nowrap; }
+.creditsVal { font-family: var(--font-mono); font-size: 0.9375rem; color: var(--color-accent); font-weight: 500; }
+
+.actions { display: flex; gap: 6px; }
+.actionBtn {
+  width: 28px; height: 28px;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-bg-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition-fast);
+  color: var(--color-text-secondary);
+  &:hover { border-color: var(--color-accent); color: var(--color-accent); }
+}
+.deactivate:hover { border-color: var(--color-danger) !important; color: var(--color-danger) !important; }
+.activate:hover   { border-color: var(--color-accent) !important; color: var(--color-accent) !important; }
+
+.pagination { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 20px; }
+.pageInfo   { font-family: var(--font-mono); font-size: 0.875rem; color: var(--color-text-secondary); }
+
+.creditModal { display: flex; flex-direction: column; gap: 14px; }
+.creditUser  { font-size: 0.9375rem; color: var(--color-text-secondary); strong { color: var(--color-accent); } }

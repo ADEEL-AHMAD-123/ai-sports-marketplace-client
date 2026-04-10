@@ -1,0 +1,30 @@
+/* AdminInsightsPage.module.scss */
+.page { max-width: 1100px; }
+.header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 16px; }
+.title  { font-size: 1.75rem; }
+.total  { font-family: var(--font-mono); font-size: 0.875rem; color: var(--color-text-muted); }
+
+.filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.filterBtn { background: var(--color-bg-surface); border: 1px solid var(--color-bg-border); border-radius: var(--radius-full); padding: 5px 14px; font-size: 0.8125rem; color: var(--color-text-secondary); cursor: pointer; transition: all var(--transition-fast); &:hover { border-color: var(--color-accent); color: var(--color-text-primary); } }
+.active { background: var(--color-accent-dim); border-color: var(--color-accent); color: var(--color-accent); }
+
+.skeletons { display: flex; flex-direction: column; gap: 8px; }
+.tableWrap { overflow-x: auto; border: 1px solid var(--color-bg-border); border-radius: var(--radius-lg); }
+
+.table {
+  width: 100%; border-collapse: collapse; font-size: 0.875rem;
+  th { text-align: left; padding: 12px 14px; font-size: 0.75rem; font-weight: 600; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em; background: var(--color-bg-elevated); border-bottom: 1px solid var(--color-bg-border); }
+  td { padding: 12px 14px; border-bottom: 1px solid var(--color-bg-border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--color-bg-hover); }
+}
+.playerCell { white-space: nowrap; }
+.playerName { font-weight: 500; color: var(--color-text-primary); }
+.sport { font-size: 0.6875rem; color: var(--color-text-muted); font-family: var(--font-mono); margin-top: 2px; }
+.statType { font-size: 0.8125rem; color: var(--color-text-secondary); text-transform: capitalize; }
+.line { font-family: var(--font-mono); font-size: 1rem; color: var(--color-text-primary); }
+.tags { display: flex; gap: 4px; }
+.mono { font-family: var(--font-mono); font-size: 0.875rem; color: var(--color-text-secondary); }
+.date { font-family: var(--font-mono); font-size: 0.8125rem; color: var(--color-text-muted); white-space: nowrap; }
+.deleteBtn { background: none; border: none; font-size: 1rem; cursor: pointer; opacity: 0.5; transition: opacity var(--transition-fast); padding: 4px; &:hover { opacity: 1; } }
+.pagination { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 20px; font-size: 0.875rem; color: var(--color-text-secondary); }

@@ -1,0 +1,33 @@
+/* FilterBar.module.css */
+.bar {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.bar::-webkit-scrollbar { display: none; }
+
+.btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: transparent;
+  border: 1px solid var(--bg-border);
+  border-radius: var(--radius-full);
+  padding: 6px 14px;
+  font-size: 0.8125rem;
+  font-family: var(--font-body);
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+.btn:hover { border-color: var(--bg-hover); color: var(--text-secondary); }
+.active {
+  background: var(--bg-surface);
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+}
+.icon { font-size: 0.875rem; }
