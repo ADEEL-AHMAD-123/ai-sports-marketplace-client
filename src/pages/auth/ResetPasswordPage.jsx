@@ -1,34 +1,35 @@
+// src/pages/auth/ResetPasswordPage.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useDispatch } from 'react-redux';
 import toast from 'react-hot-toast';
-import { authAPI, getErrorMsg } from '@/services/api';
-import Button from '@/components/ui/Button';
+import { resetPassword } from '@/store/slices/authSlice';
 import { Input } from '@/components/ui/Input';
 import styles from './AuthPage.module.scss';
 
 export default function ResetPasswordPage() {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token') || '';
 
   const [password, setPassword] = useState('');
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState('');
+  const [loading,  setLoading]  = useState(false);
+  const [error,    setError]    = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     if (password.length < 8) { setError('Password must be at least 8 characters.'); return; }
     setLoading(true);
-    try {
-      await authAPI.resetPassword({ token, newPassword: password });
+    const result = await dispatch(resetPassword({ data: { token, newPassword: password } }));
+    setLoading(false);
+    if (resetPassword.fulfilled.match(result)) {
       toast.success('Password reset! Please log in with your new password.');
       navigate('/login');
-    } catch (err) {
-      setError(getErrorMsg(err));
-    } finally {
-      setLoading(false);
+    } else {
+      setError(result.payload?.message || 'Reset failed. The link may have expired.');
     }
   };
 
@@ -36,8 +37,12 @@ export default function ResetPasswordPage() {
     return (
       <div className={styles.page}>
         <div className={styles.card}>
-          <div className={styles.errorBox}>Invalid or missing reset token. Please request a new password reset link.</div>
-          <p className={styles.footer}><Link to="/forgot-password">Request new link →</Link></p>
+          <div className={styles.errorBox}>
+            Invalid or missing reset token. Please request a new password reset link.
+          </div>
+          <p className={styles.footer}>
+            <Link to="/forgot-password">Request new link →</Link>
+          </p>
         </div>
       </div>
     );
@@ -72,9 +77,9 @@ export default function ResetPasswordPage() {
             autoComplete="new-password"
             hint="Must contain uppercase, lowercase, and a number"
           />
-          <Button type="submit" variant="primary" size="lg" fullWidth loading={loading}>
-            Reset password
-          </Button>
+          <button type="submit" className={styles.submitBtn} disabled={loading}>
+            {loading ? <span className={styles.spinner} /> : 'Reset password'}
+          </button>
         </form>
       </motion.div>
     </div>

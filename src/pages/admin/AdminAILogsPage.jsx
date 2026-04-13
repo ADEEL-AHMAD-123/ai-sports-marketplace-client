@@ -1,40 +1,33 @@
+// src/pages/admin/AdminAILogsPage.jsx
 import React, { useState } from 'react';
-import { useQuery } from 'react-query';
-import { adminAPI } from '@/services/api';
+import { motion } from 'framer-motion';
+import { useAILogs } from '@/hooks/useAdmin';
 import { Badge } from '@/components/ui/Badge';
 import { Skeleton } from '@/components/ui/Skeleton';
-import Button from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import styles from './AdminAILogsPage.module.scss';
 
 export default function AdminAILogsPage() {
-  const [page, setPage]   = useState(1);
-  const [viewing, setViewing] = useState(null); // insight to view full log
-
-  const { data, isLoading } = useQuery(
-    ['adminAILogs', page],
-    () => adminAPI.getAILogs({ page, limit: 10 }).then(r => r.data),
-    { keepPreviousData: true }
-  );
+  const { logs, pages, page, setPage, isLoading } = useAILogs();
+  const [viewing, setViewing] = useState(null);
 
   return (
     <div className={styles.page}>
       <div className={styles.header}>
         <div>
           <h1 className={styles.title}>AI Logs</h1>
-          <p className={styles.sub}>Full prompt/response logs — auto-deleted after {import.meta.env.VITE_AI_LOG_DAYS || 30} days</p>
+          <p className={styles.sub}>Full prompt/response logs — auto-deleted after retention period</p>
         </div>
-        {data && <span className={styles.total}>{data.pagination?.total ?? 0} logs</span>}
       </div>
 
       {isLoading ? (
         <div className={styles.skeletons}>{[...Array(6)].map((_, i) => <Skeleton key={i} height={100} />)}</div>
       ) : (
         <div className={styles.logList}>
-          {(data?.data || []).length === 0 && (
-            <div className={styles.empty}>No AI logs available. Logs appear after insights are generated and are deleted after retention period.</div>
+          {logs.length === 0 && (
+            <div className={styles.empty}>No AI logs yet. Logs appear after insights are generated.</div>
           )}
-          {(data?.data || []).map((ins) => (
+          {logs.map(ins => (
             <div key={ins._id} className={styles.logCard}>
               <div className={styles.logHeader}>
                 <div className={styles.logMeta}>
@@ -54,8 +47,8 @@ export default function AdminAILogsPage() {
 
               {ins.aiLog && (
                 <div className={styles.logStats}>
-                  {ins.aiLog.model && <span className={styles.logChip}>{ins.aiLog.model}</span>}
-                  {ins.aiLog.latencyMs && <span className={styles.logChip}>{ins.aiLog.latencyMs}ms</span>}
+                  {ins.aiLog.model       && <span className={styles.logChip}>{ins.aiLog.model}</span>}
+                  {ins.aiLog.latencyMs   && <span className={styles.logChip}>{ins.aiLog.latencyMs}ms</span>}
                   {ins.aiLog.tokensUsed?.total && <span className={styles.logChip}>{ins.aiLog.tokensUsed.total} tokens</span>}
                 </div>
               )}
@@ -66,24 +59,23 @@ export default function AdminAILogsPage() {
               </div>
 
               {ins.aiLog?.prompt && (
-                <Button variant="ghost" size="sm" onClick={() => setViewing(ins)}>
+                <button className={styles.viewBtn} onClick={() => setViewing(ins)}>
                   View full prompt & response →
-                </Button>
+                </button>
               )}
             </div>
           ))}
         </div>
       )}
 
-      {data?.pagination?.pages > 1 && (
+      {pages > 1 && (
         <div className={styles.pagination}>
-          <Button variant="ghost" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>← Prev</Button>
-          <span>{page} / {data.pagination.pages}</span>
-          <Button variant="ghost" size="sm" disabled={page === data.pagination.pages} onClick={() => setPage(p => p + 1)}>Next →</Button>
+          <button disabled={page === 1} onClick={() => setPage(p => p - 1)}>← Prev</button>
+          <span>{page} / {pages}</span>
+          <button disabled={page === pages} onClick={() => setPage(p => p + 1)}>Next →</button>
         </div>
       )}
 
-      {/* Full log modal */}
       <Modal isOpen={!!viewing} onClose={() => setViewing(null)} title="Full AI Log" size="lg">
         {viewing && (
           <div className={styles.logModalContent}>

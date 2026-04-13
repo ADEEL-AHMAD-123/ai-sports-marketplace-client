@@ -1,40 +1,23 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from 'react-query';
-import toast from 'react-hot-toast';
-import { adminAPI, getErrorMsg } from '@/services/api';
-import Button from '@/components/ui/Button';
+// src/pages/admin/AdminInsightsPage.jsx
+import React from 'react';
+import { useAdminInsights } from '@/hooks/useAdmin';
 import { Badge } from '@/components/ui/Badge';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { SPORTS } from '@/constants/app';
 import styles from './AdminInsightsPage.module.scss';
 
 export default function AdminInsightsPage() {
-  const qc = useQueryClient();
-  const [page, setPage]   = useState(1);
-  const [sport, setSport] = useState('');
-
-  const { data, isLoading } = useQuery(
-    ['adminInsights', page, sport],
-    () => adminAPI.listInsights({ page, limit: 15, sport: sport || undefined }).then(r => r.data),
-    { keepPreviousData: true }
-  );
-
-  const deleteInsight = useMutation(adminAPI.deleteInsight, {
-    onSuccess: () => { toast.success('Insight deleted — will regenerate on next unlock'); qc.invalidateQueries(['adminInsights']); },
-    onError: (e) => toast.error(getErrorMsg(e)),
-  });
-
-  const confirmDelete = (id, player) => {
-    if (window.confirm(`Delete insight for ${player}? It will regenerate on next user unlock.`)) {
-      deleteInsight.mutate(id);
-    }
-  };
+  const {
+    insights, pages, page, setPage,
+    sport, setSport,
+    isLoading, deleteInsight,
+  } = useAdminInsights();
 
   return (
     <div className={styles.page}>
       <div className={styles.header}>
         <h1 className={styles.title}>Insights</h1>
-        {data && <span className={styles.total}>{data.pagination?.total ?? 0} total</span>}
+        {insights.length > 0 && <span className={styles.total}>{insights.length} shown</span>}
       </div>
 
       {/* Sport filter */}
@@ -42,7 +25,7 @@ export default function AdminInsightsPage() {
         <button className={`${styles.filterBtn} ${!sport ? styles.active : ''}`} onClick={() => { setSport(''); setPage(1); }}>All Sports</button>
         {SPORTS.filter(s => s.active).map(s => (
           <button key={s.key} className={`${styles.filterBtn} ${sport === s.key ? styles.active : ''}`} onClick={() => { setSport(s.key); setPage(1); }}>
-            {s.emoji} {s.label}
+            {s.name}
           </button>
         ))}
       </div>
@@ -53,20 +36,10 @@ export default function AdminInsightsPage() {
         <div className={styles.tableWrap}>
           <table className={styles.table}>
             <thead>
-              <tr>
-                <th>Player</th>
-                <th>Stat / Line</th>
-                <th>Rec</th>
-                <th>Confidence</th>
-                <th>Edge</th>
-                <th>Tags</th>
-                <th>Unlocks</th>
-                <th>Created</th>
-                <th></th>
-              </tr>
+              <tr><th>Player</th><th>Stat / Line</th><th>Rec</th><th>Confidence</th><th>Edge</th><th>Tags</th><th>Unlocks</th><th>Created</th><th></th></tr>
             </thead>
             <tbody>
-              {(data?.data || []).map((ins) => (
+              {insights.map(ins => (
                 <tr key={ins._id}>
                   <td className={styles.playerCell}>
                     <p className={styles.playerName}>{ins.playerName}</p>
@@ -100,13 +73,13 @@ export default function AdminInsightsPage() {
                   <td>
                     <div className={styles.tags}>
                       {ins.isHighConfidence && <Badge variant="accent">HC</Badge>}
-                      {ins.isBestValue && <Badge variant="warning">BV</Badge>}
+                      {ins.isBestValue      && <Badge variant="warning">BV</Badge>}
                     </div>
                   </td>
                   <td className={styles.mono}>{ins.unlockCount ?? 0}</td>
                   <td className={styles.date}>{new Date(ins.createdAt).toLocaleDateString()}</td>
                   <td>
-                    <button className={styles.deleteBtn} onClick={() => confirmDelete(ins._id, ins.playerName)} title="Delete insight">🗑</button>
+                    <button className={styles.deleteBtn} onClick={() => deleteInsight(ins._id, ins.playerName)} title="Delete">🗑</button>
                   </td>
                 </tr>
               ))}
@@ -115,11 +88,11 @@ export default function AdminInsightsPage() {
         </div>
       )}
 
-      {data?.pagination?.pages > 1 && (
+      {pages > 1 && (
         <div className={styles.pagination}>
-          <Button variant="ghost" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>← Prev</Button>
-          <span>{page} / {data.pagination.pages}</span>
-          <Button variant="ghost" size="sm" disabled={page === data.pagination.pages} onClick={() => setPage(p => p + 1)}>Next →</Button>
+          <button disabled={page === 1} onClick={() => setPage(p => p - 1)}>← Prev</button>
+          <span>{page} / {pages}</span>
+          <button disabled={page === pages} onClick={() => setPage(p => p + 1)}>Next →</button>
         </div>
       )}
     </div>

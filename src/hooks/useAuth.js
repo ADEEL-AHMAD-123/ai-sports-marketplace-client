@@ -1,36 +1,57 @@
-// hooks/useAuth.js
-import { useSelector, useDispatch } from 'react-redux';
+// src/hooks/useAuth.js
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { loginSuccess, logout as logoutAction, selectUser, selectIsLoggedIn, selectCredits, selectIsAdmin } from '@/store/slices/authSlice';
-import { authAPI, getErrorMsg } from '@/services/api';
+
+import {
+  loginUser, registerUser, logoutUser,
+  selectUser, selectIsLoggedIn, selectCredits,
+  selectIsAdmin, selectAuthLoading, selectAuthError,
+  clearAuthError, resetAuth,
+} from '@/store/slices/authSlice';
 
 export function useAuth() {
-  const dispatch   = useDispatch();
-  const navigate   = useNavigate();
-  const user       = useSelector(selectUser);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const user      = useSelector(selectUser);
   const isLoggedIn = useSelector(selectIsLoggedIn);
-  const credits    = useSelector(selectCredits);
-  const isAdmin    = useSelector(selectIsAdmin);
+  const credits   = useSelector(selectCredits);
+  const isAdmin   = useSelector(selectIsAdmin);
+  const isLoading = useSelector(selectAuthLoading);
+  const error     = useSelector(selectAuthError);
 
   const login = async (email, password) => {
-    const res = await authAPI.login({ email, password });
-    dispatch(loginSuccess(res.data));
-    return res.data;
+    const result = await dispatch(loginUser({ data: { email, password } }));
+    if (loginUser.fulfilled.match(result)) {
+      toast.success('Welcome back!');
+      return { success: true };
+    } else {
+      return { success: false, error: result.payload?.message };
+    }
   };
 
   const register = async (name, email, password) => {
-    const res = await authAPI.register({ name, email, password });
-    dispatch(loginSuccess(res.data));
-    return res.data;
+    const result = await dispatch(registerUser({ data: { name, email, password } }));
+    if (registerUser.fulfilled.match(result)) {
+      toast.success('Account created! You have 3 free credits.');
+      return { success: true };
+    } else {
+      return { success: false, error: result.payload?.message };
+    }
   };
 
   const logout = async () => {
-    try { await authAPI.logout(); } catch (_) {}
-    dispatch(logoutAction());
+    await dispatch(logoutUser());
+    dispatch(resetAuth());
     navigate('/');
-    toast('Logged out');
+    toast('Logged out successfully.');
   };
 
-  return { user, isLoggedIn, credits, isAdmin, login, register, logout };
+  const clearError = () => dispatch(clearAuthError());
+
+  return {
+    user, isLoggedIn, credits, isAdmin, isLoading, error,
+    login, register, logout, clearError,
+  };
 }

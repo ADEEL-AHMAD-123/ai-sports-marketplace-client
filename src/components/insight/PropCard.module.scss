@@ -1,127 +1,105 @@
+/* PropCard.module.scss */
+
 .card {
+  position: relative;
   background: var(--color-bg-surface);
   border: 1px solid var(--color-bg-border);
-  border-radius: var(--radius-lg);
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  border-radius: var(--radius-xl);
+  padding: 20px;
+  display: flex; flex-direction: column; gap: 14px;
+  overflow: hidden;
   transition: border-color var(--transition-normal), box-shadow var(--transition-normal);
+  cursor: default;
 
   &:hover {
-    border-color: rgba(var(--color-accent-rgb), 0.25);
-    box-shadow: 0 2px 16px rgba(0,0,0,0.2);
+    border-color: rgba(var(--color-accent-rgb), 0.3);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
   }
 }
 
-.header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
+.cardUnlocked {
+  border-color: rgba(var(--color-accent-rgb), 0.3) !important;
+  background: linear-gradient(160deg, var(--color-bg-surface), rgba(var(--color-accent-rgb), 0.04)) !important;
 }
 
-.playerInfo { flex: 1; min-width: 0; }
-
-.playerName {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 0.9375rem;
-  color: var(--color-text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.unlockedBar {
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--color-accent), rgba(var(--color-accent-rgb), 0.2));
 }
 
-.teamName {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  margin-top: 2px;
+/* Header */
+.header  { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.playerInfo {}
+.playerName { font-family: var(--font-display); font-size: 1.0625rem; font-weight: 700; color: var(--color-text-primary); letter-spacing: -0.02em; }
+.teamName   { font-size: 0.8125rem; color: var(--color-text-muted); margin-top: 2px; }
+
+.badges { display: flex; gap: 4px; flex-shrink: 0; margin-top: 2px; }
+.badgeHC {
+  font-size: 0.625rem; font-weight: 800; color: var(--color-accent);
+  background: var(--color-accent-dim); border: 1px solid rgba(var(--color-accent-rgb), 0.25);
+  border-radius: var(--radius-full); padding: 2px 7px; letter-spacing: 0.05em;
+}
+.badgeBV {
+  font-size: 0.625rem; font-weight: 800; color: var(--color-warning);
+  background: rgba(255,171,0,0.1); border: 1px solid rgba(255,171,0,0.25);
+  border-radius: var(--radius-full); padding: 2px 7px; letter-spacing: 0.05em;
+}
+.badgeUnlocked {
+  font-size: 0.625rem; font-weight: 800; color: var(--color-accent);
+  background: var(--color-accent-dim); border: 1px solid rgba(var(--color-accent-rgb), 0.25);
+  border-radius: var(--radius-full); padding: 2px 7px;
 }
 
-.tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  flex-shrink: 0;
+/* Prop row */
+.propRow   { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.statBlock { display: flex; flex-direction: column; gap: 2px; }
+.statType  { font-size: 0.8125rem; color: var(--color-text-muted); text-transform: capitalize; }
+.line      { font-family: var(--font-display); font-size: 2rem; font-weight: 800; color: var(--color-text-primary); letter-spacing: -0.04em; line-height: 1; }
+
+.oddsBlock { display: flex; flex-direction: column; gap: 5px; align-items: flex-end; }
+.oddsItem  { display: flex; align-items: center; gap: 5px; }
+.oddsDir   { font-size: 0.75rem; color: var(--color-text-muted); }
+.oddsVal   { font-family: var(--font-mono); font-size: 0.875rem; font-weight: 600; color: var(--color-text-secondary); }
+
+/* Confidence bar */
+.confBar   { display: flex; align-items: center; gap: 10px; }
+.confTrack { flex: 1; height: 5px; background: var(--color-bg-elevated); border-radius: var(--radius-full); overflow: hidden; }
+.confFill  { height: 100%; border-radius: var(--radius-full); }
+.confLabel { font-family: var(--font-mono); font-size: 0.8125rem; font-weight: 600; flex-shrink: 0; }
+
+/* Edge */
+.edgeRow   { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--color-bg-elevated); border-radius: var(--radius-md); }
+.edgeLabel { font-size: 0.8125rem; color: var(--color-text-muted); }
+.edgeVal   { font-family: var(--font-mono); font-size: 0.875rem; font-weight: 700; }
+
+/* Bookmaker */
+.bookmaker { font-size: 0.75rem; color: var(--color-text-muted); }
+
+/* CTA */
+.cta {
+  width: 100%; height: 44px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--color-accent); color: var(--color-text-inverse);
+  border: none; border-radius: var(--radius-full);
+  font-family: var(--font-body); font-size: 0.9375rem; font-weight: 700;
+  cursor: pointer;
+  transition: opacity var(--transition-fast), box-shadow var(--transition-fast);
+  svg { flex-shrink: 0; }
+  &:hover:not(:disabled) { opacity: 0.88; box-shadow: var(--shadow-accent); }
+  &:disabled { opacity: 0.55; cursor: not-allowed; }
+}
+.ctaDone {
+  background: var(--color-bg-elevated) !important;
+  color: var(--color-accent) !important;
+  border: 1px solid rgba(var(--color-accent-rgb), 0.3);
+  &:hover:not(:disabled) { background: var(--color-accent-dim) !important; box-shadow: none; }
 }
 
-.propRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: var(--color-bg-elevated);
-  border-radius: var(--radius-md);
-  padding: 12px 14px;
+.spinner {
+  width: 18px; height: 18px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
 }
-
-.statBlock {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-}
-
-.statType {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  text-transform: capitalize;
-  letter-spacing: 0.02em;
-}
-
-.line {
-  font-family: var(--font-mono);
-  font-size: 1.625rem;
-  font-weight: 500;
-  color: var(--color-text-primary);
-  line-height: 1;
-}
-
-.oddsBlock {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 5px;
-}
-
-.overOdds {
-  font-family: var(--font-mono);
-  font-size: 0.8125rem;
-  color: var(--color-accent);
-  font-weight: 500;
-}
-
-.underOdds {
-  font-family: var(--font-mono);
-  font-size: 0.8125rem;
-  color: var(--color-danger);
-  font-weight: 500;
-}
-
-.metrics {
-  display: flex;
-  gap: 20px;
-}
-
-.metric {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.metricLabel {
-  font-size: 0.6875rem;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.metricVal {
-  font-family: var(--font-mono);
-  font-size: 0.9375rem;
-  font-weight: 500;
-}
-
-.bookmaker {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-}
+@keyframes spin { to { transform: rotate(360deg); } }

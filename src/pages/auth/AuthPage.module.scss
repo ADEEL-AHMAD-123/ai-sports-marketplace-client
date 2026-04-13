@@ -75,4 +75,34 @@
   color: var(--color-accent);
   text-align: center;
   line-height: 1.6;
+  margin-bottom: 8px;
 }
+
+.submitBtn {
+  width: 100%;
+  height: 48px;
+  background: var(--color-accent);
+  color: var(--color-text-inverse);
+  border: none;
+  border-radius: var(--radius-full);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity var(--transition-fast), box-shadow var(--transition-fast);
+  &:hover:not(:disabled) { opacity: 0.88; box-shadow: var(--shadow-accent); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }

@@ -1,141 +1,123 @@
+// src/components/insight/PropCard.jsx
 import React, { useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
-import toast from 'react-hot-toast';
-import { selectIsLoggedIn, selectCredits, updateCredits } from '@/store/slices/authSlice';
-import { setPendingInsightRequest } from '@/store/slices/uiSlice';
-import { insightAPI, getErrorMsg } from '@/services/api';
-import { Badge } from '@/components/ui/Badge';
-import Button from '@/components/ui/Button';
+import { useUnlock } from '@/hooks/useInsights';
 import InsightModal from './InsightModal';
 import styles from './PropCard.module.scss';
 
+// ── Confidence bar ────────────────────────────────────────────
+function ConfBar({ score }) {
+  if (score == null) return null;
+  const color = score >= 80 ? 'var(--color-accent)'
+    : score >= 60 ? 'var(--color-warning)'
+    : 'var(--color-danger)';
+  return (
+    <div className={styles.confBar}>
+      <div className={styles.confTrack}>
+        <motion.div
+          className={styles.confFill}
+          style={{ background: color }}
+          initial={{ width: 0 }}
+          animate={{ width: `${score}%` }}
+          transition={{ duration: 0.7, ease: 'easeOut' }}
+        />
+      </div>
+      <span className={styles.confLabel} style={{ color }}>{score}%</span>
+    </div>
+  );
+}
+
 export default function PropCard({ prop, sport }) {
-  const dispatch   = useDispatch();
-  const isLoggedIn = useSelector(selectIsLoggedIn);
-  const credits    = useSelector(selectCredits);
-  const [loading, setLoading]   = useState(false);
-  const [insight, setInsight]   = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const { unlock, isUnlocking, isUnlocked, insight, canUnlock } = useUnlock(prop, sport);
 
-  const handleUnlock = async () => {
-    if (!isLoggedIn) {
-      dispatch(setPendingInsightRequest({
-        sport, eventId: prop.oddsEventId, playerName: prop.playerName,
-        statType: prop.statType, bettingLine: prop.line, marketType: 'player_prop',
-      }));
-      window.location.href = '/login';
-      return;
-    }
-
-    if (credits < 1) {
-      toast.error('Not enough credits. Purchase more in your wallet.');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const res = await insightAPI.unlock({
-        sport, eventId: prop.oddsEventId, playerName: prop.playerName,
-        statType: prop.statType, bettingLine: prop.line, marketType: 'player_prop',
-      });
-
-      if (res.data.preflightFailed) {
-        toast.error(res.data.message || 'Odds changed. Please refresh.');
-        return;
-      }
-
-      setInsight(res.data.insight);
-      setModalOpen(true);
-
-      if (res.data.creditDeducted) {
-        dispatch(updateCredits(credits - 1));
-        toast.success('Insight unlocked! 1 credit used.');
-      } else {
-        toast('Insight retrieved — no credit charged.');
-      }
-    } catch (e) {
-      if (e.response?.status === 402) {
-        toast.error('Not enough credits. Purchase more in your wallet.');
-      } else {
-        toast.error(getErrorMsg(e));
-      }
-    } finally {
-      setLoading(false);
-    }
+  const handleClick = async () => {
+    if (isUnlocked && insight) { setModalOpen(true); return; }
+    const result = await unlock();
+    if (result?.success) setModalOpen(true);
   };
+
+  const isOver  = prop.overOdds  != null;
+  const isUnder = prop.underOdds != null;
 
   return (
     <>
       <motion.div
-        className={styles.card}
+        className={`${styles.card} ${isUnlocked ? styles.cardUnlocked : ''}`}
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
+        whileHover={{ y: -2, transition: { duration: 0.12 } }}
       >
+        {/* Unlocked indicator */}
+        {isUnlocked && <div className={styles.unlockedBar} />}
+
         {/* Header */}
         <div className={styles.header}>
           <div className={styles.playerInfo}>
             <p className={styles.playerName}>{prop.playerName}</p>
-            {prop.teamName && <p className={styles.teamName}>{prop.teamName}</p>}
+            <p className={styles.teamName}>{prop.teamName || sport.toUpperCase()}</p>
           </div>
-          <div className={styles.tags}>
-            {prop.isHighConfidence && <Badge variant="accent" dot>High Confidence</Badge>}
-            {prop.isBestValue      && <Badge variant="warning" dot>Best Value</Badge>}
+          <div className={styles.badges}>
+            {prop.isHighConfidence && <span className={styles.badgeHC}>HC</span>}
+            {prop.isBestValue      && <span className={styles.badgeBV}>BV</span>}
+            {isUnlocked            && <span className={styles.badgeUnlocked}>✓</span>}
           </div>
         </div>
 
-        {/* Prop line */}
+        {/* Stat + line */}
         <div className={styles.propRow}>
           <div className={styles.statBlock}>
             <span className={styles.statType}>{prop.statType}</span>
             <span className={styles.line}>{prop.line}</span>
           </div>
           <div className={styles.oddsBlock}>
-            <span className={styles.overOdds}>▲ {prop.overOdds > 0 ? '+' : ''}{prop.overOdds}</span>
-            <span className={styles.underOdds}>▼ {prop.underOdds > 0 ? '+' : ''}{prop.underOdds}</span>
+            {isOver  && <div className={styles.oddsItem}><span className={styles.oddsDir}>▲</span><span className={styles.oddsVal}>{prop.overOdds > 0 ? '+' : ''}{prop.overOdds}</span></div>}
+            {isUnder && <div className={styles.oddsItem}><span className={styles.oddsDir}>▼</span><span className={styles.oddsVal}>{prop.underOdds > 0 ? '+' : ''}{prop.underOdds}</span></div>}
           </div>
         </div>
 
-        {/* Metrics row */}
-        {(prop.confidenceScore != null || prop.edgePercentage != null) && (
-          <div className={styles.metrics}>
-            {prop.confidenceScore != null && (
-              <div className={styles.metric}>
-                <span className={styles.metricLabel}>Confidence</span>
-                <span
-                  className={styles.metricVal}
-                  style={{ color: prop.confidenceScore >= 80 ? 'var(--color-accent)' : prop.confidenceScore >= 60 ? 'var(--color-warning)' : 'var(--color-danger)' }}
-                >
-                  {prop.confidenceScore}%
-                </span>
-              </div>
-            )}
-            {prop.edgePercentage != null && (
-              <div className={styles.metric}>
-                <span className={styles.metricLabel}>Edge</span>
-                <span
-                  className={styles.metricVal}
-                  style={{ color: prop.edgePercentage > 0 ? 'var(--color-accent)' : 'var(--color-danger)' }}
-                >
-                  {prop.edgePercentage > 0 ? '+' : ''}{prop.edgePercentage}%
-                </span>
-              </div>
-            )}
+        {/* Confidence bar */}
+        <ConfBar score={prop.confidenceScore} />
+
+        {/* Edge */}
+        {prop.edgePercentage != null && (
+          <div className={styles.edgeRow}>
+            <span className={styles.edgeLabel}>Edge</span>
+            <span className={styles.edgeVal} style={{ color: prop.edgePercentage > 0 ? 'var(--color-accent)' : 'var(--color-danger)' }}>
+              {prop.edgePercentage > 0 ? '+' : ''}{prop.edgePercentage}%
+            </span>
           </div>
         )}
 
+        {/* Bookmaker */}
         {prop.bookmaker && <p className={styles.bookmaker}>{prop.bookmaker}</p>}
 
-        <Button
-          variant="primary"
-          size="sm"
-          fullWidth
-          loading={loading}
-          onClick={handleUnlock}
+        {/* CTA */}
+        <button
+          className={`${styles.cta} ${isUnlocked ? styles.ctaDone : ''}`}
+          onClick={handleClick}
+          disabled={isUnlocking}
         >
-          {isLoggedIn ? '🔓 Unlock AI Insight (1 credit)' : '🔒 Log in to Unlock'}
-        </Button>
+          {isUnlocking ? (
+            <span className={styles.spinner} />
+          ) : isUnlocked ? (
+            <>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+              View Scouting Report
+            </>
+          ) : canUnlock ? (
+            <>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+              Unlock — 1 Credit
+            </>
+          ) : (
+            <>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              Log in to Unlock
+            </>
+          )}
+        </button>
       </motion.div>
 
       <InsightModal

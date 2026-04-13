@@ -1,28 +1,29 @@
+// src/pages/auth/ForgotPasswordPage.jsx
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { authAPI, getErrorMsg } from '@/services/api';
-import Button from '@/components/ui/Button';
+import { useDispatch } from 'react-redux';
+import { forgotPassword } from '@/store/slices/authSlice';
 import { Input } from '@/components/ui/Input';
 import styles from './AuthPage.module.scss';
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail]     = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState('');
-  const [sent, setSent]       = useState(false);
+  const dispatch = useDispatch();
+  const [email,     setEmail]     = useState('');
+  const [loading,   setLoading]   = useState(false);
+  const [error,     setError]     = useState('');
+  const [sent,      setSent]      = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-    try {
-      await authAPI.forgotPassword(email);
+    const result = await dispatch(forgotPassword({ data: { email } }));
+    setLoading(false);
+    if (forgotPassword.fulfilled.match(result)) {
       setSent(true);
-    } catch (err) {
-      setError(getErrorMsg(err));
-    } finally {
-      setLoading(false);
+    } else {
+      setError(result.payload?.message || 'Request failed. Please try again.');
     }
   };
 
@@ -58,9 +59,9 @@ export default function ForgotPasswordPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
-              <Button type="submit" variant="primary" size="lg" fullWidth loading={loading}>
-                Send reset link
-              </Button>
+              <button type="submit" className={styles.submitBtn} disabled={loading}>
+                {loading ? <span className={styles.spinner} /> : 'Send reset link'}
+              </button>
             </form>
           </>
         )}
