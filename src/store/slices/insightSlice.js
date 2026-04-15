@@ -17,12 +17,21 @@ export const fetchRecentInsights = createApiThunk({
 const initialState = {
   // Keyed by `${playerName}_${statType}_${oddsEventId}`
   unlockedInsights: {},
-  unlocking:        false,
-  unlockError:      null,
+
+  // Per-prop unlocking state — keyed by same composite key
+  // This prevents ALL cards showing spinner when one is loading
+  unlockingKeys:  {},
+  unlockErrors:   {},
 
   recentInsights: [],
   recentLoading:  false,
   recentError:    null,
+};
+
+const buildInsightKey = ({ playerName, statType, eventId, oddsEventId }) => {
+  const resolvedEventId = eventId ?? oddsEventId;
+  if (!playerName || !statType || !resolvedEventId) return null;
+  return `${playerName}_${statType}_${resolvedEventId}`;
 };
 
 const insightSlice = createSlice({
@@ -31,27 +40,41 @@ const insightSlice = createSlice({
   reducers: {
     clearUnlockError(state) { state.unlockError = null; },
     cacheInsight(state, { payload }) {
-      const key = `${payload.playerName}_${payload.statType}_${payload.oddsEventId}`;
-      state.unlockedInsights[key] = payload;
+      const key = buildInsightKey(payload || {});
+      if (key) state.unlockedInsights[key] = payload;
     },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(unlockInsight.pending, (state) => {
-        state.unlocking   = true;
-        state.unlockError = null;
+      .addCase(unlockInsight.pending, (state, { meta }) => {
+        // Only mark THIS specific prop as loading — not all of them
+        const { playerName, statType, eventId } = meta.arg.data || {};
+        const key = buildInsightKey({ playerName, statType, eventId });
+        if (key) {
+          state.unlockingKeys[key] = true;
+          delete state.unlockErrors[key];
+        }
       })
-      .addCase(unlockInsight.rejected, (state, { payload }) => {
-        state.unlocking   = false;
-        state.unlockError = payload?.message || 'Failed to unlock insight';
+      .addCase(unlockInsight.rejected, (state, { payload, meta }) => {
+        const { playerName, statType, eventId } = meta.arg.data || {};
+        const key = buildInsightKey({ playerName, statType, eventId });
+        if (key) {
+          state.unlockingKeys[key] = false;
+          state.unlockErrors[key]  = payload?.message || 'Failed to unlock';
+        }
       })
-      .addCase(unlockInsight.fulfilled, (state, { payload }) => {
-        state.unlocking = false;
-        // Backend returns: { success, message, creditDeducted, remainingCredits, insight }
+      .addCase(unlockInsight.fulfilled, (state, { payload, meta }) => {
+        const { playerName, statType, eventId } = meta.arg.data || {};
+        const key = buildInsightKey({ playerName, statType, eventId });
+        if (key) {
+          state.unlockingKeys[key] = false;
+          delete state.unlockErrors[key];
+        }
+        // Store the insight — keyed so PropCard can find it
         const insight = payload?.insight;
         if (insight) {
-          const key = `${insight.playerName}_${insight.statType}_${insight.oddsEventId}`;
-          state.unlockedInsights[key] = insight;
+          const insightKey = buildInsightKey(insight);
+          if (insightKey) state.unlockedInsights[insightKey] = insight;
         }
       })
 
@@ -69,7 +92,8 @@ export const { clearUnlockError, cacheInsight } = insightSlice.actions;
 export default insightSlice.reducer;
 
 // ── Selectors ─────────────────────────────────────────────────
-export const selectUnlocking      = (s) => s.insights.unlocking;
-export const selectUnlockError    = (s) => s.insights.unlockError;
+// Per-prop selectors — pass the composite key
+export const selectIsUnlockingKey = (key) => (s) => !!s.insights.unlockingKeys[key];
+export const selectUnlockErrorKey = (key) => (s) => s.insights.unlockErrors[key] || null;
 export const selectRecentInsights = (s) => s.insights.recentInsights;
 export const selectRecentLoading  = (s) => s.insights.recentLoading;

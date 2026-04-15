@@ -22,7 +22,10 @@ const uiSlice = createSlice({
     },
     setActiveSport(state, { payload }) {
       state.activeSport  = payload;
-      state.activeFilter = 'all'; // reset filter when sport changes
+      state.activeFilter = 'all'; // always reset filter on sport change
+    },
+    resetFilter(state) {
+      state.activeFilter = 'all';
     },
     setActiveFilter(state, { payload }) {
       state.activeFilter = payload;
@@ -40,6 +43,7 @@ export const {
   toggleTheme, setTheme,
   setActiveSport, setActiveFilter,
   setSidebarOpen, toggleSidebar,
+  resetFilter,
 } = uiSlice.actions;
 export default uiSlice.reducer;
 

@@ -3,25 +3,39 @@ import { useDispatch, useSelector } from 'react-redux';
 import toast from 'react-hot-toast';
 import {
   unlockInsight, fetchRecentInsights,
-  selectUnlocking, selectRecentInsights, selectRecentLoading,
+  selectIsUnlockingKey,
+  selectRecentInsights, selectRecentLoading,
 } from '@/store/slices/insightSlice';
 import { setCredits, selectCredits, selectIsLoggedIn } from '@/store/slices/authSlice';
 
-// Stable reference — never creates new null on each render
 const NULL = null;
-const EMPTY = [];
+
+const buildInsightKey = ({ playerName, statType, eventId, oddsEventId }) => {
+  const resolvedEventId = eventId ?? oddsEventId;
+  return `${playerName}_${statType}_${resolvedEventId}`;
+};
 
 export function useUnlock(prop, sport) {
-  const dispatch    = useDispatch();
-  const isLoggedIn  = useSelector(selectIsLoggedIn);
-  const credits     = useSelector(selectCredits);
-  const isUnlocking = useSelector(selectUnlocking);
+  const dispatch   = useDispatch();
+  const isLoggedIn = useSelector(selectIsLoggedIn);
+  const credits    = useSelector(selectCredits);
 
-  const key      = `${prop.playerName}_${prop.statType}_${prop.oddsEventId}`;
-  const insight  = useSelector((s) => s.insights.unlockedInsights[key] ?? NULL);
+  const key = buildInsightKey({
+    playerName: prop.playerName,
+    statType: prop.statType,
+    eventId: prop.eventId,
+    oddsEventId: prop.oddsEventId,
+  });
+
+  // Per-prop loading — ONLY this card shows spinner
+  const isUnlocking = useSelector(selectIsUnlockingKey(key));
+
+  // Check if already unlocked
+  const insight = useSelector((s) => s.insights.unlockedInsights[key] ?? NULL);
   const isUnlocked = !!insight;
 
   const unlock = async () => {
+    // Already unlocked — return immediately so modal opens
     if (isUnlocked && insight) return { success: true, alreadyUnlocked: true };
 
     if (!isLoggedIn) {
@@ -69,7 +83,7 @@ export function useUnlock(prop, sport) {
     } else {
       const status = result.payload?.status;
       if (status === 402)      toast.error('Not enough credits.');
-      else if (status === 409) toast.error('Odds shifted. Please refresh the page.');
+      else if (status === 409) toast.error('Odds shifted. Please refresh.');
       else                     toast.error(result.payload?.message || 'Failed to unlock insight.');
       return { success: false };
     }
@@ -77,7 +91,7 @@ export function useUnlock(prop, sport) {
 
   return {
     unlock,
-    isUnlocking,
+    isUnlocking,  // Only true for THIS prop
     isUnlocked,
     insight,
     canUnlock: isLoggedIn && credits >= 1,
@@ -88,8 +102,6 @@ export function useScoutLog() {
   const dispatch       = useDispatch();
   const recentInsights = useSelector(selectRecentInsights);
   const isLoading      = useSelector(selectRecentLoading);
-
   const load = () => dispatch(fetchRecentInsights({ params: { limit: 5, sort: '-createdAt' } }));
-
   return { recentInsights, isLoading, load };
 }

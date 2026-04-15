@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useOdds } from '@/hooks/useOdds';
 import { selectActiveSport } from '@/store/slices/uiSlice';
 import styles from './LiveSlate.module.scss';
+import { GameRowSkeleton } from '@/components/ui/Skeleton';
 
 // ── Team logo from API-Sports ─────────────────────────────────
 function TeamLogo({ apiId, name, sport, size = 48 }) {
@@ -155,9 +156,7 @@ export default function LiveSlate() {
         {/* Loading skeletons */}
         {isLoading && (
           <div className={styles.list}>
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className={styles.skRow}><div className={styles.skPulse} /></div>
-            ))}
+            {[...Array(3)].map((_, i) => <GameRowSkeleton key={i} />)}
           </div>
         )}
 

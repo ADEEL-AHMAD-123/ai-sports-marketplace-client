@@ -1,4 +1,4 @@
-// client/src/App.jsx
+// src/App.jsx
 import React, { useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';

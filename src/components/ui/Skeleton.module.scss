@@ -1,20 +1,90 @@
-// Skeleton.module.scss
-.skeleton {
-  background: var(--color-bg-elevated);
-  animation: skeletonPulse 1.6s ease infinite;
+/* Skeleton.module.scss */
+
+/* Base shimmer animation */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
 }
 
-.card {
-  @include card;
+.block {
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-elevated) 25%,
+    rgba(255,255,255,0.06) 50%,
+    var(--color-bg-elevated) 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.6s ease infinite;
+  flex-shrink: 0;
+}
+:global(.light) .block {
+  background: linear-gradient(
+    90deg,
+    rgba(0,0,0,0.06) 25%,
+    rgba(0,0,0,0.1) 50%,
+    rgba(0,0,0,0.06) 75%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.6s ease infinite;
+}
+
+/* Prop card skeleton */
+.propCard {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-bg-border);
+  border-radius: var(--radius-xl, 16px);
   padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+/* Game row skeleton */
+.gameRow {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto auto;
+  align-items: center; gap: 16px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-bg-border);
+  border-radius: var(--radius-xl, 16px);
+  padding: 18px 22px;
+}
+.teamSk        { display: flex; align-items: center; gap: 12px; }
+.teamSkRight   { flex-direction: row-reverse; }
+.teamInfoSk    { display: flex; flex-direction: column; gap: 5px; }
+.centerSk      { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+
+/* Admin stat card skeleton */
+.statCard {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-bg-border);
+  border-radius: var(--radius-xl, 16px);
+  padding: 24px;
+  display: flex; flex-direction: column; gap: 10px;
 }
 
-.row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+/* Section skeleton */
+.section { display: flex; flex-direction: column; gap: 10px; }
+.sectionHeader {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+/* Spinner */
+.spinner {
+  animation: rotate 0.7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes rotate { to { transform: rotate(360deg); } }
+
+/* Page loader */
+.pageLoader {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 320px; width: 100%;
+}
+.pageLoaderInner {
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+}
+.pageLoaderLabel {
+  font-size: 0.9375rem; color: var(--color-text-muted);
+  font-weight: 500; letter-spacing: 0.02em;
 }
