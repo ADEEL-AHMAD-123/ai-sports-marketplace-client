@@ -50,8 +50,10 @@ function timeAgo(date) {
   return `${Math.floor(s / 86400)}d ago`;
 }
 
+const API_BASE = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
+
 function apiFetch(path, token, opts = {}) {
-  return fetch(`/api${path}`, {
+  return fetch(`${API_BASE}${path}`, {
     ...opts,
     headers: {
       'Content-Type': 'application/json',
