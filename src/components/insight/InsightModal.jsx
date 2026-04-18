@@ -1,6 +1,6 @@
 // src/components/insight/InsightModal.jsx
 // Premium AI scouting report modal with structured sections
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import styles from './InsightModal.module.scss';
 
@@ -123,8 +123,50 @@ function Verdict({ rec, line }) {
   );
 }
 
+// ── Copy Pick button ────────────────────────────────────────────
+function CopyPickButton({ insight }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    const rec  = insight.recommendation?.toUpperCase() || '—';
+    const edge = insight.edgePercentage ? `${insight.edgePercentage > 0 ? '+' : ''}${insight.edgePercentage}% edge` : '';
+    const tags = [insight.isHighConfidence && 'HC', insight.isBestValue && 'BV'].filter(Boolean).join(' · ');
+    const text = [
+      `${insight.playerName} — ${insight.statType?.toUpperCase()} ${rec} ${insight.bettingLine}`,
+      insight.insightSummary?.split('.')[0] || '',
+      [edge, tags].filter(Boolean).join(' · '),
+      'via EdgeIQ',
+    ].filter(Boolean).join('\n');
+
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }).catch(() => {
+      // Fallback for non-HTTPS
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  return (
+    <button className={`${styles.copyBtn} ${copied ? styles.copyBtnDone : ''}`} onClick={handleCopy}>
+      {copied ? (
+        <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg> Copied!</>
+      ) : (
+        <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy Pick</>
+      )}
+    </button>
+  );
+}
+
 // ── Section component ──────────────────────────────────────────
-function Section({ icon, label, items, color, delay = 0 }) {
+function Section({ icon, label, items, color, delay = 0, boldFirst = false }) {
   if (!items?.length) return null;
   return (
     <motion.div
@@ -139,7 +181,7 @@ function Section({ icon, label, items, color, delay = 0 }) {
       </div>
       <div className={styles.sectionItems}>
         {items.map((item, i) => (
-          <div key={i} className={styles.sectionItem}>
+          <div key={i} className={`${styles.sectionItem} ${boldFirst && i === 0 ? styles.sectionItemFirst : ''}`}>
             <span className={styles.itemDot} style={{ background: color }} />
             <p className={styles.itemText}>{item}</p>
           </div>
@@ -254,6 +296,11 @@ export default function InsightModal({ isOpen, onClose, insight, prop }) {
                 <h2 className={styles.playerName}>{insight.playerName}</h2>
                 <p className={styles.statLine}>
                   <span className={styles.statBadge}>{insight.statType}</span>
+                  {insight.injuryStatus && ['out','questionable','doubtful'].includes(insight.injuryStatus) && (
+                    <span className={styles.injuryBadge}>
+                      ⚠ {insight.injuryStatus.charAt(0).toUpperCase() + insight.injuryStatus.slice(1)}
+                    </span>
+                  )}
                   <span className={styles.statSep}>·</span>
                   Line: <strong>{insight.bettingLine}</strong>
                 </p>
@@ -309,7 +356,7 @@ export default function InsightModal({ isOpen, onClose, insight, prop }) {
             <div className={styles.divider} />
 
             {/* Stat windows — two labelled sections */}
-            {(insight.baselineStatAvg || insight.formPoints) && (
+            {(insight.baselineStatAvg != null || insight.formPoints != null) && (
               <StatWindows insight={insight} />
             )}
 
@@ -332,13 +379,14 @@ export default function InsightModal({ isOpen, onClose, insight, prop }) {
                 </motion.div>
               )}
 
-              {/* Supporting factors */}
+              {/* Supporting factors — first item is the primary signal, styled bolder */}
               <Section
                 icon="📊"
                 label="Supporting Factors"
                 items={[...factors, ...raw].slice(0, 4)}
                 color="#22c55e"
                 delay={0.35}
+                boldFirst
               />
 
               {/* Risk factors */}
@@ -370,7 +418,10 @@ export default function InsightModal({ isOpen, onClose, insight, prop }) {
               <p className={styles.disclaimer}>
                 AI-generated analysis for informational purposes only. Not financial advice. Bet responsibly.
               </p>
-              <button className={styles.doneBtn} onClick={onClose}>Got it</button>
+              <div className={styles.footerBtns}>
+                <CopyPickButton insight={insight} />
+                <button className={styles.doneBtn} onClick={onClose}>Got it</button>
+              </div>
             </div>
           </motion.div>
         </div>

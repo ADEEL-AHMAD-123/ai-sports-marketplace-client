@@ -15,6 +15,7 @@ import ErrorBoundary  from '@/components/ui/ErrorBoundary';
 import HomePage           from '@/pages/user/HomePage';
 import MatchPage          from '@/pages/user/MatchPage';
 import WalletPage         from '@/pages/user/WalletPage';
+import HistoryPage        from '@/pages/user/HistoryPage';
 import LoginPage          from '@/pages/auth/LoginPage';
 import RegisterPage       from '@/pages/auth/RegisterPage';
 import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage';
@@ -64,6 +65,7 @@ export default function App() {
 
         <Route element={<ProtectedRoute />}>
           <Route path="/wallet" element={<WalletPage />} />
+          <Route path="/history" element={<HistoryPage />} />
         </Route>
 
         <Route element={<ProtectedRoute requireAdmin />}>

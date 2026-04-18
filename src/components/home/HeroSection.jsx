@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useSelector } from 'react-redux';
 import { selectIsLoggedIn } from '@/store/slices/authSlice';
 import styles from './HeroSection.module.scss';
@@ -37,6 +37,23 @@ function TeamBadge({ apiId, abbr, sport, size = 48 }) {
       width={size}
       height={size}
       className={styles.teamBadgeImg}
+      onError={() => setErr(true)}
+    />
+  );
+}
+
+function LeagueBadgeLogo({ sport, leagueLabel }) {
+  const [err, setErr] = useState(false);
+  if (err || !LEAGUE_LOGOS[sport]) {
+    return <span className={styles.leagueFallback}>{sport.toUpperCase()}</span>;
+  }
+  return (
+    <img
+      src={LEAGUE_LOGOS[sport]}
+      alt={`${leagueLabel} logo`}
+      width={20}
+      height={20}
+      className={styles.leagueLogo}
       onError={() => setErr(true)}
     />
   );
@@ -90,31 +107,38 @@ const ArrowR = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
 // ── Insight Carousel ──────────────────────────────────────────
 function InsightCarousel() {
   const [idx, setIdx] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
   const timer = useRef(null);
+  const reduceMotion = useReducedMotion();
   const next = () => setIdx(i => (i + 1) % SLIDES.length);
   const prev = () => setIdx(i => (i - 1 + SLIDES.length) % SLIDES.length);
 
   useEffect(() => {
+    if (reduceMotion || isPaused) return undefined;
     timer.current = setInterval(next, 6000);
     return () => clearInterval(timer.current);
-  }, []);
+  }, [reduceMotion, isPaused]);
 
   const s = SLIDES[idx];
 
   return (
-    <div className={styles.carousel}>
+    <div
+      className={styles.carousel}
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      onFocusCapture={() => setIsPaused(true)}
+      onBlurCapture={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget)) setIsPaused(false);
+      }}
+      aria-roledescription="carousel"
+      aria-label="Featured AI insight previews"
+    >
       <div className={styles.carouselTopBar} />
 
       {/* Header: league + sport count */}
       <div className={styles.carouselHeader}>
         <div className={styles.carouselLeague}>
-          <img
-            src={LEAGUE_LOGOS[s.sport]}
-            alt={s.leagueLabel}
-            width={20} height={20}
-            className={styles.leagueLogo}
-            onError={e => e.currentTarget.style.display = 'none'}
-          />
+          <LeagueBadgeLogo sport={s.sport} leagueLabel={s.leagueLabel} />
           <span>{s.leagueLabel}</span>
         </div>
         <span className={styles.carouselLiveTag}>
@@ -181,13 +205,30 @@ function InsightCarousel() {
 
       {/* Carousel controls */}
       <div className={styles.controls}>
-        <button className={styles.ctrlBtn} onClick={prev}><ChevL /></button>
+        <button type="button" className={styles.ctrlBtn} onClick={prev} aria-label="Previous insight slide"><ChevL /></button>
         <div className={styles.dots}>
           {SLIDES.map((_, i) => (
-            <button key={i} className={i === idx ? styles.dotActive : styles.dot} onClick={() => setIdx(i)} />
+            <button
+              type="button"
+              key={i}
+              className={i === idx ? styles.dotActive : styles.dot}
+              onClick={() => setIdx(i)}
+              aria-label={`Go to insight slide ${i + 1}`}
+              aria-current={i === idx ? 'true' : 'false'}
+            />
           ))}
         </div>
-        <button className={styles.ctrlBtn} onClick={next}><ChevR /></button>
+        <button type="button" className={styles.ctrlBtn} onClick={next} aria-label="Next insight slide"><ChevR /></button>
+        {!reduceMotion && (
+          <button
+            type="button"
+            className={`${styles.ctrlBtn} ${styles.pauseBtn}`}
+            onClick={() => setIsPaused(p => !p)}
+            aria-label={isPaused ? 'Resume carousel autoplay' : 'Pause carousel autoplay'}
+          >
+            {isPaused ? 'Play' : 'Pause'}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -222,7 +263,7 @@ export default function HeroSection() {
           <p className={styles.subheadline}>
             Every line has a weakness. Our AI-driven scouting engine scans the global markets
             to identify the efficiency gaps the house missed. Access institutional-grade
-            insights across 9 global leagues — delivered before the game even starts.
+            insights with NBA live now and more leagues rolling out soon — delivered before the game even starts.
           </p>
 
           {!isLoggedIn ? (
@@ -247,11 +288,11 @@ export default function HeroSection() {
           {/* Stats strip */}
           <div className={styles.statsStrip}>
             {[
-              { val: '9',         lbl: 'Global Leagues' },
-              { val: 'TS% · USG%', lbl: 'NBA Formulas'  },
-              { val: 'xG · xA',   lbl: 'Soccer Engine'  },
-              { val: 'Real-time', lbl: 'Odds Scanning'  },
-            ].map(({ val, lbl }, i, a) => (
+  { val: 'AI',        lbl: 'Powered Analysis' },
+  { val: '3',         lbl: 'Stat Windows' },
+  { val: 'Real-time', lbl: 'Odds Tracking' },
+  { val: 'Free',      lbl: '3 Credits Start' },
+].map(({ val, lbl }, i, a) => (
               <React.Fragment key={val}>
                 <div className={styles.stat}>
                   <span className={styles.statVal}>{val}</span>

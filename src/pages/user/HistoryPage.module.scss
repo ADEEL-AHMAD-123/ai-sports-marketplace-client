@@ -1,0 +1,303 @@
+.page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+  color: var(--color-text);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.title {
+  font-size: 1.375rem;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+
+.sub {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.filters {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.filterBtn {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover { border-color: var(--color-accent); color: var(--color-text); }
+}
+
+.filterActive {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+
+.loading {
+  text-align: center;
+  padding: 48px;
+  color: var(--color-text-muted);
+}
+
+.empty {
+  text-align: center;
+  padding: 64px 24px;
+}
+
+.emptyIcon   { font-size: 2.5rem; margin: 0 0 12px; }
+.emptyTitle  { font-size: 1rem; font-weight: 600; margin: 0 0 6px; }
+.emptySub    { font-size: 0.8125rem; color: var(--color-text-muted); margin: 0; }
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+// ── Card ─────────────────────────────────────────────────────────────────────
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+
+  &:hover { border-color: var(--color-accent); }
+}
+
+.cardExpanded { border-color: var(--color-accent); }
+
+.cardMain {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  cursor: pointer;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.cardLeft   { flex: 1; min-width: 140px; }
+.cardMid    { flex-shrink: 0; }
+.cardRight  { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+
+.playerInfo { display: flex; flex-direction: column; gap: 3px; }
+
+.playerName {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.statRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.statType {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  background: var(--color-border);
+  padding: 2px 8px;
+  border-radius: 10px;
+  color: var(--color-text-muted);
+}
+
+.line {
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+}
+
+.rec {
+  font-size: 0.875rem;
+  font-weight: 700;
+  white-space: nowrap;
+  &.over  { color: #22c55e; }
+  &.under { color: #ef4444; }
+}
+
+.metrics {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.statBadge {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 3px 8px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  &.dim { opacity: 0.5; }
+}
+
+.badgeLabel {
+  font-size: 0.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+}
+
+.badgeVal {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.tagHC {
+  font-size: 0.625rem; font-weight: 700; padding: 2px 7px; border-radius: 4px;
+  background: color-mix(in srgb, #22c55e 15%, transparent);
+  color: #22c55e; border: 1px solid color-mix(in srgb, #22c55e 30%, transparent);
+}
+
+.tagBV {
+  font-size: 0.625rem; font-weight: 700; padding: 2px 7px; border-radius: 4px;
+  background: color-mix(in srgb, #f59e0b 15%, transparent);
+  color: #f59e0b; border: 1px solid color-mix(in srgb, #f59e0b 30%, transparent);
+}
+
+.time {
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+}
+
+.expandBtn {
+  background: none; border: none; color: var(--color-text-muted);
+  font-size: 0.625rem; cursor: pointer; padding: 4px; flex-shrink: 0;
+}
+
+// ── Detail Expansion ──────────────────────────────────────────────────────────
+
+.cardDetail {
+  border-top: 1px solid var(--color-border);
+  padding: 16px;
+}
+
+.summary {
+  font-size: 0.875rem;
+  color: var(--color-text);
+  background: var(--color-bg);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin: 0 0 14px;
+  line-height: 1.5;
+}
+
+.detailWindows {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.window {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.windowTitle {
+  display: block;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+  margin-bottom: 8px;
+}
+
+.windowRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 0;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border) 50%, transparent);
+
+  &:last-child { border-bottom: none; }
+  strong { color: var(--color-text); font-weight: 600; }
+}
+
+.factors, .risks {
+  margin-top: 12px;
+  ul { margin: 4px 0 0; padding-left: 18px; list-style-type: disc; }
+  li { font-size: 0.75rem; color: var(--color-text-muted); line-height: 1.6; }
+}
+
+.factorsTitle {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #22c55e;
+  margin: 0;
+}
+
+.risksTitle {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #f59e0b;
+  margin: 0;
+}
+
+.over  { color: #22c55e; }
+.under { color: #ef4444; }
+
+// ── Pagination ────────────────────────────────────────────────────────────────
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.pageBtn {
+  padding: 8px 18px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover:not(:disabled) { border-color: var(--color-accent); }
+  &:disabled { opacity: 0.4; cursor: default; }
+}
+
+.pageInfo {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}

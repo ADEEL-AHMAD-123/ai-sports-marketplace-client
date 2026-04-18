@@ -8,7 +8,7 @@ import { selectActiveSport } from '@/store/slices/uiSlice';
 import styles from './LiveSlate.module.scss';
 import { GameRowSkeleton } from '@/components/ui/Skeleton';
 
-// ── Team logo from API-Sports ─────────────────────────────────
+// ── Team logo from NBA Stats API (media.api-sports.io CDN) ────
 function TeamLogo({ apiId, name, sport, size = 48 }) {
   const [err, setErr] = useState(false);
   const initials = (name || '?').split(' ').map(w => w[0]).join('').slice(0, 3).toUpperCase();
@@ -80,12 +80,10 @@ function GameTime({ game }) {
   const start = new Date(game.startTime);
   const minsFromNow = Math.round((start - Date.now()) / 60000);
 
-  // < 60 min away — show countdown
   if (minsFromNow > 0 && minsFromNow < 60) {
     return <span className={styles.timeTagSoon}>Starts in {minsFromNow}m</span>;
   }
 
-  // < 24h away — show time only
   if (minsFromNow >= 0 && minsFromNow < 1440) {
     try {
       return (
@@ -101,7 +99,6 @@ function GameTime({ game }) {
     } catch { return <span className={styles.timeTag}>TBD</span>; }
   }
 
-  // > 24h away — show date + time
   try {
     return (
       <div className={styles.timeBlock}>
@@ -122,12 +119,17 @@ const ArrR = () => (
   </svg>
 );
 
+const ArrRSm = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+  </svg>
+);
+
 // ── LiveSlate ─────────────────────────────────────────────────
 export default function LiveSlate() {
   const activeSport = useSelector(selectActiveSport);
   const { games, isLoading, error, refresh } = useOdds();
 
-  // Sort: LIVE games first, then by start time ascending
   const sortedGames = [...games].sort((a, b) => {
     if (a.status === 'live' && b.status !== 'live') return -1;
     if (b.status === 'live' && a.status !== 'live') return 1;
@@ -153,23 +155,20 @@ export default function LiveSlate() {
           )}
         </div>
 
-        {/* Loading skeletons */}
         {isLoading && (
           <div className={styles.list}>
             {[...Array(3)].map((_, i) => <GameRowSkeleton key={i} />)}
           </div>
         )}
 
-        {/* Error */}
         {error && (
           <div className={styles.empty}>
             <p className={styles.emptyTitle}>Backend offline</p>
             <p className={styles.emptySub}>Start your server at localhost:5000 to load live games.</p>
-            <button className={styles.retryBtn} onClick={refresh}>Retry</button>
+            <button className={styles.retryBtn} onClick={refresh} aria-label="Retry loading live slate">Retry</button>
           </div>
         )}
 
-        {/* Empty */}
         {!isLoading && !error && games.length === 0 && (
           <div className={styles.empty}>
             <p className={styles.emptyTitle}>No upcoming {activeSport.toUpperCase()} games</p>
@@ -180,7 +179,6 @@ export default function LiveSlate() {
           </div>
         )}
 
-        {/* Game rows */}
         {!isLoading && !error && sortedGames.length > 0 && (
           <AnimatePresence mode="wait">
             <motion.div
@@ -201,34 +199,37 @@ export default function LiveSlate() {
                     to={`/match/${activeSport}/${game.oddsEventId}`}
                     className={`${styles.row} ${game.status === 'live' ? styles.rowLive : ''}`}
                   >
-                    {/* Away team */}
-                    <div className={styles.team}>
-                      <TeamLogo apiId={game.awayTeam?.apiSportsId} name={game.awayTeam?.name} sport={activeSport} size={48} />
-                      <div className={styles.teamInfo}>
-                        <p className={styles.teamAbbr}>{game.awayTeam?.abbreviation || '—'}</p>
-                        <p className={styles.teamName}>{game.awayTeam?.name}</p>
+                    {/* ── Top row ── */}
+                    <div className={styles.rowTop}>
+                      {/* Away team */}
+                      <div className={styles.team}>
+                        <TeamLogo apiId={game.awayTeam?.apiSportsId} name={game.awayTeam?.name} sport={activeSport} size={48} />
+                        <div className={styles.teamInfo}>
+                          <p className={styles.teamAbbr}>{game.awayTeam?.abbreviation || '—'}</p>
+                          <p className={styles.teamName}>{game.awayTeam?.name}</p>
+                        </div>
+                      </div>
+
+                      {/* Center */}
+                      <div className={styles.center}>
+                        <GameTime game={game} />
+                        <span className={styles.vsText}>VS</span>
+                      </div>
+
+                      {/* Home team */}
+                      <div className={`${styles.team} ${styles.teamRight}`}>
+                        <div className={`${styles.teamInfo} ${styles.teamInfoRight}`}>
+                          <p className={styles.teamAbbr}>{game.homeTeam?.abbreviation || '—'}</p>
+                          <p className={styles.teamName}>{game.homeTeam?.name}</p>
+                        </div>
+                        <TeamLogo apiId={game.homeTeam?.apiSportsId} name={game.homeTeam?.name} sport={activeSport} size={48} />
                       </div>
                     </div>
 
-                    {/* Center: status */}
-                    <div className={styles.center}>
-                      <GameTime game={game} />
-                      <span className={styles.vsText}>VS</span>
-                    </div>
-
-                    {/* Home team */}
-                    <div className={`${styles.team} ${styles.teamRight}`}>
-                      <div className={`${styles.teamInfo} ${styles.teamInfoRight}`}>
-                        <p className={styles.teamAbbr}>{game.homeTeam?.abbreviation || '—'}</p>
-                        <p className={styles.teamName}>{game.homeTeam?.name}</p>
-                      </div>
-                      <TeamLogo apiId={game.homeTeam?.apiSportsId} name={game.homeTeam?.name} sport={activeSport} size={48} />
-                    </div>
-
-                    {/* Divider */}
+                    {/* ── Divider (desktop) ── */}
                     <div className={styles.divider} />
 
-                    {/* Market info */}
+                    {/* ── Market (desktop / tablet) ── */}
                     <div className={styles.market}>
                       {game.hasProps && game.propCount > 0 ? (
                         <>
@@ -245,10 +246,23 @@ export default function LiveSlate() {
                       )}
                     </div>
 
-                    {/* Badge + arrow */}
+                    {/* ── Badge + arrow (desktop) ── */}
                     <div className={styles.right}>
                       <GameBadge game={game} />
                       <span className={styles.arrow}><ArrR /></span>
+                    </div>
+
+                    {/* ── Bottom strip (mobile only) ── */}
+                    <div className={styles.rowBottom}>
+                      <GameBadge game={game} />
+                      {game.hasProps ? (
+                        <span className={styles.marketMobile}>
+                          {game.propCount > 0 ? `${game.propCount} Props` : 'Props'} · View Report
+                          <ArrRSm />
+                        </span>
+                      ) : (
+                        <span className={styles.marketMobilePending}>Lines pending</span>
+                      )}
                     </div>
                   </Link>
                 </motion.div>

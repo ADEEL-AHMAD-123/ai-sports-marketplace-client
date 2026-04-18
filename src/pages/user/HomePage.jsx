@@ -3,7 +3,7 @@ import React from 'react';
 import HeroSection from '@/components/home/HeroSection';
 import LeagueGrid  from '@/components/home/LeagueGrid';
 import LiveSlate   from '@/components/home/LiveSlate';
-import ScoutLog    from '@/components/home/ScoutLog';
+import ScoutClosings from '@/components/home/ScoutClosings';
 import ErrorBoundary from '@/components/ui/ErrorBoundary';
 import styles from './HomePage.module.scss';
 
@@ -19,8 +19,8 @@ export default function HomePage() {
       <ErrorBoundary label="Live slate failed to load">
         <LiveSlate />
       </ErrorBoundary>
-      <ErrorBoundary label="Scout log failed to load">
-        <ScoutLog />
+      <ErrorBoundary label="Scout closings failed to load">
+        <ScoutClosings />
       </ErrorBoundary>
     </div>
   );

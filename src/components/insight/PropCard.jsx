@@ -66,6 +66,13 @@ export default function PropCard({ prop, sport }) {
             {prop.isHighConfidence && <span className={styles.badgeHC}>HC</span>}
             {prop.isBestValue      && <span className={styles.badgeBV}>BV</span>}
             {isUnlocked            && <span className={styles.badgeUnlocked}>✓</span>}
+            {/* Injury warning — shown before unlock so user can decide */}
+            {prop.injuryStatus === 'questionable' && (
+              <span className={styles.badgeQ} title={prop.injuryReason || 'Questionable'}>⚠ Q</span>
+            )}
+            {prop.injuryStatus === 'doubtful' && (
+              <span className={styles.badgeDTD} title={prop.injuryReason || 'Doubtful'}>⚠ DTD</span>
+            )}
           </div>
         </div>
 

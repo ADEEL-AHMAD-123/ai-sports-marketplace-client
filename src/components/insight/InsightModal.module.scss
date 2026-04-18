@@ -270,6 +270,12 @@
 }
 .sectionItems { display: flex; flex-direction: column; gap: 8px; padding-left: 4px; }
 .sectionItem  { display: flex; align-items: flex-start; gap: 10px; }
+// First supporting factor is the strongest signal — make it stand out
+.sectionItemFirst .itemText {
+  color: var(--m-text-primary);
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
 .itemDot      {
   width: 5px; height: 5px; border-radius: 50%;
   flex-shrink: 0; margin-top: 8px;
@@ -296,6 +302,26 @@
 .disclaimer {
   font-size: 0.75rem; line-height: 1.6;
   color: var(--m-text-muted);
+}
+// Button row — Copy Pick + Got it sit together on the right
+.footerBtns {
+  display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+}
+.copyBtn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 18px;
+  background: transparent;
+  color: var(--m-text-secondary);
+  border: 1px solid var(--m-border-inner);
+  border-radius: 99px;
+  font-weight: 600; font-size: 0.875rem; cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: var(--font-body, 'Inter', sans-serif);
+  &:hover { border-color: #22c55e; color: #22c55e; }
+}
+.copyBtnDone {
+  border-color: #22c55e; color: #22c55e;
+  background: rgba(34, 197, 94, 0.08);
 }
 .doneBtn {
   flex-shrink: 0; padding: 10px 24px;
@@ -342,13 +368,15 @@
 
 .statRow {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 2px 0;
 }
 .statRowLabel {
   font-size: 0.8125rem; color: var(--m-text-muted); white-space: nowrap;
 }
 .statRowVal {
-  font-size: 0.875rem; font-weight: 700;
-  color: var(--m-text-secondary); font-family: var(--font-mono, monospace);
+  font-size: 1rem; font-weight: 800;
+  color: var(--m-text-primary); font-family: var(--font-mono, monospace);
+  letter-spacing: -0.02em;
 }
 
 /* Data quality + AI confidence tags */
@@ -366,4 +394,90 @@
   padding: 4px 10px; border-radius: 99px;
   font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.05em; text-transform: capitalize;
   color: var(--m-text-muted); background: var(--m-bg-elevated); border: 1px solid var(--m-border-inner);
+}
+
+/* Injury status badge */
+.injuryBadge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 99px;
+  font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.05em;
+  color: #f97316;
+  background: rgba(249, 115, 22, 0.12);
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  margin-left: 4px;
+}
+
+/* ── Mobile sheet — slides up from bottom on small screens ────────────────── */
+@media (max-width: 560px) {
+  .overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .modal {
+    min-width: 100vw;
+    max-width: 100vw;
+    width: 100vw;
+    max-height: 92vh;
+    border-radius: 20px 20px 0 0;
+    margin: 0;
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+  }
+
+  /* Drag handle pill */
+  .modal::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--color-border);
+    margin: 10px auto 0;
+  }
+
+  .header {
+    padding: 16px 16px 12px;
+  }
+
+  .playerName {
+    font-size: 1.5rem;
+  }
+
+  .closeBtn {
+    top: 14px;
+    right: 14px;
+  }
+
+  .body {
+    padding: 0 16px 16px;
+  }
+
+  .scoreWrap {
+    width: 80px;
+    height: 80px;
+  }
+
+  .windows {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .metricGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .factorsList li,
+  .risksList li {
+    font-size: 0.8125rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .metricGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .playerName {
+    font-size: 1.25rem;
+  }
 }

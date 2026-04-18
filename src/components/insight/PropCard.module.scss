@@ -49,6 +49,17 @@
   background: var(--color-accent-dim); border: 1px solid rgba(var(--color-accent-rgb), 0.25);
   border-radius: var(--radius-full); padding: 2px 7px;
 }
+// Injury badges — shown BEFORE unlock so users can decide whether to spend a credit
+.badgeQ {
+  font-size: 0.625rem; font-weight: 800; color: var(--color-warning);
+  background: rgba(255, 171, 0, 0.12); border: 1px solid rgba(255, 171, 0, 0.3);
+  border-radius: var(--radius-full); padding: 2px 7px; cursor: help;
+}
+.badgeDTD {
+  font-size: 0.625rem; font-weight: 800; color: var(--color-danger);
+  background: rgba(var(--color-danger-rgb), 0.1); border: 1px solid rgba(var(--color-danger-rgb), 0.3);
+  border-radius: var(--radius-full); padding: 2px 7px; cursor: help;
+}
 
 /* Prop row */
 .propRow   { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
@@ -103,3 +114,27 @@
   animation: spin 0.7s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Mobile ──────────────────────────────────────────────────────────────── */
+@media (max-width: 400px) {
+  .card {
+    padding: 16px;
+  }
+
+  .playerName {
+    font-size: 1rem;
+  }
+
+  .cta {
+    height: 48px;
+    font-size: 0.875rem;
+  }
+
+  .statType {
+    font-size: 0.875rem;
+  }
+
+  .line {
+    font-size: 1.25rem;
+  }
+}
