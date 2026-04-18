@@ -6,7 +6,8 @@ import { useSelector } from 'react-redux';
 import { selectToken } from '@/store/slices/authSlice';
 import styles from './HistoryPage.module.scss';
 
-const API = (path) => `/api${path}`;
+const API_BASE = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
+const API = (path) => `${API_BASE}${path}`;
 
 function timeAgo(date) {
   const diff = Math.floor((Date.now() - new Date(date)) / 1000);
@@ -173,7 +174,7 @@ export default function HistoryPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, filter]);
+  }, [page, filter, token]);
 
   useEffect(() => { load(); }, [load]);
 
