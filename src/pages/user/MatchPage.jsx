@@ -7,9 +7,10 @@ import { useProps } from '@/hooks/useOdds';
 import { setActiveFilter, selectActiveFilter, resetFilter } from '@/store/slices/uiSlice';
 import PropCard from '@/components/insight/PropCard';
 import { PropCardSkeleton } from '@/components/ui/Skeleton';
+import { getSportConfig } from '@/config/sportConfig';
 import styles from './MatchPage.module.scss';
 
-const BackIcon  = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>;
+const BackIcon    = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>;
 const RefreshIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>;
 
 const FILTERS = [
@@ -18,6 +19,18 @@ const FILTERS = [
   { key: 'bestValue',      label: 'Best Value',      hint: '15%+ edge on line', icon: '⚡' },
 ];
 
+// Format game time as ET — sports bettors always want ET
+const fmtTimeET = (iso) => {
+  if (!iso) return null;
+  try {
+    return new Date(iso).toLocaleTimeString('en-US', {
+      hour: 'numeric', minute: '2-digit',
+      timeZone: 'America/New_York',
+      timeZoneName: 'short',
+    });
+  } catch { return null; }
+};
+
 const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
 const card    = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } };
 
@@ -25,11 +38,25 @@ export default function MatchPage() {
   const { sport, eventId } = useParams();
   const dispatch     = useDispatch();
   const activeFilter = useSelector(selectActiveFilter);
+  const sportCfg     = getSportConfig(sport);
 
-  // Always reset to 'all' on mount — prevents stale filter from previous session
+  // Always reset to 'all' on mount
   useEffect(() => { dispatch(resetFilter()); }, [eventId]);
 
   const { props, isLoading, error, refresh } = useProps(sport, eventId);
+
+  // Dynamic page title
+  const firstProp = props?.[0];
+  useEffect(() => {
+    const away = firstProp?.awayTeam;
+    const home = firstProp?.homeTeam;
+    if (away && home) {
+      document.title = `${away} vs ${home} · Props | EdgeIQ`;
+    } else {
+      document.title = `${sportCfg.label} Player Props | EdgeIQ`;
+    }
+    return () => { document.title = 'EdgeIQ — AI Sports Insights'; };
+  }, [firstProp, sportCfg]);
 
   // Count per filter for badges
   const counts = {
@@ -43,12 +70,34 @@ export default function MatchPage() {
     : activeFilter === 'highConfidence' ? props.filter(p => p.isHighConfidence)
     : props.filter(p => p.isBestValue);
 
+  // Extract game context from first prop (all props share the same game)
+  // gameInfo comes from the prop or we can infer from the URL eventId
+  const gameTime   = firstProp?.gameStartTime ? fmtTimeET(firstProp.gameStartTime) : null;
+  const awayTeam   = firstProp?.awayTeam || null;
+  const homeTeam   = firstProp?.homeTeam || null;
+  const hasContext = awayTeam && homeTeam;
+
   return (
     <div className={styles.page}>
       <div className={styles.container}>
 
         {/* Back nav */}
         <Link to="/" className={styles.back}><BackIcon />Back to Games</Link>
+
+        {/* Game context strip — shows which game you're looking at */}
+        {hasContext && (
+          <div className={styles.gameContext}>
+            <span className={styles.gameTeams}>
+              <strong>{awayTeam}</strong>
+              <span className={styles.gameVs}>vs</span>
+              <strong>{homeTeam}</strong>
+            </span>
+            {gameTime && (
+              <span className={styles.gameTime}>{gameTime}</span>
+            )}
+            <span className={styles.gameSport}>{sport?.toUpperCase()}</span>
+          </div>
+        )}
 
         {/* Header */}
         <div className={styles.header}>
@@ -130,7 +179,7 @@ export default function MatchPage() {
           </div>
         )}
 
-        {/* Props grid */}
+        {/* Props grid — 2 columns max for readability */}
         {!isLoading && !error && visible.length > 0 && (
           <AnimatePresence mode="wait">
             <motion.div

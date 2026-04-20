@@ -5,21 +5,17 @@ import { useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useOdds } from '@/hooks/useOdds';
 import { selectActiveSport } from '@/store/slices/uiSlice';
+import { getTeamLogoUrl } from '@/config/sportConfig';
 import styles from './LiveSlate.module.scss';
 import { GameRowSkeleton } from '@/components/ui/Skeleton';
 
-// ── Team logo from NBA Stats API (media.api-sports.io CDN) ────
+// ── Team logo — sport-agnostic via sportConfig ────────────────────────────────
 function TeamLogo({ apiId, name, sport, size = 48 }) {
   const [err, setErr] = useState(false);
   const initials = (name || '?').split(' ').map(w => w[0]).join('').slice(0, 3).toUpperCase();
-  const src = {
-    nba:    `https://media.api-sports.io/basketball/teams/${apiId}.png`,
-    nfl:    `https://media.api-sports.io/american-football/teams/${apiId}.png`,
-    mlb:    `https://media.api-sports.io/baseball/teams/${apiId}.png`,
-    nhl:    `https://media.api-sports.io/hockey/teams/${apiId}.png`,
-    soccer: `https://media.api-sports.io/football/teams/${apiId}.png`,
-  }[sport];
-  if (!apiId || err) {
+  const src = getTeamLogoUrl(sport, apiId);
+
+  if (!apiId || !src || err) {
     return (
       <div className={styles.logoFallback} style={{ width: size, height: size, fontSize: size * 0.28 }}>
         {initials}
@@ -80,10 +76,12 @@ function GameTime({ game }) {
   const start = new Date(game.startTime);
   const minsFromNow = Math.round((start - Date.now()) / 60000);
 
+  // < 60 min away — show countdown
   if (minsFromNow > 0 && minsFromNow < 60) {
     return <span className={styles.timeTagSoon}>Starts in {minsFromNow}m</span>;
   }
 
+  // < 24h away — show time only
   if (minsFromNow >= 0 && minsFromNow < 1440) {
     try {
       return (
@@ -92,13 +90,14 @@ function GameTime({ game }) {
             {start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
           </span>
           <span className={styles.timeTag}>
-            {start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' })}
+            {start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York', timeZoneName: 'short' })}
           </span>
         </div>
       );
     } catch { return <span className={styles.timeTag}>TBD</span>; }
   }
 
+  // > 24h away — show date + time
   try {
     return (
       <div className={styles.timeBlock}>
@@ -106,7 +105,7 @@ function GameTime({ game }) {
           {start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
         </span>
         <span className={styles.timeTag}>
-          {start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' })}
+          {start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York', timeZoneName: 'short' })}
         </span>
       </div>
     );
@@ -119,17 +118,12 @@ const ArrR = () => (
   </svg>
 );
 
-const ArrRSm = () => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-  </svg>
-);
-
 // ── LiveSlate ─────────────────────────────────────────────────
 export default function LiveSlate() {
   const activeSport = useSelector(selectActiveSport);
   const { games, isLoading, error, refresh } = useOdds();
 
+  // Sort: LIVE games first, then by start time ascending
   const sortedGames = [...games].sort((a, b) => {
     if (a.status === 'live' && b.status !== 'live') return -1;
     if (b.status === 'live' && a.status !== 'live') return 1;
@@ -155,20 +149,23 @@ export default function LiveSlate() {
           )}
         </div>
 
+        {/* Loading skeletons */}
         {isLoading && (
           <div className={styles.list}>
             {[...Array(3)].map((_, i) => <GameRowSkeleton key={i} />)}
           </div>
         )}
 
+        {/* Error */}
         {error && (
           <div className={styles.empty}>
             <p className={styles.emptyTitle}>Backend offline</p>
             <p className={styles.emptySub}>Start your server at localhost:5000 to load live games.</p>
-            <button className={styles.retryBtn} onClick={refresh} aria-label="Retry loading live slate">Retry</button>
+            <button className={styles.retryBtn} onClick={refresh}>Retry</button>
           </div>
         )}
 
+        {/* Empty */}
         {!isLoading && !error && games.length === 0 && (
           <div className={styles.empty}>
             <p className={styles.emptyTitle}>No upcoming {activeSport.toUpperCase()} games</p>
@@ -179,6 +176,7 @@ export default function LiveSlate() {
           </div>
         )}
 
+        {/* Game rows */}
         {!isLoading && !error && sortedGames.length > 0 && (
           <AnimatePresence mode="wait">
             <motion.div
@@ -199,7 +197,7 @@ export default function LiveSlate() {
                     to={`/match/${activeSport}/${game.oddsEventId}`}
                     className={`${styles.row} ${game.status === 'live' ? styles.rowLive : ''}`}
                   >
-                    {/* ── Top row ── */}
+                    {/* ── Top row: both teams + time (always visible) ── */}
                     <div className={styles.rowTop}>
                       {/* Away team */}
                       <div className={styles.team}>
@@ -210,7 +208,7 @@ export default function LiveSlate() {
                         </div>
                       </div>
 
-                      {/* Center */}
+                      {/* Center: time */}
                       <div className={styles.center}>
                         <GameTime game={game} />
                         <span className={styles.vsText}>VS</span>
@@ -226,10 +224,10 @@ export default function LiveSlate() {
                       </div>
                     </div>
 
-                    {/* ── Divider (desktop) ── */}
+                    {/* ── Divider (desktop only) ── */}
                     <div className={styles.divider} />
 
-                    {/* ── Market (desktop / tablet) ── */}
+                    {/* ── Market info (desktop only) ── */}
                     <div className={styles.market}>
                       {game.hasProps && game.propCount > 0 ? (
                         <>
@@ -246,23 +244,20 @@ export default function LiveSlate() {
                       )}
                     </div>
 
-                    {/* ── Badge + arrow (desktop) ── */}
+                    {/* ── Badge + arrow (desktop only) ── */}
                     <div className={styles.right}>
                       <GameBadge game={game} />
                       <span className={styles.arrow}><ArrR /></span>
                     </div>
 
-                    {/* ── Bottom strip (mobile only) ── */}
+                    {/* ── Bottom row: badge + CTA (mobile only) ── */}
                     <div className={styles.rowBottom}>
                       <GameBadge game={game} />
-                      {game.hasProps ? (
-                        <span className={styles.marketMobile}>
-                          {game.propCount > 0 ? `${game.propCount} Props` : 'Props'} · View Report
-                          <ArrRSm />
-                        </span>
-                      ) : (
-                        <span className={styles.marketMobilePending}>Lines pending</span>
-                      )}
+                      <span className={styles.marketMobile}>
+                        {game.hasProps
+                          ? `${game.propCount > 0 ? game.propCount + ' Props' : 'Props'} · View Report →`
+                          : 'Lines pending'}
+                      </span>
                     </div>
                   </Link>
                 </motion.div>

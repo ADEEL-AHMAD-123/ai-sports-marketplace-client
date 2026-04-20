@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useUnlock } from '@/hooks/useInsights';
 import InsightModal from './InsightModal';
 import { Spinner } from '@/components/ui/Skeleton';
+import { getStatLabel } from '@/config/sportConfig';
 import styles from './PropCard.module.scss';
 
 function ConfBar({ score }) {
@@ -79,7 +80,15 @@ export default function PropCard({ prop, sport }) {
         {/* Stat + line */}
         <div className={styles.propRow}>
           <div className={styles.statBlock}>
-            <span className={styles.statType}>{prop.statType}</span>
+            <span className={styles.statType}>
+              {getStatLabel(prop.sport, prop.statType)}
+              {/* MLB: show pitcher hand badge when available */}
+              {prop.sport === 'mlb' && prop.pitcherHand && (
+                <span className={styles.pitcherHandBadge} title={`Opposing pitcher: ${prop.pitcherHand}HP`}>
+                  vs {prop.pitcherHand}HP
+                </span>
+              )}
+            </span>
             <span className={styles.line}>{prop.line}</span>
           </div>
           <div className={styles.oddsBlock}>

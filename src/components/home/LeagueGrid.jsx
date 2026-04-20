@@ -1,35 +1,28 @@
 // src/components/home/LeagueGrid.jsx
+// Sport selector — uses sportConfig.js as single source of truth.
+// No sport-specific logic lives here — just reads the config and renders.
+
 import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
 import { selectActiveSport, setActiveSport } from '@/store/slices/uiSlice';
+import { getAllSports, getLeagueLogoUrl } from '@/config/sportConfig';
 import styles from './LeagueGrid.module.scss';
 
-// ── Official league logos via API-Sports CDN ──────────────────
-const LEAGUE_LOGOS = {
-  nba:    'https://media.api-sports.io/basketball/leagues/12.png',
-  nfl:    'https://media.api-sports.io/american-football/leagues/1.png',
-  mlb:    'https://media.api-sports.io/baseball/leagues/1.png',
-  nhl:    'https://media.api-sports.io/hockey/leagues/57.png',
-  soccer: 'https://media.api-sports.io/football/leagues/39.png',
-};
-
-const SPORTS = [
-  { key: 'nba',    name: 'NBA',    full: 'Basketball',        region: 'North America', active: true  },
-  { key: 'nfl',    name: 'NFL',    full: 'American Football', region: 'North America', active: false },
-  { key: 'mlb',    name: 'MLB',    full: 'Baseball',          region: 'North America', active: false },
-  { key: 'nhl',    name: 'NHL',    full: 'Ice Hockey',        region: 'North America', active: false },
-  { key: 'soccer', name: 'Soccer', full: 'Premier League',    region: 'Global',        active: false },
-];
+// Sport data comes entirely from sportConfig — nothing hardcoded here
+const SPORTS = getAllSports();
 
 function LeagueLogo({ sport }) {
   const [err, setErr] = useState(false);
-  if (err) return <div className={styles.logoFallback}>{sport.toUpperCase().slice(0, 2)}</div>;
-  const label = SPORTS.find((s) => s.key === sport)?.name || sport.toUpperCase();
+  const url = getLeagueLogoUrl(sport.key);
+
+  if (err || !url) {
+    return <div className={styles.logoFallback}>{sport.label}</div>;
+  }
   return (
     <img
-      src={LEAGUE_LOGOS[sport]}
-      alt={`${label} league logo`}
+      src={url}
+      alt={`${sport.label} league logo`}
       className={styles.logoImg}
       onError={() => setErr(true)}
     />
@@ -50,10 +43,12 @@ export default function LeagueGrid() {
             <h2 className={styles.title}>Select League</h2>
             <p className={styles.sub}>Choose a sport to load today's games and AI scouting reports</p>
           </div>
-          <span className={styles.comingSoon}>4 more leagues launching soon</span>
+          <span className={styles.comingSoon}>
+            {SPORTS.filter(s => !s.isActive).length} more leagues launching soon
+          </span>
         </div>
 
-        {/* Desktop grid (hidden on mobile) */}
+        {/* Desktop grid */}
         <div className={styles.grid}>
           {SPORTS.map((s, i) => (
             <motion.button
@@ -61,24 +56,24 @@ export default function LeagueGrid() {
               className={[
                 styles.card,
                 activeSport === s.key ? styles.cardActive : '',
-                !s.active ? styles.cardDisabled : '',
+                !s.isActive ? styles.cardDisabled : '',
               ].join(' ')}
-              onClick={() => s.active && dispatch(setActiveSport(s.key))}
-              disabled={!s.active}
+              onClick={() => s.isActive && dispatch(setActiveSport(s.key))}
+              disabled={!s.isActive}
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.07, duration: 0.32 }}
-              whileHover={s.active ? { y: -4, transition: { duration: 0.12 } } : {}}
+              whileHover={s.isActive ? { y: -4, transition: { duration: 0.12 } } : {}}
             >
               <div className={styles.logoWrap}>
-                <LeagueLogo sport={s.key} />
+                <LeagueLogo sport={s} />
               </div>
               <div className={styles.info}>
-                <span className={styles.name}>{s.name}</span>
-                <span className={styles.full}>{s.full}</span>
+                <span className={styles.name}>{s.label}</span>
+                <span className={styles.full}>{s.fullName}</span>
                 <span className={styles.region}>{s.region}</span>
               </div>
-              {s.active
+              {s.isActive
                 ? <span className={styles.liveBadge}><span className={styles.liveDot} />Live</span>
                 : <span className={styles.soonBadge}>Soon</span>
               }
@@ -87,7 +82,7 @@ export default function LeagueGrid() {
           ))}
         </div>
 
-        {/* Mobile tabs (hidden on desktop) */}
+        {/* Mobile tabs */}
         <div className={styles.tabsWrap}>
           <div className={styles.tabs}>
             {SPORTS.map((s) => (
@@ -96,16 +91,17 @@ export default function LeagueGrid() {
                 className={[
                   styles.tab,
                   activeSport === s.key ? styles.tabActive : '',
-                  !s.active ? styles.tabDisabled : '',
+                  !s.isActive ? styles.tabDisabled : '',
                 ].join(' ')}
-                onClick={() => s.active && dispatch(setActiveSport(s.key))}
-                disabled={!s.active}
+                onClick={() => s.isActive && dispatch(setActiveSport(s.key))}
+                disabled={!s.isActive}
               >
                 <div className={styles.tabLogo}>
-                  <LeagueLogo sport={s.key} />
+                  <LeagueLogo sport={s} />
                 </div>
-                <span className={styles.tabName}>{s.name}</span>
-                {!s.active && <span className={styles.tabSoon}>Soon</span>}
+                <span className={styles.tabName}>{s.label}</span>
+                {!s.isActive && <span className={styles.tabSoon}>Soon</span>}
+                {s.isActive && activeSport !== s.key && <span className={styles.tabLive}>Live</span>}
               </button>
             ))}
           </div>
