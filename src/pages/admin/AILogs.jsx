@@ -1,109 +1,145 @@
-import React, { useState } from 'react';
-import { useQuery } from 'react-query';
-import { adminAPI } from '@/services/api';
-import { Badge } from '@/components/ui/Badge';
-import { Skeleton } from '@/components/ui/Skeleton';
-import Button from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal'; 
-import styles from './AdminAILogsPage.module.scss';
+/**
+ * AdminAILogsPage.jsx
+ * GET /api/admin/logs/ai?page=1&limit=10
+ * Shows AI prompt + raw response for debugging prompt quality.
+ */
+import React, { useEffect, useState, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useSelector } from 'react-redux';
+import toast from 'react-hot-toast';
+import styles from './AdminShared.module.scss';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+async function apiFetch(path, token) {
+  const res  = await fetch(`${API_BASE}${path}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || res.statusText);
+  return data;
+}
+
+function LogEntry({ log }) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div className={styles.logEntry}>
+      <div className={styles.logHeader} onClick={() => setExpanded(e => !e)}>
+        <div className={styles.logMeta}>
+          <span className={styles.sportTag}>{log.sport?.toUpperCase()}</span>
+          <span className={styles.tdBold}>{log.playerName}</span>
+          <span className={styles.tdMuted}>{log.statType}</span>
+          <span className={styles.tdMono} style={{ color: log.recommendation === 'over' ? '#22c55e' : '#ef4444', fontWeight: 700 }}>
+            {log.recommendation === 'over' ? '▲ OVER' : '▼ UNDER'}
+          </span>
+          {log.aiLog?.latencyMs && (
+            <span className={styles.tdMuted}>{log.aiLog.latencyMs}ms</span>
+          )}
+          {log.aiLog?.tokensUsed?.total_tokens && (
+            <span className={styles.tdMuted}>{log.aiLog.tokensUsed.total_tokens} tokens</span>
+          )}
+        </div>
+        <span className={styles.expandBtn}>{expanded ? '▲' : '▼'}</span>
+      </div>
+
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            style={{ overflow: 'hidden' }}
+          >
+            <div className={styles.logBody}>
+              {log.aiLog?.prompt && (
+                <div className={styles.logSection}>
+                  <p className={styles.logSectionLabel}>PROMPT</p>
+                  <pre className={styles.logPre}>{log.aiLog.prompt}</pre>
+                </div>
+              )}
+              {log.aiLog?.rawResponse && (
+                <div className={styles.logSection}>
+                  <p className={styles.logSectionLabel}>AI RESPONSE</p>
+                  <pre className={styles.logPre}>{
+                    (() => {
+                      try { return JSON.stringify(JSON.parse(log.aiLog.rawResponse), null, 2); }
+                      catch { return log.aiLog.rawResponse; }
+                    })()
+                  }</pre>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 export default function AdminAILogsPage() {
-  const [page, setPage]   = useState(1);
-  const [viewing, setViewing] = useState(null); // insight to view full log
+  const token = useSelector(s => s.auth.token);
+  const [logs, setLogs]           = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [page, setPage]           = useState(1);
+  const [pagination, setPagination] = useState({});
 
-  const { data, isLoading } = useQuery(
-    ['adminAILogs', page],
-    () => adminAPI.getAILogs({ page, limit: 10 }).then(r => r.data),
-    { keepPreviousData: true }
-  );
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await apiFetch(`/admin/logs/ai?page=${page}&limit=10`, token);
+      setLogs(data.data || []);
+      setPagination(data.pagination || {});
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [token, page]);
+
+  useEffect(() => { load(); }, [load]);
 
   return (
     <div className={styles.page}>
-      <div className={styles.header}>
-        <div>
-          <h1 className={styles.title}>AI Logs</h1>
-          <p className={styles.sub}>Full prompt/response logs — auto-deleted after {import.meta.env.VITE_AI_LOG_DAYS || 30} days</p>
+      <div className={styles.pageHeader}>
+        <h2 className={styles.pageTitle}>AI Prompt Logs</h2>
+        <div className={styles.searchRow}>
+          <p className={styles.pageHint}>
+            Logs expire after {import.meta.env.VITE_AI_LOG_RETENTION_DAYS || 30} days.
+            Click any row to expand prompt + response.
+          </p>
+          <button className={styles.refreshBtn} onClick={load}>↻ Refresh</button>
         </div>
-        {data && <span className={styles.total}>{data.pagination?.total ?? 0} logs</span>}
       </div>
 
-      {isLoading ? (
-        <div className={styles.skeletons}>{[...Array(6)].map((_, i) => <Skeleton key={i} height={100} />)}</div>
+      {loading ? (
+        <div className={styles.loading}>Loading logs...</div>
+      ) : logs.length === 0 ? (
+        <div className={styles.emptyState}>
+          <p>No AI logs found.</p>
+          <p className={styles.tdMuted}>Logs are cleared after {import.meta.env.VITE_AI_LOG_RETENTION_DAYS || 30} days or sooner via the 3AM cleanup job.</p>
+        </div>
       ) : (
         <div className={styles.logList}>
-          {(data?.data || []).length === 0 && (
-            <div className={styles.empty}>No AI logs available. Logs appear after insights are generated and are deleted after retention period.</div>
-          )}
-          {(data?.data || []).map((ins) => (
-            <div key={ins._id} className={styles.logCard}>
-              <div className={styles.logHeader}>
-                <div className={styles.logMeta}>
-                  <span className={styles.logPlayer}>{ins.playerName}</span>
-                  <span className={styles.logStat}>{ins.statType} — {ins.bettingLine}</span>
-                  <span className={styles.logSport}>{ins.sport?.toUpperCase()}</span>
-                </div>
-                <div className={styles.logRight}>
-                  {ins.recommendation && (
-                    <Badge variant={ins.recommendation === 'over' ? 'over' : 'under'}>
-                      {ins.recommendation === 'over' ? '▲ OVER' : '▼ UNDER'}
-                    </Badge>
-                  )}
-                  <span className={styles.logDate}>{new Date(ins.createdAt).toLocaleString()}</span>
-                </div>
-              </div>
-
-              {ins.aiLog && (
-                <div className={styles.logStats}>
-                  {ins.aiLog.model && <span className={styles.logChip}>{ins.aiLog.model}</span>}
-                  {ins.aiLog.latencyMs && <span className={styles.logChip}>{ins.aiLog.latencyMs}ms</span>}
-                  {ins.aiLog.tokensUsed?.total && <span className={styles.logChip}>{ins.aiLog.tokensUsed.total} tokens</span>}
-                </div>
-              )}
-
-              <div className={styles.logPreview}>
-                <p className={styles.previewLabel}>Response preview</p>
-                <p className={styles.previewText}>{ins.insightText?.slice(0, 200)}{ins.insightText?.length > 200 ? '...' : ''}</p>
-              </div>
-
-              {ins.aiLog?.prompt && (
-                <Button variant="ghost" size="sm" onClick={() => setViewing(ins)}>
-                  View full prompt & response →
-                </Button>
-              )}
-            </div>
+          {logs.map((log, i) => (
+            <motion.div key={log._id}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.04 }}>
+              <LogEntry log={log} />
+            </motion.div>
           ))}
         </div>
       )}
 
-      {data?.pagination?.pages > 1 && (
+      {pagination.pages > 1 && (
         <div className={styles.pagination}>
-          <Button variant="ghost" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>← Prev</Button>
-          <span>{page} / {data.pagination.pages}</span>
-          <Button variant="ghost" size="sm" disabled={page === data.pagination.pages} onClick={() => setPage(p => p + 1)}>Next →</Button>
+          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className={styles.pageBtn}>← Prev</button>
+          <span className={styles.pageInfo}>{page} / {pagination.pages}</span>
+          <button disabled={page >= pagination.pages} onClick={() => setPage(p => p + 1)} className={styles.pageBtn}>Next →</button>
         </div>
       )}
-
-      {/* Full log modal */}
-      <Modal isOpen={!!viewing} onClose={() => setViewing(null)} title="Full AI Log" size="lg">
-        {viewing && (
-          <div className={styles.logModalContent}>
-            <div className={styles.logSection}>
-              <p className={styles.logSectionLabel}>📝 Prompt sent to OpenAI</p>
-              <pre className={styles.logPre}>{viewing.aiLog?.prompt}</pre>
-            </div>
-            <div className={styles.logSection}>
-              <p className={styles.logSectionLabel}>🤖 AI Response</p>
-              <pre className={styles.logPre}>{viewing.insightText}</pre>
-            </div>
-            {viewing.aiLog?.processedStats && (
-              <div className={styles.logSection}>
-                <p className={styles.logSectionLabel}>📐 Processed Stats</p>
-                <pre className={styles.logPre}>{JSON.stringify(viewing.aiLog.processedStats, null, 2)}</pre>
-              </div>
-            )}
-          </div>
-        )}
-      </Modal>
     </div>
   );
 }

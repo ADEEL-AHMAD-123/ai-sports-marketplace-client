@@ -25,8 +25,8 @@ const CRON_JOBS = [
     key: 'post-game-sync',
     label: 'Post-Game Sync',
     icon: '🔄',
-    desc: 'Marks completed games as finished. Planned: will record actual player stats to enable prediction outcome tracking.',
-    when: 'Runs nightly after games complete. (Outcome tracking coming soon.)',
+    desc: 'Marks completed games as finished. Prediction outcomes are graded from completed games and surfaced in the dashboard outcome section.',
+    when: 'Runs nightly after games complete.',
   },
   {
     key: 'ai-log-cleanup',
@@ -41,6 +41,15 @@ const CRON_JOBS = [
 
 const fmt  = (n, d = 0) => n == null ? '—' : Number(n).toLocaleString('en-US', { maximumFractionDigits: d });
 const pct  = (n) => n == null ? '—' : `${n}%`;
+const titleize = (value) => value ? String(value).replace(/_/g, ' ') : '—';
+
+function getConfidenceBand(confidence) {
+  if (confidence == null || Number.isNaN(Number(confidence))) return 'unknown';
+  const score = Number(confidence);
+  if (score >= 80) return '80-100';
+  if (score >= 60) return '60-79';
+  return '0-59';
+}
 
 function timeAgo(date) {
   const s = Math.floor((Date.now() - new Date(date)) / 1000);
@@ -79,7 +88,7 @@ function StatCard({ label, value, sub, tooltip, accentColor }) {
 }
 
 function DistBar({ label, tooltip, values, total, colorMap }) {
-  if (!total) return (
+  if (!total || !values) return (
     <div className={styles.distBar}>
       <p className={styles.distLabel}>{label}</p>
       <p className={styles.distEmpty}>No data yet</p>
@@ -147,6 +156,102 @@ function PredictionRow({ insight }) {
         {insight.isBestValue     && <span className={styles.tagBV} title="Best Value: edge ≥ 15% vs the book's line">BV</span>}
       </div>
       <span className={styles.predTime}>{timeAgo(insight.createdAt)}</span>
+    </div>
+  );
+}
+
+function OutcomeRow({ row }) {
+  const [expanded, setExpanded] = useState(false);
+  const isOver = row.rec === 'over';
+  const resultClass = row.result === 'win'
+    ? styles.resultWin
+    : row.result === 'loss'
+      ? styles.resultLoss
+      : row.result === 'push'
+        ? styles.resultPush
+        : styles.resultPending;
+
+  return (
+    <>
+      <div
+        className={`${styles.outcomeRow} ${expanded ? styles.outcomeRowExpanded : ''}`}
+        onClick={() => setExpanded((v) => !v)}
+        style={{ cursor: 'pointer' }}
+      >
+        <div className={styles.outcomePlayer}>
+          <span className={styles.outcomeName}>{row.playerName}</span>
+          <span className={styles.outcomeMeta}>{(row.sport || '—').toUpperCase()} · {titleize(row.statType)} · Line {row.line}</span>
+        </div>
+        <span className={`${styles.predRec} ${isOver ? styles.recOver : styles.recUnder}`}>
+          {isOver ? '▲' : '▼'} {row.rec?.toUpperCase()} {row.line}
+        </span>
+        <span className={styles.outcomeActual}>{row.actual != null ? fmt(row.actual, 1) : '—'}</span>
+        <span className={`${styles.outcomeResult} ${resultClass}`}>{row.result || 'unresolved'}</span>
+        <span className={styles.outcomeMetric}>{row.confidence != null ? `${Math.round(row.confidence)}%` : '—'}</span>
+        <span className={styles.outcomeMetric}>{row.edge != null ? `${row.edge >= 0 ? '+' : ''}${Number(row.edge).toFixed(1)}%` : '—'}</span>
+        <span className={styles.predTime}>{row.createdAt ? timeAgo(row.createdAt) : '—'}</span>
+      </div>
+      {expanded && (
+        <div className={styles.outcomeDetail}>
+          <div className={styles.outcomeDetailGrid}>
+            <div className={styles.outcomeDetailItem}>
+              <span className={styles.outcomeDetailLabel}>Event ID</span>
+              <span className={styles.outcomeDetailValue}>{row.eventId || '—'}</span>
+            </div>
+            <div className={styles.outcomeDetailItem}>
+              <span className={styles.outcomeDetailLabel}>Game Status</span>
+              <span className={styles.outcomeDetailValue}>{row.gameStatus || '—'}</span>
+            </div>
+            <div className={styles.outcomeDetailItem}>
+              <span className={styles.outcomeDetailLabel}>Stat Type</span>
+              <span className={styles.outcomeDetailValue}>{titleize(row.statType)}</span>
+            </div>
+            <div className={styles.outcomeDetailItem}>
+              <span className={styles.outcomeDetailLabel}>Betting Line</span>
+              <span className={styles.outcomeDetailValue}>{row.line != null ? row.line : '—'}</span>
+            </div>
+            <div className={styles.outcomeDetailItem}>
+              <span className={styles.outcomeDetailLabel}>Actual Stat</span>
+              <span className={styles.outcomeDetailValue}>{row.actual != null ? fmt(row.actual, 1) : '—'}</span>
+            </div>
+            <div className={styles.outcomeDetailItem}>
+              <span className={styles.outcomeDetailLabel}>Confidence Score</span>
+              <span className={styles.outcomeDetailValue}>{row.confidence != null ? `${Number(row.confidence).toFixed(1)}%` : '—'}</span>
+            </div>
+            <div className={styles.outcomeDetailItem}>
+              <span className={styles.outcomeDetailLabel}>Edge %</span>
+              <span className={styles.outcomeDetailValue}>{row.edge != null ? `${row.edge >= 0 ? '+' : ''}${Number(row.edge).toFixed(2)}%` : '—'}</span>
+            </div>
+            <div className={styles.outcomeDetailItem}>
+              <span className={styles.outcomeDetailLabel}>Recommendation</span>
+              <span className={`${styles.outcomeDetailValue} ${isOver ? styles.recOver : styles.recUnder}`}>{row.rec?.toUpperCase() || '—'}</span>
+            </div>
+            <div className={styles.outcomeDetailItem}>
+              <span className={styles.outcomeDetailLabel}>Created</span>
+              <span className={styles.outcomeDetailValue}>{row.createdAt ? new Date(row.createdAt).toLocaleString() : '—'}</span>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
+
+function PendingOutcomeRow({ row }) {
+  return (
+    <div className={styles.outcomeRow}>
+      <div className={styles.outcomePlayer}>
+        <span className={styles.outcomeName}>{row.playerName}</span>
+        <span className={styles.outcomeMeta}>{(row.sport || '—').toUpperCase()} · {titleize(row.statType)} · Line {row.line}</span>
+      </div>
+      <span className={`${styles.predRec} ${row.rec === 'over' ? styles.recOver : styles.recUnder}`}>
+        {row.rec === 'over' ? '▲' : '▼'} {row.rec?.toUpperCase()} {row.line}
+      </span>
+      <span className={styles.outcomeActual}>—</span>
+      <span className={`${styles.outcomeResult} ${styles.resultPending}`}>pending</span>
+      <span className={styles.outcomeMetric}>—</span>
+      <span className={styles.outcomeMetric}>—</span>
+      <span className={styles.predTime}>{row.createdAt ? timeAgo(row.createdAt) : '—'}</span>
     </div>
   );
 }
@@ -282,6 +387,10 @@ export default function AdminDashboard() {
   const [cronStatus, setCronStatus] = useState({});
   const [activeTab,  setActiveTab]  = useState('overview');
   const [lastRefresh, setLastRefresh] = useState(null);
+  const [outcomeSportFilter, setOutcomeSportFilter] = useState('all');
+  const [outcomeResultFilter, setOutcomeResultFilter] = useState('all');
+  const [outcomeConfidenceFilter, setOutcomeConfidenceFilter] = useState('all');
+  const [outcomeSearch, setOutcomeSearch] = useState('');
 
   const loadStats = useCallback(async () => {
     try {
@@ -317,8 +426,39 @@ export default function AdminDashboard() {
 
   const s = stats;
   const insightTotal = s?.insights?.total || 0;
+  const outcomeTotal = s?.outcomes?.graded || 0;
   const hcPct  = insightTotal ? Math.round((s.insights.highConfidence / insightTotal) * 100) : 0;
   const bvPct  = insightTotal ? Math.round((s.insights.bestValue      / insightTotal) * 100) : 0;
+  const outcomeBySport = Object.fromEntries(
+    Object.entries(s?.outcomes?.bySport || {}).map(([sport, row]) => [sport, row.graded || 0])
+  );
+  const outcomeByConfidence = Object.fromEntries(
+    Object.entries(s?.outcomes?.byConfidence || {}).map(([band, row]) => [band, row.graded || 0])
+  );
+  const resolvedOutcomeRows = (s?.outcomes?.sampleResolved || []).filter((row) => {
+    const query = outcomeSearch.trim().toLowerCase();
+    if (query && !`${row.playerName || ''} ${row.statType || ''} ${row.sport || ''}`.toLowerCase().includes(query)) return false;
+    if (outcomeSportFilter !== 'all' && row.sport !== outcomeSportFilter) return false;
+    if (outcomeResultFilter !== 'all' && row.result !== outcomeResultFilter) return false;
+    if (outcomeConfidenceFilter !== 'all' && getConfidenceBand(row.confidence) !== outcomeConfidenceFilter) return false;
+    return true;
+  });
+  const pendingOutcomeRows = (s?.outcomes?.sampleUnresolved || []).filter((row) => {
+    const query = outcomeSearch.trim().toLowerCase();
+    if (query && !`${row.playerName || ''} ${row.statType || ''} ${row.sport || ''}`.toLowerCase().includes(query)) return false;
+    if (outcomeSportFilter !== 'all' && row.sport !== outcomeSportFilter) return false;
+    if (!['all', 'pending'].includes(outcomeResultFilter)) return false;
+    if (outcomeConfidenceFilter !== 'all' && getConfidenceBand(row.confidence) !== outcomeConfidenceFilter) return false;
+    return true;
+  });
+  const pendingOutcomeRowsFromStarted = (s?.outcomes?.samplePending || []).filter((row) => {
+    const query = outcomeSearch.trim().toLowerCase();
+    if (query && !`${row.playerName || ''} ${row.statType || ''} ${row.sport || ''}`.toLowerCase().includes(query)) return false;
+    if (outcomeSportFilter !== 'all' && row.sport !== outcomeSportFilter) return false;
+    if (!['all', 'pending'].includes(outcomeResultFilter)) return false;
+    if (outcomeConfidenceFilter !== 'all' && getConfidenceBand(row.confidence) !== outcomeConfidenceFilter) return false;
+    return true;
+  });
 
   const TABS = [
     { key: 'overview',    label: 'Overview',    icon: '⊞' },
@@ -421,6 +561,65 @@ export default function AdminDashboard() {
             />
           </div>
 
+          <div className={styles.sectionLabel}>Prediction Outcomes</div>
+          <div className={styles.statGrid}>
+            <StatCard
+              label="Graded Insights"
+              value={fmt(s?.outcomes?.graded)}
+              sub={`${s?.outcomes?.startedInsights ?? 0} started · ${s?.outcomes?.unresolved ?? 0} unresolved`}
+              tooltip="Resolved outcomes from recent started games. Unresolved means the game started but no matching player stat row was found yet."
+              accentColor="var(--color-info)"
+            />
+            <StatCard
+              label="Win Rate"
+              value={pct(s?.outcomes?.winRateExPush)}
+              sub={`${s?.outcomes?.wins ?? 0} wins · ${s?.outcomes?.losses ?? 0} losses · ${s?.outcomes?.pushes ?? 0} pushes`}
+              tooltip="Win percentage excluding pushes across recently graded insights."
+              accentColor="var(--color-accent)"
+            />
+            <StatCard
+              label="Recent Window"
+              value={fmt(s?.outcomes?.scannedInsights)}
+              sub="latest generated insights scanned for grading"
+              tooltip="Recent generated insights considered for outcome grading. Only started games can be graded."
+            />
+            <StatCard
+              label="NBA Win Rate"
+              value={pct(s?.outcomes?.bySport?.nba?.winRateExPush)}
+              sub={`${s?.outcomes?.bySport?.nba?.graded ?? 0} graded NBA insights`}
+              tooltip="Resolved NBA insight win rate excluding pushes."
+              accentColor="var(--color-warning)"
+            />
+            <StatCard
+              label="MLB Win Rate"
+              value={pct(s?.outcomes?.bySport?.mlb?.winRateExPush)}
+              sub={`${s?.outcomes?.bySport?.mlb?.graded ?? 0} graded MLB insights`}
+              tooltip="Resolved MLB insight win rate excluding pushes."
+              accentColor="var(--color-purple)"
+            />
+            <StatCard
+              label="High-Conf Hit Rate"
+              value={pct(s?.outcomes?.byConfidence?.['80-100']?.winRateExPush)}
+              sub={`${s?.outcomes?.byConfidence?.['80-100']?.graded ?? 0} graded in 80-100 band`}
+              tooltip="Resolved win rate for insights whose confidence score fell between 80 and 100."
+              accentColor="var(--color-accent)"
+            />
+            <StatCard
+              label="Avg Edge on Wins"
+              value={s?.outcomes?.avgEdgeOnWins != null ? `${s.outcomes.avgEdgeOnWins}%` : '—'}
+              sub={`across ${s?.outcomes?.wins ?? 0} winning insights`}
+              tooltip="Average absolute edge percentage on insights that resolved as wins. Higher = the model had strong conviction on correct calls."
+              accentColor="var(--color-accent)"
+            />
+            <StatCard
+              label="Avg Edge on Losses"
+              value={s?.outcomes?.avgEdgeOnLosses != null ? `${s.outcomes.avgEdgeOnLosses}%` : '—'}
+              sub={`across ${s?.outcomes?.losses ?? 0} losing insights`}
+              tooltip="Average absolute edge percentage on insights that resolved as losses. Lower vs wins = model edge is a reliable signal."
+              accentColor="var(--color-danger)"
+            />
+          </div>
+
           {/* Distribution charts */}
           {s && insightTotal > 0 && (
             <>
@@ -446,6 +645,34 @@ export default function AdminDashboard() {
                   values={s.insights.byRecommendation}
                   total={insightTotal}
                   colorMap={{ over: 'var(--color-accent)', under: 'var(--color-info)' }}
+                />
+              </div>
+            </>
+          )}
+
+          {s && (
+            <>
+              <div className={styles.distGrid}>
+                <DistBar
+                  label="Outcome Split"
+                  tooltip="Resolved outcome mix for recent graded insights. Pushes are tracked but excluded from win rate calculations."
+                  values={s.outcomes?.byResult}
+                  total={outcomeTotal}
+                  colorMap={{ win: 'var(--color-accent)', loss: 'var(--color-danger)', push: 'var(--color-warning)' }}
+                />
+                <DistBar
+                  label="Graded By Sport"
+                  tooltip="How the currently graded sample is split across supported sports."
+                  values={outcomeBySport}
+                  total={outcomeTotal}
+                  colorMap={{ nba: 'var(--color-warning)', mlb: 'var(--color-purple)' }}
+                />
+                <DistBar
+                  label="Graded By Confidence"
+                  tooltip="How many resolved outcomes are currently available in each confidence-score band."
+                  values={outcomeByConfidence}
+                  total={outcomeTotal}
+                  colorMap={{ '80-100': 'var(--color-accent)', '60-79': 'var(--color-warning)', '0-59': 'var(--color-danger)' }}
                 />
               </div>
             </>
@@ -495,6 +722,89 @@ export default function AdminDashboard() {
               ))
             )}
           </div>
+
+          <div className={styles.panelHeader} style={{ marginTop: '28px' }}>
+            <div className={styles.panelTitleGroup}>
+              <h2 className={styles.panelTitle}>Outcome Audit</h2>
+              <p className={styles.panelDesc}>
+                Recent graded predictions matched against completed player stat rows. This is the quickest admin check for whether the recommendation, line, edge and confidence are holding up after games finish.
+              </p>
+              <div className={styles.panelStats}>
+                <span className={styles.panelStat}><strong>{s?.outcomes?.graded ?? 0}</strong> graded</span>
+                <span className={styles.panelStat}><strong>{s?.outcomes?.wins ?? 0}</strong> wins</span>
+                <span className={styles.panelStat}><strong>{s?.outcomes?.losses ?? 0}</strong> losses</span>
+                <span className={styles.panelStat}><strong>{s?.outcomes?.unresolved ?? 0}</strong> pending</span>
+                <span className={styles.panelStat}><strong>{resolvedOutcomeRows.length}</strong> filtered resolved</span>
+              </div>
+            </div>
+            <div className={styles.panelControls}>
+              <input
+                className={styles.searchInput}
+                placeholder="Search player, stat, sport…"
+                value={outcomeSearch}
+                onChange={(e) => setOutcomeSearch(e.target.value)}
+              />
+              <select className={styles.sortSelect} value={outcomeSportFilter} onChange={(e) => setOutcomeSportFilter(e.target.value)}>
+                <option value="all">Sport: All</option>
+                <option value="nba">Sport: NBA</option>
+                <option value="mlb">Sport: MLB</option>
+              </select>
+              <select className={styles.sortSelect} value={outcomeResultFilter} onChange={(e) => setOutcomeResultFilter(e.target.value)}>
+                <option value="all">Result: All</option>
+                <option value="win">Result: Win</option>
+                <option value="loss">Result: Loss</option>
+                <option value="push">Result: Push</option>
+                <option value="pending">Result: Pending</option>
+              </select>
+              <select className={styles.sortSelect} value={outcomeConfidenceFilter} onChange={(e) => setOutcomeConfidenceFilter(e.target.value)}>
+                <option value="all">Conf: All</option>
+                <option value="80-100">Conf: 80-100</option>
+                <option value="60-79">Conf: 60-79</option>
+                <option value="0-59">Conf: 0-59</option>
+              </select>
+              <button className={styles.refreshBtn} onClick={loadStats} title="Refresh outcome audit">↻ Refresh</button>
+            </div>
+          </div>
+
+          <div className={styles.tableWrap}>
+            <div className={`${styles.tableHead} ${styles.outcomeTableHead}`}>
+              <span>Player · Sport · Stat</span>
+              <span>Pick</span>
+              <span>Actual</span>
+              <span>Result</span>
+              <span>Conf</span>
+              <span>Edge</span>
+              <span>When</span>
+            </div>
+            {resolvedOutcomeRows.length === 0 ? (
+              <div className={styles.tableMsg}>
+                {(s?.outcomes?.sampleResolved || []).length === 0
+                  ? 'No resolved outcomes yet. Once games complete and player stats are available, graded rows will show here.'
+                  : 'No resolved outcomes match the current filters.'}
+              </div>
+            ) : (
+              resolvedOutcomeRows.map((row) => (
+                <OutcomeRow key={`${row.eventId}_${row.playerName}_${row.statType}_${row.rec}`} row={row} />
+              ))
+            )}
+          </div>
+
+          {!!(pendingOutcomeRows.length || pendingOutcomeRowsFromStarted.length) && (
+            <div className={styles.tableWrap} style={{ marginTop: '14px' }}>
+              <div className={`${styles.tableHead} ${styles.outcomeTableHead}`}>
+                <span>Pending Player · Sport · Stat</span>
+                <span>Pick</span>
+                <span>Actual</span>
+                <span>Status</span>
+                <span>Conf</span>
+                <span>Edge</span>
+                <span>When</span>
+              </div>
+              {[...pendingOutcomeRows, ...pendingOutcomeRowsFromStarted].map((row) => (
+                <PendingOutcomeRow key={`${row.eventId}_${row.playerName}_${row.statType}_${row.rec}_pending`} row={row} />
+              ))}
+            </div>
+          )}
         </div>
       )}
 

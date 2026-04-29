@@ -5,27 +5,37 @@ import { useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useOdds } from '@/hooks/useOdds';
 import { selectActiveSport } from '@/store/slices/uiSlice';
-import { getTeamLogoUrl } from '@/config/sportConfig';
 import styles from './LiveSlate.module.scss';
 import { GameRowSkeleton } from '@/components/ui/Skeleton';
 
-// ── Team logo — sport-agnostic via sportConfig ────────────────────────────────
-function TeamLogo({ apiId, name, sport, size = 48 }) {
+// Team logo — backend is source of truth (homeTeam.logoUrl / awayTeam.logoUrl)
+function TeamLogo({ logoUrl, name, size = 48 }) {
   const [err, setErr] = useState(false);
   const initials = (name || '?').split(' ').map(w => w[0]).join('').slice(0, 3).toUpperCase();
-  const src = getTeamLogoUrl(sport, apiId);
 
-  if (!apiId || !src || err) {
+  if (!logoUrl || err) {
     return (
       <div className={styles.logoFallback} style={{ width: size, height: size, fontSize: size * 0.28 }}>
         {initials}
       </div>
     );
   }
-  return <img src={src} alt={name} width={size} height={size} className={styles.logoImg} onError={() => setErr(true)} />;
+  return (
+    <img
+      src={logoUrl}
+      alt={name}
+      width={size}
+      height={size}
+      className={styles.logoImg}
+      loading="lazy"
+      decoding="async"
+      onError={() => setErr(true)}
+    />
+  );
 }
 
-// ── Right-side badge — shows real backend data ────────────────
+// GameBadge — backend provides topConfidence, topEdge, propCount, hasProps
+// Gracefully falls back through the chain if fields are missing
 function GameBadge({ game }) {
   if (game.status === 'live') {
     return (
@@ -35,7 +45,9 @@ function GameBadge({ game }) {
       </span>
     );
   }
-  if (game.topConfidence) {
+
+  // topConfidence is the highest confidenceScore among this game's HC-tagged props
+  if (game.topConfidence && game.topConfidence >= 57) {
     return (
       <span className={styles.badgeConf}>
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
@@ -43,7 +55,9 @@ function GameBadge({ game }) {
       </span>
     );
   }
-  if (game.topEdge) {
+
+  // topEdge is the highest |edgePercentage| among this game's BV-tagged props
+  if (game.topEdge && game.topEdge >= 15) {
     return (
       <span className={styles.badgeEdge}>
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
@@ -51,6 +65,8 @@ function GameBadge({ game }) {
       </span>
     );
   }
+
+  // hasProps is set by propWatcher when at least one upsert succeeds
   if (game.hasProps) {
     return (
       <span className={styles.badgeReady}>
@@ -59,10 +75,10 @@ function GameBadge({ game }) {
       </span>
     );
   }
+
   return <span className={styles.badgePending}>Lines Pending</span>;
 }
 
-// ── Time display ──────────────────────────────────────────────
 function GameTime({ game }) {
   if (game.status === 'live') {
     return (
@@ -76,28 +92,10 @@ function GameTime({ game }) {
   const start = new Date(game.startTime);
   const minsFromNow = Math.round((start - Date.now()) / 60000);
 
-  // < 60 min away — show countdown
   if (minsFromNow > 0 && minsFromNow < 60) {
     return <span className={styles.timeTagSoon}>Starts in {minsFromNow}m</span>;
   }
 
-  // < 24h away — show time only
-  if (minsFromNow >= 0 && minsFromNow < 1440) {
-    try {
-      return (
-        <div className={styles.timeBlock}>
-          <span className={styles.timeDate}>
-            {start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-          </span>
-          <span className={styles.timeTag}>
-            {start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York', timeZoneName: 'short' })}
-          </span>
-        </div>
-      );
-    } catch { return <span className={styles.timeTag}>TBD</span>; }
-  }
-
-  // > 24h away — show date + time
   try {
     return (
       <div className={styles.timeBlock}>
@@ -118,19 +116,20 @@ const ArrR = () => (
   </svg>
 );
 
-// ── LiveSlate ─────────────────────────────────────────────────
 export default function LiveSlate() {
   const activeSport = useSelector(selectActiveSport);
   const { games, isLoading, error, refresh } = useOdds();
 
-  // Sort: LIVE games first, then by start time ascending
-  const sortedGames = [...games].sort((a, b) => {
+  // Only show games that have props available
+  const gamesWithProps = games.filter((g) => Number(g.propCount || 0) > 0 || g.hasProps);
+
+  const sortedGames = [...gamesWithProps].sort((a, b) => {
     if (a.status === 'live' && b.status !== 'live') return -1;
     if (b.status === 'live' && a.status !== 'live') return 1;
     return new Date(a.startTime) - new Date(b.startTime);
   });
 
-  const liveCount = games.filter(g => g.status === 'live').length;
+  const liveCount = gamesWithProps.filter(g => g.status === 'live').length;
 
   return (
     <section className={styles.section}>
@@ -145,18 +144,16 @@ export default function LiveSlate() {
             <p className={styles.sub}>Click any game to view props and unlock AI scouting reports</p>
           </div>
           {!isLoading && !error && (
-            <span className={styles.count}>{games.length} {games.length === 1 ? 'game' : 'games'}</span>
+            <span className={styles.count}>{gamesWithProps.length} {gamesWithProps.length === 1 ? 'game' : 'games'}</span>
           )}
         </div>
 
-        {/* Loading skeletons */}
         {isLoading && (
           <div className={styles.list}>
             {[...Array(3)].map((_, i) => <GameRowSkeleton key={i} />)}
           </div>
         )}
 
-        {/* Error */}
         {error && (
           <div className={styles.empty}>
             <p className={styles.emptyTitle}>Backend offline</p>
@@ -165,18 +162,16 @@ export default function LiveSlate() {
           </div>
         )}
 
-        {/* Empty */}
-        {!isLoading && !error && games.length === 0 && (
+        {!isLoading && !error && gamesWithProps.length === 0 && (
           <div className={styles.empty}>
-            <p className={styles.emptyTitle}>No upcoming {activeSport.toUpperCase()} games</p>
+            <p className={styles.emptyTitle}>No {activeSport.toUpperCase()} games with props right now</p>
             <p className={styles.emptySub}>
-              Games appear here when the morning scraper runs (8 AM daily).
-              Check back later or trigger it manually from the admin panel.
+              Markets update during the day. Check back shortly or tap retry.
             </p>
+            <button className={styles.retryBtn} onClick={refresh}>Retry</button>
           </div>
         )}
 
-        {/* Game rows */}
         {!isLoading && !error && sortedGames.length > 0 && (
           <AnimatePresence mode="wait">
             <motion.div
@@ -197,18 +192,20 @@ export default function LiveSlate() {
                     to={`/match/${activeSport}/${game.oddsEventId}`}
                     className={`${styles.row} ${game.status === 'live' ? styles.rowLive : ''}`}
                   >
-                    {/* ── Top row: both teams + time (always visible) ── */}
                     <div className={styles.rowTop}>
                       {/* Away team */}
                       <div className={styles.team}>
-                        <TeamLogo apiId={game.awayTeam?.apiSportsId} name={game.awayTeam?.name} sport={activeSport} size={48} />
+                        <TeamLogo
+                          logoUrl={game.awayTeam?.logoUrl || game.awayTeam?.logo}
+                          name={game.awayTeam?.name}
+                          size={48}
+                        />
                         <div className={styles.teamInfo}>
                           <p className={styles.teamAbbr}>{game.awayTeam?.abbreviation || '—'}</p>
                           <p className={styles.teamName}>{game.awayTeam?.name}</p>
                         </div>
                       </div>
 
-                      {/* Center: time */}
                       <div className={styles.center}>
                         <GameTime game={game} />
                         <span className={styles.vsText}>VS</span>
@@ -220,23 +217,22 @@ export default function LiveSlate() {
                           <p className={styles.teamAbbr}>{game.homeTeam?.abbreviation || '—'}</p>
                           <p className={styles.teamName}>{game.homeTeam?.name}</p>
                         </div>
-                        <TeamLogo apiId={game.homeTeam?.apiSportsId} name={game.homeTeam?.name} sport={activeSport} size={48} />
+                        <TeamLogo
+                          logoUrl={game.homeTeam?.logoUrl || game.homeTeam?.logo}
+                          name={game.homeTeam?.name}
+                          size={48}
+                        />
                       </div>
                     </div>
 
-                    {/* ── Divider (desktop only) ── */}
                     <div className={styles.divider} />
 
-                    {/* ── Market info (desktop only) ── */}
                     <div className={styles.market}>
-                      {game.hasProps && game.propCount > 0 ? (
+                      {game.hasProps ? (
                         <>
-                          <p className={styles.marketLbl}>{game.propCount} Props Available</p>
-                          <p className={styles.marketCta}>View Scouting Report</p>
-                        </>
-                      ) : game.hasProps ? (
-                        <>
-                          <p className={styles.marketLbl}>Props Available</p>
+                          <p className={styles.marketLbl}>
+                            {game.propCount > 0 ? `${game.propCount} Props Available` : 'Props Available'}
+                          </p>
                           <p className={styles.marketCta}>View Scouting Report</p>
                         </>
                       ) : (
@@ -244,13 +240,12 @@ export default function LiveSlate() {
                       )}
                     </div>
 
-                    {/* ── Badge + arrow (desktop only) ── */}
                     <div className={styles.right}>
                       <GameBadge game={game} />
                       <span className={styles.arrow}><ArrR /></span>
                     </div>
 
-                    {/* ── Bottom row: badge + CTA (mobile only) ── */}
+                    {/* Mobile bottom row */}
                     <div className={styles.rowBottom}>
                       <GameBadge game={game} />
                       <span className={styles.marketMobile}>

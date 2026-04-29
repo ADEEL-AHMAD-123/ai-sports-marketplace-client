@@ -4,8 +4,19 @@ import { motion } from 'framer-motion';
 import { useUnlock } from '@/hooks/useInsights';
 import InsightModal from './InsightModal';
 import { Spinner } from '@/components/ui/Skeleton';
-import { getStatLabel } from '@/config/sportConfig';
+import { getSportBadges, getStatLabel, getStatTypeBadge } from '@/config/sportConfig';
 import styles from './PropCard.module.scss';
+
+const normalizeInjuryStatus = (value) => String(value || '').trim().toLowerCase();
+
+const getInjuryBadge = (status) => {
+  const normalized = normalizeInjuryStatus(status);
+  if (!normalized) return null;
+  if (normalized === 'out') return { label: 'OUT', className: styles.badgeOut };
+  if (normalized === 'questionable') return { label: 'Q', className: styles.badgeQ };
+  if (normalized === 'doubtful' || normalized === 'day-to-day') return { label: 'DTD', className: styles.badgeDTD };
+  return { label: normalized.toUpperCase(), className: styles.badgeDTD };
+};
 
 function ConfBar({ score }) {
   if (score == null || score === 0) return null;
@@ -30,8 +41,35 @@ function ConfBar({ score }) {
 
 export default function PropCard({ prop, sport }) {
   const [modalOpen, setModalOpen] = useState(false);
+  const sportBadges = getSportBadges(prop?.sport || sport);
+  const statTypeBadge = getStatTypeBadge(prop?.sport || sport, prop?.statType);
 
-  const { unlock, isUnlocking, isUnlocked, insight, canUnlock } = useUnlock(prop, sport);
+  const {
+    unlock,
+    isUnlocking,
+    isUnlocked,
+    insight,
+    canUnlock,
+    blockedInfo,
+    isInjuryBlocked,
+  } = useUnlock(prop, sport);
+
+  // Keep card metrics aligned with unlocked report when an insight exists.
+  const displayLine = isUnlocked && insight?.bettingLine != null ? insight.bettingLine : prop.line;
+  const displayConfidence = isUnlocked && insight?.confidenceScore != null
+    ? insight.confidenceScore
+    : prop.confidenceScore;
+  const displayEdge = isUnlocked && insight?.edgePercentage != null
+    ? insight.edgePercentage
+    : prop.edgePercentage;
+  const showHighConfidence = isUnlocked && insight ? !!insight.isHighConfidence : !!prop.isHighConfidence;
+  const showBestValue = isUnlocked && insight ? !!insight.isBestValue : !!prop.isBestValue;
+  const displayInjury = blockedInfo?.status
+    ? { status: blockedInfo.status, reason: blockedInfo.reason || blockedInfo.message }
+    : insight?.injuryStatus
+      ? { status: insight.injuryStatus, reason: insight.injuryReason }
+      : null;
+  const injuryBadge = getInjuryBadge(displayInjury?.status);
 
   const handleClick = async () => {
     // Already unlocked — just open modal directly
@@ -64,15 +102,13 @@ export default function PropCard({ prop, sport }) {
             <p className={styles.teamName}>{prop.teamName || sport?.toUpperCase()}</p>
           </div>
           <div className={styles.badges}>
-            {prop.isHighConfidence && <span className={styles.badgeHC}>HC</span>}
-            {prop.isBestValue      && <span className={styles.badgeBV}>BV</span>}
+            {showHighConfidence && <span className={styles.badgeHC}>{sportBadges.highConfidenceLabel || 'HC'}</span>}
+            {showBestValue      && <span className={styles.badgeBV}>{sportBadges.bestValueLabel || 'BV'}</span>}
             {isUnlocked            && <span className={styles.badgeUnlocked}>✓</span>}
-            {/* Injury warning — shown before unlock so user can decide */}
-            {prop.injuryStatus === 'questionable' && (
-              <span className={styles.badgeQ} title={prop.injuryReason || 'Questionable'}>⚠ Q</span>
-            )}
-            {prop.injuryStatus === 'doubtful' && (
-              <span className={styles.badgeDTD} title={prop.injuryReason || 'Doubtful'}>⚠ DTD</span>
+            {injuryBadge && (
+              <span className={injuryBadge.className} title={displayInjury?.reason || displayInjury?.status}>
+                ⚠ {injuryBadge.label}
+              </span>
             )}
           </div>
         </div>
@@ -82,14 +118,13 @@ export default function PropCard({ prop, sport }) {
           <div className={styles.statBlock}>
             <span className={styles.statType}>
               {getStatLabel(prop.sport, prop.statType)}
-              {/* MLB: show pitcher hand badge when available */}
-              {prop.sport === 'mlb' && prop.pitcherHand && (
-                <span className={styles.pitcherHandBadge} title={`Opposing pitcher: ${prop.pitcherHand}HP`}>
-                  vs {prop.pitcherHand}HP
+              {statTypeBadge && (
+                <span className={styles.pitcherHandBadge} title={statTypeBadge.title || statTypeBadge.label}>
+                  {statTypeBadge.label}
                 </span>
               )}
             </span>
-            <span className={styles.line}>{prop.line}</span>
+            <span className={styles.line}>{displayLine}</span>
           </div>
           <div className={styles.oddsBlock}>
             {prop.overOdds  != null && <div className={styles.oddsItem}><span className={styles.oddsDir}>▲</span><span className={styles.oddsVal}>{prop.overOdds  > 0 ? '+' : ''}{prop.overOdds}</span></div>}
@@ -97,13 +132,22 @@ export default function PropCard({ prop, sport }) {
           </div>
         </div>
 
-        <ConfBar score={prop.confidenceScore} />
+        <ConfBar score={displayConfidence} />
 
-        {prop.edgePercentage != null && prop.edgePercentage !== 0 && (
+        {displayEdge != null && displayEdge !== 0 && (
           <div className={styles.edgeRow}>
             <span className={styles.edgeLabel}>Edge</span>
-            <span className={styles.edgeVal} style={{ color: prop.edgePercentage > 0 ? 'var(--color-accent)' : 'var(--color-danger)' }}>
-              {prop.edgePercentage > 0 ? '+' : ''}{prop.edgePercentage}%
+            <span className={styles.edgeVal} style={{ color: displayEdge > 0 ? 'var(--color-accent)' : 'var(--color-danger)' }}>
+              {displayEdge > 0 ? '+' : ''}{displayEdge}%
+            </span>
+          </div>
+        )}
+
+        {isInjuryBlocked && (
+          <div className={`${styles.statusRow} ${styles.statusRowDanger}`}>
+            <span className={styles.statusLabel}>Player status</span>
+            <span className={styles.statusText}>
+              {blockedInfo?.message || 'Insight blocked due to player injury status.'}
             </span>
           </div>
         )}
@@ -114,7 +158,7 @@ export default function PropCard({ prop, sport }) {
         <button
           className={`${styles.cta} ${isUnlocked ? styles.ctaDone : ''}`}
           onClick={handleClick}
-          disabled={isUnlocking}
+          disabled={isUnlocking || isInjuryBlocked}
         >
           {isUnlocking ? (
             <Spinner size={18} color="currentColor" />
@@ -122,6 +166,11 @@ export default function PropCard({ prop, sport }) {
             <>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
               View Scouting Report
+            </>
+          ) : isInjuryBlocked ? (
+            <>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              Player Unavailable
             </>
           ) : canUnlock ? (
             <>

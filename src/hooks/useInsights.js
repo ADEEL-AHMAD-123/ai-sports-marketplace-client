@@ -4,8 +4,12 @@ import toast from 'react-hot-toast';
 import {
   unlockInsight, fetchRecentInsights,
   selectIsUnlockingKey,
+  selectBlockedInsightKey,
   selectRecentInsights, selectRecentLoading,
+  clearBlockedInsight,
 } from '@/store/slices/insightSlice';
+import { fetchProps } from '@/store/slices/oddsSlice';
+import { selectActiveFilter } from '@/store/slices/uiSlice';
 import { setCredits, selectCredits, selectIsLoggedIn } from '@/store/slices/authSlice';
 
 const NULL = null;
@@ -19,6 +23,7 @@ export function useUnlock(prop, sport) {
   const dispatch   = useDispatch();
   const isLoggedIn = useSelector(selectIsLoggedIn);
   const credits    = useSelector(selectCredits);
+  const activeFilter = useSelector(selectActiveFilter);
 
   const key = buildInsightKey({
     playerName: prop.playerName,
@@ -29,10 +34,31 @@ export function useUnlock(prop, sport) {
 
   // Per-prop loading — ONLY this card shows spinner
   const isUnlocking = useSelector(selectIsUnlockingKey(key));
+  const blockedInfo = useSelector(selectBlockedInsightKey(key));
 
   // Check if already unlocked
   const insight = useSelector((s) => s.insights.unlockedInsights[key] ?? NULL);
   const isUnlocked = !!insight;
+
+  const refreshProps = () => {
+    dispatch(clearBlockedInsight(key));
+    dispatch(fetchProps({
+      sport,
+      eventId: prop.oddsEventId,
+      params: activeFilter !== 'all' ? { filter: activeFilter } : {},
+    }));
+  };
+
+  const attemptUnlock = (line) => dispatch(unlockInsight({
+    data: {
+      sport,
+      eventId:     prop.oddsEventId,
+      playerName:  prop.playerName,
+      statType:    prop.statType,
+      bettingLine: line,
+      marketType:  'player_prop',
+    },
+  }));
 
   const unlock = async () => {
     // Already unlocked — return immediately so modal opens
@@ -47,16 +73,16 @@ export function useUnlock(prop, sport) {
       return { success: false };
     }
 
-    const result = await dispatch(unlockInsight({
-      data: {
-        sport,
-        eventId:     prop.oddsEventId,
-        playerName:  prop.playerName,
-        statType:    prop.statType,
-        bettingLine: prop.line,
-        marketType:  'player_prop',
-      },
-    }));
+    let result = await attemptUnlock(prop.line);
+
+    // If the line moved, auto-retry once with the latest line from server.
+    if (unlockInsight.rejected.match(result) && result.payload?.status === 409) {
+      const currentLine = result.payload?.currentLine;
+      if (typeof currentLine === 'number' && currentLine !== prop.line) {
+        toast('Line moved. Retrying with latest odds...', { icon: '↻' });
+        result = await attemptUnlock(currentLine);
+      }
+    }
 
     if (unlockInsight.fulfilled.match(result)) {
       const payload = result.payload;
@@ -79,12 +105,25 @@ export function useUnlock(prop, sport) {
         toast.success('Retrieved from cache — no credit used.');
       }
 
+      refreshProps();
+
       return { success: true };
     } else {
       const status = result.payload?.status;
+      const injuryInfo = result.payload?.details?.injuryInfo || result.payload?.injuryInfo;
       if (status === 402)      toast.error('Not enough credits.');
-      else if (status === 409) toast.error('Odds shifted. Please refresh.');
-      else                     toast.error(result.payload?.message || 'Failed to unlock insight.');
+      else if (status === 422 && injuryInfo?.skip) {
+        const fallback = injuryInfo?.reason
+          ? `Player unavailable (${injuryInfo.reason}). Insight not generated.`
+          : 'Player unavailable. Insight not generated.';
+        toast.error(result.payload?.message || fallback);
+      }
+      else if (status === 409) {
+        toast.error('Odds moved too fast. We refreshed lines for you — try once more.');
+        refreshProps();
+      } else {
+        toast.error(result.payload?.message || 'Failed to unlock insight.');
+      }
       return { success: false };
     }
   };
@@ -94,7 +133,10 @@ export function useUnlock(prop, sport) {
     isUnlocking,  // Only true for THIS prop
     isUnlocked,
     insight,
+    blockedInfo,
+    isInjuryBlocked: !!blockedInfo?.skip,
     canUnlock: isLoggedIn && credits >= 1,
+    refreshProps,
   };
 }
 

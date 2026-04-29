@@ -1,65 +1,212 @@
 /* AdminAILogsPage.module.scss */
-.page { max-width: 900px; }
-.header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; }
-.title  { font-size: 1.75rem; margin-bottom: 4px; }
-.sub    { font-size: 0.875rem; color: var(--color-text-secondary); }
-.total  { font-family: var(--font-mono); font-size: 0.875rem; color: var(--color-text-muted); white-space: nowrap; }
 
-.skeletons { display: flex; flex-direction: column; gap: 12px; }
+.page {
+  max-width: 1100px;
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+}
 
-.logList { display: flex; flex-direction: column; gap: 12px; }
+.pageHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
 
-.logCard {
+.pageTitle {
+  font-family: var(--font-display);
+  font-size: 1.625rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0 0 4px;
+  letter-spacing: -0.02em;
+}
+
+.pageSub {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+  max-width: 560px;
+}
+
+.refreshBtn {
+  padding: 7px 14px;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-bg-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+
+  &:hover { border-color: var(--color-accent); color: var(--color-text-primary); }
+}
+
+.stateMsg {
+  padding: 40px;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+/* ── Log list ────────────────────────────────────────────────── */
+.logList { display: flex; flex-direction: column; gap: 8px; }
+
+.entry {
   background: var(--color-bg-surface);
   border: 1px solid var(--color-bg-border);
   border-radius: var(--radius-lg);
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  overflow: hidden;
   transition: border-color var(--transition-fast);
-  &:hover { border-color: rgba(var(--color-accent-rgb), 0.2); }
+
+  &:hover { border-color: color-mix(in srgb, var(--color-accent) 30%, transparent); }
 }
 
-.logHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.logMeta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.logPlayer { font-weight: 600; color: var(--color-text-primary); font-size: 0.9375rem; }
-.logStat   { font-size: 0.8125rem; color: var(--color-text-secondary); font-family: var(--font-mono); }
-.logSport  { font-size: 0.6875rem; color: var(--color-text-muted); font-family: var(--font-mono); text-transform: uppercase; }
-.logRight  { display: flex; align-items: center; gap: 10px; }
-.logDate   { font-size: 0.75rem; color: var(--color-text-muted); white-space: nowrap; }
+.entryHeader {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--transition-fast);
+  flex-wrap: wrap;
 
-.logStats  { display: flex; gap: 8px; flex-wrap: wrap; }
-.logChip   { background: var(--color-bg-elevated); border: 1px solid var(--color-bg-border); border-radius: var(--radius-full); padding: 2px 10px; font-size: 0.75rem; font-family: var(--font-mono); color: var(--color-text-secondary); }
+  &:hover { background: var(--color-bg-hover); }
+}
 
-.logPreview { background: var(--color-bg-elevated); border-radius: var(--radius-md); padding: 12px; }
-.previewLabel { font-size: 0.6875rem; font-weight: 600; color: var(--color-accent); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
-.previewText  { font-size: 0.875rem; color: var(--color-text-secondary); line-height: 1.6; }
+.entryHeaderOpen { background: var(--color-bg-hover); }
 
-.pagination { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 20px; font-size: 0.875rem; color: var(--color-text-secondary); }
-
-.empty { text-align: center; padding: 48px 24px; color: var(--color-text-muted); font-size: 0.9375rem; }
-
-/* Full log modal */
-.logModalContent { display: flex; flex-direction: column; gap: 20px; }
-.logSection { display: flex; flex-direction: column; gap: 8px; }
-.logSectionLabel { font-size: 0.875rem; font-weight: 600; color: var(--color-text-secondary); }
-.logPre {
-  background: var(--color-bg-base);
+.sportTag {
+  display: inline-block;
+  padding: 2px 7px;
+  background: var(--color-bg-elevated);
   border: 1px solid var(--color-bg-border);
-  border-radius: var(--radius-md);
-  padding: 14px;
-  font-family: var(--font-mono);
-  font-size: 0.8125rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+.entryName {
+  font-size: 0.875rem;
+  font-weight: 600;
   color: var(--color-text-primary);
+  white-space: nowrap;
+}
+
+.entryStat {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.entryRec {
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.recOver  { color: var(--color-accent); }
+.recUnder { color: var(--color-danger); }
+
+.entryMeta {
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.entryTime {
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.expandIcon {
+  font-size: 0.5625rem;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+/* ── Log body ────────────────────────────────────────────────── */
+.entryBody {
+  border-top: 1px solid var(--color-bg-border);
+}
+
+.logSection {
+  padding: 16px;
+  border-bottom: 1px solid var(--color-bg-border);
+
+  &:last-child { border-bottom: none; }
+}
+
+.logSectionLabel {
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  margin: 0 0 10px;
+}
+
+.logPre {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1.7;
+  color: var(--color-text-secondary);
   white-space: pre-wrap;
   word-break: break-word;
-  max-height: 300px;
+  margin: 0;
+  max-height: 480px;
   overflow-y: auto;
-  line-height: 1.6;
-
   scrollbar-width: thin;
   scrollbar-color: var(--color-bg-border) transparent;
-  &::-webkit-scrollbar { width: 5px; }
-  &::-webkit-scrollbar-thumb { background: var(--color-bg-border); border-radius: 99px; }
+
+  &::-webkit-scrollbar       { width: 4px; }
+  &::-webkit-scrollbar-thumb { background: var(--color-bg-border); border-radius: 2px; }
+}
+
+/* ── Pagination ─────────────────────────────────────────────── */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.pageBtn {
+  padding: 7px 16px;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-bg-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+
+  &:hover:not(:disabled) { border-color: var(--color-accent); color: var(--color-text-primary); }
+  &:disabled { opacity: 0.35; cursor: not-allowed; }
+}
+
+.pageInfo {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
 }

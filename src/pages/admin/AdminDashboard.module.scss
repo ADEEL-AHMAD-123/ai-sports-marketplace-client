@@ -422,6 +422,108 @@
 .predTags  { display: flex; gap: 4px; }
 .predTime  { font-size: 0.6875rem; color: var(--color-text-muted); }
 
+.outcomeTableHead {
+  grid-template-columns: 2.1fr 1.1fr 0.8fr 0.9fr 0.8fr 0.8fr 0.7fr;
+}
+
+.outcomeRow {
+  display: grid;
+  grid-template-columns: 2.1fr 1.1fr 0.8fr 0.9fr 0.8fr 0.8fr 0.7fr;
+  gap: 8px;
+  padding: 11px 16px;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-bg-border) 60%, transparent);
+  align-items: center;
+  transition: background var(--transition-fast);
+
+  &:last-child { border-bottom: none; }
+  &:hover { background: var(--color-bg-hover); }
+}
+
+.outcomeRowExpanded {
+  background: var(--color-bg-hover);
+}
+
+.outcomeDetail {
+  padding: 12px 16px 14px;
+  background: color-mix(in srgb, var(--color-bg-elevated) 60%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-bg-border) 60%, transparent);
+  border-left: 2px solid var(--color-accent);
+}
+
+.outcomeDetailGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px 16px;
+}
+
+.outcomeDetailItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.outcomeDetailLabel {
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+}
+
+.outcomeDetailValue {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  word-break: break-all;
+}
+
+.outcomePlayer { display: flex; flex-direction: column; gap: 2px; }
+.outcomeName { font-size: 0.8125rem; font-weight: 600; color: var(--color-text-primary); }
+.outcomeMeta { font-size: 0.6875rem; color: var(--color-text-muted); text-transform: capitalize; }
+.outcomeActual,
+.outcomeMetric {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.outcomeResult {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--color-bg-border);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.resultWin {
+  color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-accent) 25%, transparent);
+}
+
+.resultLoss {
+  color: var(--color-danger);
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-danger) 25%, transparent);
+}
+
+.resultPush {
+  color: var(--color-warning);
+  background: color-mix(in srgb, var(--color-warning) 12%, transparent);
+  border-color: color-mix(in srgb, var(--color-warning) 25%, transparent);
+}
+
+.resultPending {
+  color: var(--color-text-muted);
+  background: var(--color-bg-elevated);
+}
+
 .tagHC {
   font-size: 0.5625rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;
   background: color-mix(in srgb, var(--color-accent) 15%, transparent);
@@ -629,6 +731,10 @@
   .predTableHead, .predRow {
     grid-template-columns: 2fr 1.2fr 1fr 1fr;
     .predTags, .predTime { display: none; }
+  }
+  .outcomeTableHead, .outcomeRow {
+    grid-template-columns: 2fr 1.1fr 0.9fr 0.9fr;
+    .outcomeMetric, .predTime, .outcomeActual + .outcomeResult + .outcomeMetric { display: none; }
   }
   .tableHead, .tableRow {
     grid-template-columns: 1.8fr 1.4fr 0.8fr 0.6fr 0.6fr;

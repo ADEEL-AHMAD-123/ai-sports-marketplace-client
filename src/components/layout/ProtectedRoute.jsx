@@ -1,20 +1,20 @@
-/**
- * ProtectedRoute.jsx
- * Redirects to /login if user is not authenticated.
- * Saves the intended destination so we can redirect after login.
- */
+// src/components/layout/ProtectedRoute.jsx
 import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { selectIsLoggedIn } from '@/store/slices/authSlice';
+import { selectIsLoggedIn, selectIsAdmin } from '@/store/slices/authSlice';
 
-export default function ProtectedRoute() {
+export default function ProtectedRoute({ requireAdmin = false }) {
   const isLoggedIn = useSelector(selectIsLoggedIn);
-  const location = useLocation();
+  const isAdmin    = useSelector(selectIsAdmin);
+  const location   = useLocation();
 
   if (!isLoggedIn) {
-    // Pass the current path so we can redirect back after login
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (requireAdmin && !isAdmin) {
+    return <Navigate to="/" replace />;
   }
 
   return <Outlet />;

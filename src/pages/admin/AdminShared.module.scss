@@ -1,0 +1,332 @@
+/* AdminShared.module.scss — shared styles for all admin sub-pages */
+
+.page {
+  padding: 0 0 80px;
+  color: #e2e8f0;
+  font-family: 'IBM Plex Sans', 'Inter', sans-serif;
+}
+
+.pageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.pageTitle {
+  font-size: 1.375rem;
+  font-weight: 800;
+  color: #f1f5f9;
+  letter-spacing: -0.03em;
+  margin: 0;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+.pageHint {
+  font-size: 0.8125rem;
+  color: rgba(255,255,255,0.35);
+  margin: 0;
+}
+
+.searchRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.searchInput {
+  padding: 8px 14px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  color: #e2e8f0;
+  font-size: 0.875rem;
+  min-width: 200px;
+  font-family: inherit;
+  outline: none;
+
+  &:focus { border-color: rgba(255,255,255,0.25); }
+  option  { background: #1e2030; }
+}
+
+.refreshBtn {
+  padding: 8px 16px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  color: rgba(255,255,255,0.6);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  white-space: nowrap;
+
+  &:hover { background: rgba(255,255,255,0.09); color: #e2e8f0; }
+}
+
+.loading {
+  padding: 40px;
+  text-align: center;
+  color: rgba(255,255,255,0.3);
+  font-size: 0.875rem;
+}
+
+.emptyState {
+  padding: 48px;
+  text-align: center;
+  color: rgba(255,255,255,0.35);
+  font-size: 0.9375rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── Table ─────────────────────────────────────────────────────*/
+.tableWrap {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.07);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+
+  th {
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    color: rgba(255,255,255,0.7);
+    vertical-align: middle;
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+}
+
+.tdBold  { font-weight: 600; color: #e2e8f0; white-space: nowrap; }
+.tdMuted { color: rgba(255,255,255,0.4); font-size: 0.8125rem; white-space: nowrap; }
+.tdMono  { font-family: 'IBM Plex Mono', monospace; font-size: 0.8125rem; }
+
+.sportTag {
+  display: inline-block;
+  padding: 2px 7px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 4px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  color: rgba(255,255,255,0.5);
+}
+
+/* ── Action buttons ────────────────────────────────────────────*/
+.actionBtns { display: flex; gap: 6px; }
+
+.actionBtn {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.6);
+  transition: all 0.12s;
+  font-family: inherit;
+
+  &:hover  { background: rgba(255,255,255,0.1); color: #e2e8f0; }
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+}
+
+.actionBtnRed {
+  border-color: rgba(239,68,68,0.3);
+  color: #fca5a5;
+  &:hover { background: rgba(239,68,68,0.1); }
+}
+
+.actionBtnGreen {
+  border-color: rgba(34,197,94,0.3);
+  color: #86efac;
+  &:hover { background: rgba(34,197,94,0.1); }
+}
+
+/* ── Pagination ────────────────────────────────────────────────*/
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+  justify-content: center;
+}
+
+.pageBtn {
+  padding: 8px 16px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  color: rgba(255,255,255,0.6);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+
+  &:hover:not(:disabled) { background: rgba(255,255,255,0.09); color: #e2e8f0; }
+  &:disabled { opacity: 0.35; cursor: not-allowed; }
+}
+
+.pageInfo {
+  font-size: 0.8125rem;
+  color: rgba(255,255,255,0.4);
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* ── Credit modal ──────────────────────────────────────────────*/
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.modal {
+  background: #1a1c24;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  padding: 28px;
+  width: min(400px, calc(100vw - 40px));
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.modalTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin: 0;
+}
+
+.modalInput {
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  color: #e2e8f0;
+  font-size: 0.875rem;
+  font-family: inherit;
+  outline: none;
+  &:focus { border-color: rgba(255,255,255,0.3); }
+}
+
+.modalBtns { display: flex; gap: 10px; justify-content: flex-end; }
+
+.cancelBtn {
+  padding: 9px 18px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  color: rgba(255,255,255,0.5);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  &:hover { border-color: rgba(255,255,255,0.25); color: #e2e8f0; }
+}
+
+.confirmBtn {
+  padding: 9px 20px;
+  background: #22c55e;
+  border: none;
+  border-radius: 8px;
+  color: #000;
+  font-size: 0.875rem;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+  &:hover { opacity: 0.88; }
+}
+
+/* ── AI Logs ───────────────────────────────────────────────────*/
+.logList { display: flex; flex-direction: column; gap: 8px; }
+
+.logEntry {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.logHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.12s;
+  &:hover { background: rgba(255,255,255,0.04); }
+}
+
+.logMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.expandBtn {
+  font-size: 0.6875rem;
+  color: rgba(255,255,255,0.3);
+  flex-shrink: 0;
+}
+
+.logBody { border-top: 1px solid rgba(255,255,255,0.07); }
+
+.logSection { padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.logSection:last-child { border-bottom: none; }
+
+.logSectionLabel {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.3);
+  text-transform: uppercase;
+  margin: 0 0 10px;
+}
+
+.logPre {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.75rem;
+  line-height: 1.7;
+  color: rgba(255,255,255,0.6);
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+  max-height: 400px;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+}
