@@ -565,3 +565,4 @@ export default function InsightModal({ isOpen, onClose, insight, prop }) {
     </AnimatePresence>
   );
 }
+

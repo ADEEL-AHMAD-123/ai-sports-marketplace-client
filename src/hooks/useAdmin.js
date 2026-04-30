@@ -1,99 +1,104 @@
 // src/hooks/useAdmin.js
-import { useState, useEffect } from 'react';
+// Admin-specific data hooks — no Redux slice needed (admin data is ephemeral)
+import { useState, useEffect, useCallback } from 'react';
 import { useDispatch } from 'react-redux';
 import toast from 'react-hot-toast';
 import { createApiThunk } from '@/utils/apiHelper';
-import { getErrorMsg } from '@/services/api';
 
-// ── Admin-specific thunks ─────────────────────────────────────
+// ── Admin thunks (reuse createApiThunk pattern from other slices) ─────────────
+
 export const fetchAdminStats = createApiThunk({
   typePrefix: 'admin/fetchStats',
-  method: 'GET',
-  url: '/admin/stats',
+  method:     'GET',
+  url:        '/admin/stats',
 });
 
 export const fetchAdminUsers = createApiThunk({
   typePrefix: 'admin/fetchUsers',
-  method: 'GET',
-  url: '/admin/users',
+  method:     'GET',
+  url:        '/admin/users',
 });
 
 export const adjustUserCredits = createApiThunk({
   typePrefix: 'admin/adjustCredits',
-  method: 'PATCH',
-  url: ({ userId }) => `/admin/users/${userId}/credits`,
+  method:     'PATCH',
+  url:        ({ userId }) => `/admin/users/${userId}/credits`,
 });
 
 export const setUserStatus = createApiThunk({
   typePrefix: 'admin/setUserStatus',
-  method: 'PATCH',
-  url: ({ userId }) => `/admin/users/${userId}/status`,
+  method:     'PATCH',
+  url:        ({ userId }) => `/admin/users/${userId}/status`,
 });
 
 export const fetchAdminInsights = createApiThunk({
   typePrefix: 'admin/fetchInsights',
-  method: 'GET',
-  url: '/admin/insights',
+  method:     'GET',
+  url:        '/admin/insights',
 });
 
 export const deleteAdminInsight = createApiThunk({
   typePrefix: 'admin/deleteInsight',
-  method: 'DELETE',
-  url: ({ insightId }) => `/admin/insights/${insightId}`,
+  method:     'DELETE',
+  url:        ({ insightId }) => `/admin/insights/${insightId}`,
 });
 
 export const fetchAILogs = createApiThunk({
   typePrefix: 'admin/fetchAILogs',
-  method: 'GET',
-  url: '/admin/logs/ai',
+  method:     'GET',
+  url:        '/admin/logs/ai',
 });
 
 export const triggerCronJob = createApiThunk({
   typePrefix: 'admin/triggerCron',
-  method: 'POST',
-  url: ({ job }) => `/admin/cron/${job}`,
+  method:     'POST',
+  url:        ({ job }) => `/admin/cron/${job}`,
 });
 
-// ── Hooks ─────────────────────────────────────────────────────
+// ── useAdminStats ─────────────────────────────────────────────────────────────
+// Used by AdminDashboard — fetches /admin/stats, auto-refreshes every 60s
 
-/**
- * useAdminStats()
- * Use on AdminDashboard.
- */
 export function useAdminStats() {
   const dispatch = useDispatch();
-  const [stats,     setStats]     = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [stats,       setStats]       = useState(null);
+  const [isLoading,   setIsLoading]   = useState(false);
+  const [lastRefresh, setLastRefresh] = useState(null);
+
+  const load = useCallback(async () => {
+    setIsLoading(true);
+    const result = await dispatch(fetchAdminStats());
+    if (fetchAdminStats.fulfilled.match(result) && result.payload?.stats) {
+      setStats(result.payload.stats);
+      setLastRefresh(new Date());
+    }
+    setIsLoading(false);
+  }, [dispatch]);
 
   useEffect(() => {
-    setIsLoading(true);
-    dispatch(fetchAdminStats())
-      .then(r => { if (r.payload?.stats) setStats(r.payload.stats); })
-      .finally(() => setIsLoading(false));
-
-    // Auto-refresh every 60s
-    const interval = setInterval(() => {
-      dispatch(fetchAdminStats()).then(r => { if (r.payload?.stats) setStats(r.payload.stats); });
-    }, 60_000);
+    load();
+    const interval = setInterval(load, 60_000);
     return () => clearInterval(interval);
-  }, []);
+  }, [load]);
 
-  const triggerCron = async (job) => {
+  // Returns true on success, false on failure — used by CronPanel button state
+  const triggerCron = useCallback(async (job) => {
     const result = await dispatch(triggerCronJob({ job }));
     if (triggerCronJob.fulfilled.match(result)) {
-      toast.success(`✅ ${job} triggered successfully`);
+      toast.success(`${job} triggered`);
+      load(); // refresh stats after cron runs
+      return true;
     } else {
       toast.error(result.payload?.message || 'Cron trigger failed');
+      return false;
     }
-  };
+  }, [dispatch, load]);
 
-  return { stats, isLoading, triggerCron };
+  return { stats, isLoading, lastRefresh, triggerCron, reload: load };
 }
 
-/**
- * useAdminUsers()
- * Use on AdminUsersPage.
- */
+// ── useAdminUsers ─────────────────────────────────────────────────────────────
+// Used by AdminUsersPage
+
 export function useAdminUsers() {
   const dispatch = useDispatch();
   const [users,     setUsers]     = useState([]);
@@ -101,20 +106,26 @@ export function useAdminUsers() {
   const [pages,     setPages]     = useState(1);
   const [page,      setPage]      = useState(1);
   const [search,    setSearch]    = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const load = () => {
+  const load = useCallback(() => {
     setIsLoading(true);
-    dispatch(fetchAdminUsers({ params: { page, limit: 15, search: search || undefined } }))
-      .then(r => {
-        if (r.payload?.data)  setUsers(r.payload.data);
-        if (r.payload?.total) setTotal(r.payload.total);
-        if (r.payload?.pages) setPages(r.payload.pages);
-      })
-      .finally(() => setIsLoading(false));
-  };
+    dispatch(fetchAdminUsers({
+      params: {
+        page,
+        limit: 15,
+        search:  search  || undefined,
+        role:    roleFilter || undefined,
+      },
+    })).then(r => {
+      if (r.payload?.data)             setUsers(r.payload.data);
+      if (r.payload?.pagination?.total) setTotal(r.payload.pagination.total);
+      if (r.payload?.pagination?.pages) setPages(r.payload.pagination.pages);
+    }).finally(() => setIsLoading(false));
+  }, [dispatch, page, search, roleFilter]);
 
-  useEffect(() => { load(); }, [page, search]);
+  useEffect(() => { load(); }, [load]);
 
   const adjustCredits = async (userId, delta, reason) => {
     const result = await dispatch(adjustUserCredits({ userId, data: { delta, reason } }));
@@ -122,10 +133,9 @@ export function useAdminUsers() {
       toast.success('Credits adjusted');
       load();
       return true;
-    } else {
-      toast.error(result.payload?.message || 'Failed to adjust credits');
-      return false;
     }
+    toast.error(result.payload?.message || 'Failed to adjust credits');
+    return false;
   };
 
   const toggleStatus = async (userId, isActive) => {
@@ -141,37 +151,43 @@ export function useAdminUsers() {
   return {
     users, total, pages, page, setPage,
     search, setSearch,
+    roleFilter, setRoleFilter,
     isLoading, load,
     adjustCredits, toggleStatus,
   };
 }
 
-/**
- * useAdminInsights()
- * Use on AdminInsightsPage.
- */
+// ── useAdminInsights ──────────────────────────────────────────────────────────
+// Used by AdminInsightsPage
+
 export function useAdminInsights() {
   const dispatch = useDispatch();
   const [insights,  setInsights]  = useState([]);
   const [pages,     setPages]     = useState(1);
   const [page,      setPage]      = useState(1);
   const [sport,     setSport]     = useState('');
+  const [status,    setStatus]    = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const load = () => {
+  const load = useCallback(() => {
     setIsLoading(true);
-    dispatch(fetchAdminInsights({ params: { page, limit: 15, sport: sport || undefined } }))
-      .then(r => {
-        if (r.payload?.data)             setInsights(r.payload.data);
-        if (r.payload?.pagination?.pages) setPages(r.payload.pagination.pages);
-      })
-      .finally(() => setIsLoading(false));
-  };
+    dispatch(fetchAdminInsights({
+      params: {
+        page,
+        limit:  15,
+        sport:  sport  || undefined,
+        status: status || undefined,
+      },
+    })).then(r => {
+      if (r.payload?.data)             setInsights(r.payload.data);
+      if (r.payload?.pagination?.pages) setPages(r.payload.pagination.pages);
+    }).finally(() => setIsLoading(false));
+  }, [dispatch, page, sport, status]);
 
-  useEffect(() => { load(); }, [page, sport]);
+  useEffect(() => { load(); }, [load]);
 
   const deleteInsight = async (insightId, playerName) => {
-    if (!window.confirm(`Delete insight for ${playerName}? It regenerates on next unlock.`)) return;
+    if (!window.confirm(`Delete insight for ${playerName}?\nIt will regenerate on next unlock.`)) return;
     const result = await dispatch(deleteAdminInsight({ insightId }));
     if (deleteAdminInsight.fulfilled.match(result)) {
       toast.success('Insight deleted');
@@ -184,14 +200,14 @@ export function useAdminInsights() {
   return {
     insights, pages, page, setPage,
     sport, setSport,
+    status, setStatus,
     isLoading, load, deleteInsight,
   };
 }
 
-/**
- * useAILogs()
- * Use on AdminAILogsPage.
- */
+// ── useAILogs ─────────────────────────────────────────────────────────────────
+// Used by AdminAILogsPage
+
 export function useAILogs() {
   const dispatch = useDispatch();
   const [logs,      setLogs]      = useState([]);
@@ -210,4 +226,52 @@ export function useAILogs() {
   }, [page]);
 
   return { logs, pages, page, setPage, isLoading };
+}
+
+// ── useAdminPlayers ───────────────────────────────────────────────────────────
+// Used by PlayerHealthPanel
+
+export const fetchPlayerHealth = createApiThunk({
+  typePrefix: 'admin/fetchPlayerHealth',
+  method:     'GET',
+  url:        ({ sport = 'nba', limit = 200 } = {}) => `/admin/players/health?sport=${sport}&limit=${limit}`,
+});
+
+export const clearPlayerCache = createApiThunk({
+  typePrefix: 'admin/clearPlayerCache',
+  method:     'DELETE',
+  url:        ({ name, sport = 'nba' }) => `/admin/players/${encodeURIComponent(name)}/cache?sport=${sport}`,
+});
+
+export function useAdminPlayers(sport = 'nba') {
+  const dispatch = useDispatch();
+  const [players,  setPlayers]  = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [clearing,  setClearing]  = useState(null);
+
+  const load = useCallback(async () => {
+    setIsLoading(true);
+    const result = await dispatch(fetchPlayerHealth({ sport }));
+    if (fetchPlayerHealth.fulfilled.match(result)) {
+      setPlayers(result.payload.players || []);
+    }
+    setIsLoading(false);
+  }, [dispatch, sport]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const clearCache = async (name) => {
+    if (!window.confirm(`Clear ${sport.toUpperCase()} ID cache for "${name}"?\n\nWill be re-resolved on next Prop Watcher run.`)) return;
+    setClearing(name);
+    const result = await dispatch(clearPlayerCache({ name, sport }));
+    if (clearPlayerCache.fulfilled.match(result)) {
+      toast.success(`Cache cleared for ${name}`);
+      await load();
+    } else {
+      toast.error(result.payload?.message || 'Failed to clear cache');
+    }
+    setClearing(null);
+  };
+
+  return { players, isLoading, clearing, load, clearCache };
 }

@@ -221,3 +221,4 @@ export const shouldShowWeakDataBadge = (sport, dataQuality, confidenceScore) => 
 
 export const getActiveSports = () => Object.values(SPORT_CONFIG).filter(s => s.isActive);
 export const getAllSports     = () => Object.values(SPORT_CONFIG);
+
