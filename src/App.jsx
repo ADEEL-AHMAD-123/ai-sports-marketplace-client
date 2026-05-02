@@ -1,10 +1,8 @@
-// src/App.jsx
 import React, { useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import toast from 'react-hot-toast';
 
-// selectIsAdmin is used in ProtectedRoute via requireAdmin, not directly here
 import { selectIsLoggedIn, getLoggedInUser } from '@/store/slices/authSlice';
 import { useTheme } from '@/hooks/useTheme';
 
@@ -25,7 +23,9 @@ import NotFoundPage       from '@/pages/NotFoundPage';
 
 import AdminDashboard    from '@/pages/admin/AdminDashboard';
 import AdminUsersPage    from '@/pages/admin/AdminUsersPage';
-import AdminInsightsPage from '@/pages/admin/AdminInsightsPage';
+import AdminOutcomesPage from '@/pages/admin/AdminOutcomesPage';
+import AdminPlayersPage  from '@/pages/admin/AdminPlayersPage';
+import AdminJobsPage     from '@/pages/admin/AdminJobsPage';
 import AdminAILogsPage   from '@/pages/admin/AdminAILogsPage';
 
 export default function App() {
@@ -33,23 +33,18 @@ export default function App() {
   const isLoggedIn = useSelector(selectIsLoggedIn);
   const location   = useLocation();
 
-  // Apply persisted theme on mount
   useTheme();
 
-  // Silently refresh user data on app load (keeps credits in sync)
   useEffect(() => {
-    if (isLoggedIn) {
-      dispatch(getLoggedInUser());
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    if (isLoggedIn) dispatch(getLoggedInUser());
+  }, []); // eslint-disable-line
 
-  // Handle Stripe redirect params
   useEffect(() => {
     const p = new URLSearchParams(location.search);
     if (p.get('purchase') === 'success')   toast.success('Payment successful! Credits added.', { icon: '🎉', duration: 5000 });
     if (p.get('purchase') === 'cancelled') toast('Payment cancelled.', { icon: '↩️' });
     if (p.get('session')  === 'expired')   toast.error('Session expired. Please log in again.');
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []); // eslint-disable-line
 
   const isAdminPath = location.pathname.startsWith('/admin');
 
@@ -57,7 +52,7 @@ export default function App() {
     <ErrorBoundary label="Application failed to load. Please refresh the page.">
       {!isAdminPath && <Navbar />}
       <Routes>
-        {/* ── Public ─────────────────────────────────────────── */}
+        {/* Public */}
         <Route path="/"                      element={<HomePage />} />
         <Route path="/match/:sport/:eventId" element={<MatchPage />} />
         <Route path="/login"                 element={isLoggedIn ? <Navigate to="/" replace /> : <LoginPage />} />
@@ -65,19 +60,21 @@ export default function App() {
         <Route path="/forgot-password"       element={<ForgotPasswordPage />} />
         <Route path="/reset-password"        element={<ResetPasswordPage />} />
 
-        {/* ── Authenticated user ──────────────────────────────── */}
+        {/* Authenticated */}
         <Route element={<ProtectedRoute />}>
           <Route path="/wallet"  element={<WalletPage />} />
           <Route path="/history" element={<HistoryPage />} />
         </Route>
 
-        {/* ── Admin — requires admin role ─────────────────────── */}
+        {/* Admin */}
         <Route element={<ProtectedRoute requireAdmin />}>
           <Route path="/admin" element={<AdminLayout />}>
-            <Route index           element={<AdminDashboard />} />
-            <Route path="users"    element={<AdminUsersPage />} />
-            <Route path="insights" element={<AdminInsightsPage />} />
-            <Route path="ai-logs"  element={<AdminAILogsPage />} />
+            <Route index             element={<AdminDashboard />} />
+            <Route path="users"      element={<AdminUsersPage />} />
+            <Route path="outcomes"   element={<AdminOutcomesPage />} />
+            <Route path="players"    element={<AdminPlayersPage />} />
+            <Route path="jobs"       element={<AdminJobsPage />} />
+            <Route path="ai-logs"    element={<AdminAILogsPage />} />
           </Route>
         </Route>
 
@@ -86,4 +83,3 @@ export default function App() {
     </ErrorBoundary>
   );
 }
-

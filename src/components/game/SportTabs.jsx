@@ -8,7 +8,7 @@ const SPORTS = [
   { key: 'nba',    label: 'NBA',    emoji: '🏀' },
   { key: 'nfl',    label: 'NFL',    emoji: '🏈', comingSoon: true },
   { key: 'mlb',    label: 'MLB',    emoji: '⚾' },
-  { key: 'nhl',    label: 'NHL',    emoji: '🏒', comingSoon: true },
+  { key: 'nhl',    label: 'NHL',    emoji: '🏒' },
   { key: 'soccer', label: 'Soccer', emoji: '⚽', comingSoon: true },
 ];
 

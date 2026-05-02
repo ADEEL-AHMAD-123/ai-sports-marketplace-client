@@ -5,10 +5,10 @@ import {useSelector} from 'react-redux';
 import {selectIsLoggedIn,selectUser,selectCredits} from '@/store/slices/authSlice';
 import {useAuth} from '@/hooks/useAuth';
 import {useTheme} from '@/hooks/useTheme';
+import EdgeMark from '@/components/ui/EdgeMark';
 import styles from './Navbar.module.scss';
 const SunIcon=()=>(<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>);
 const MoonIcon=()=>(<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>);
-const BoltIcon=()=>(<svg width="15" height="18" viewBox="0 0 15 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8.5 1L1 10H7.5L6.5 17L14 8H7.5L8.5 1Z" fill="currentColor" stroke="currentColor" strokeWidth="1.2" strokeLinejoin="round"/></svg>);
 const StarIcon=()=>(<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>);
 export default function Navbar(){
   const {logout}=useAuth();const {isDark,toggle}=useTheme();
@@ -17,7 +17,10 @@ export default function Navbar(){
   return(
     <nav className={styles.nav}>
       <div className={styles.inner}>
-        <Link to="/" className={styles.logo}><span className={styles.bolt}><BoltIcon/></span><span className={styles.logoText}>Edge<span className={styles.accent}>IQ</span></span></Link>
+        <Link to="/" className={styles.logo}>
+          <span className={styles.mark}><EdgeMark size={17} color="var(--color-accent)" /></span>
+          <span className={styles.logoText}>Edge<span className={styles.accent}>AI</span></span>
+        </Link>
         <div className={styles.right}>
           <button className={styles.themeBtn} onClick={toggle} title={isDark?'Light':'Dark'}>{isDark?<SunIcon/>:<MoonIcon/>}</button>
           {isLoggedIn?(

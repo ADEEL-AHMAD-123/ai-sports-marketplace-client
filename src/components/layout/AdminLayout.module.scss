@@ -1,9 +1,11 @@
+// AdminLayout.module.scss
 .shell {
   display: flex;
   min-height: 100vh;
   background: var(--color-bg-base);
 }
 
+// ── Sidebar ───────────────────────────────────────────────────
 .sidebar {
   width: var(--sidebar-width);
   background: var(--color-bg-surface);
@@ -13,8 +15,8 @@
   position: sticky;
   top: 0;
   height: 100vh;
-  overflow-y: auto;
   flex-shrink: 0;
+  overflow-y: auto;
   scrollbar-width: none;
   &::-webkit-scrollbar { display: none; }
 }
@@ -31,14 +33,11 @@
   background: none;
   border: none;
   cursor: pointer;
-  margin-bottom: 12px;
   padding: 0;
+  margin-bottom: 12px;
 }
 
-.logoMark {
-  font-size: 1.125rem;
-  filter: drop-shadow(0 0 5px var(--color-accent));
-}
+/* .logoMark removed — EdgeMark SVG component used instead */
 
 .logoText {
   font-family: var(--font-display);
@@ -55,32 +54,35 @@
   background: var(--color-accent-dim);
   border: 1px solid rgba(var(--color-accent-rgb), 0.3);
   color: var(--color-accent);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  padding: 2px 8px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  padding: 3px 8px;
   border-radius: var(--radius-full);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
+// ── Nav ───────────────────────────────────────────────────────
 .nav {
-  padding: 16px 12px;
+  padding: 12px 10px;
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .navItem {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 12px;
+  padding: 9px 12px;
   border-radius: var(--radius-md);
   font-size: 0.875rem;
+  font-weight: 500;
   color: var(--color-text-secondary);
   text-decoration: none;
   transition: background var(--transition-fast), color var(--transition-fast);
+  border: 1px solid transparent;
 
   &:hover {
     background: var(--color-bg-hover);
@@ -91,17 +93,20 @@
 .active {
   background: var(--color-accent-dim) !important;
   color: var(--color-accent) !important;
-  border: 1px solid rgba(var(--color-accent-rgb), 0.2);
+  border-color: rgba(var(--color-accent-rgb), 0.2) !important;
+  font-weight: 600;
 }
 
 .navIcon {
-  font-size: 1rem;
+  font-size: 0.9375rem;
   width: 20px;
   text-align: center;
+  flex-shrink: 0;
 }
 
+// ── Bottom ────────────────────────────────────────────────────
 .sideBottom {
-  padding: 16px;
+  padding: 14px 16px;
   border-top: 1px solid var(--color-bg-border);
 }
 
@@ -117,7 +122,7 @@
   height: 32px;
   border-radius: 50%;
   background: var(--color-accent-dim);
-  border: 1px solid var(--color-accent);
+  border: 1px solid rgba(var(--color-accent-rgb), 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -128,13 +133,11 @@
   flex-shrink: 0;
 }
 
-.userName { font-size: 0.875rem; font-weight: 600; color: var(--color-text-primary); }
-.userRole { font-size: 0.75rem; color: var(--color-text-muted); }
+.userInfo { min-width: 0; }
+.userName { font-size: 0.875rem; font-weight: 600; color: var(--color-text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.userRole { font-size: 0.6875rem; color: var(--color-text-muted); }
 
-.sideActions {
-  display: flex;
-  gap: 6px;
-}
+.sideActions { display: flex; gap: 6px; }
 
 .actionBtn {
   flex: 1;
@@ -145,9 +148,9 @@
   font-size: 0.75rem;
   color: var(--color-text-secondary);
   cursor: pointer;
-  transition: all var(--transition-fast);
-  white-space: nowrap;
   font-family: var(--font-body);
+  white-space: nowrap;
+  transition: all var(--transition-fast);
 
   &:hover {
     border-color: var(--color-accent);
@@ -155,13 +158,16 @@
   }
 }
 
+// ── Main content ──────────────────────────────────────────────
 .main {
   flex: 1;
   padding: 32px;
   overflow-y: auto;
   min-height: 100vh;
+  min-width: 0;
 }
 
 @media (max-width: 768px) {
   .sidebar { display: none; }
+  .main { padding: 20px 16px; }
 }
