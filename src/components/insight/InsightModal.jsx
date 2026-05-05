@@ -209,6 +209,290 @@ function StatRow({ label, value, highlight }) {
   );
 }
 
+// ── GameContextStrip — personalizes the modal to tonight's matchup ───
+// Reads insight.leagueContext (persisted by InsightService) and renders:
+//   - Opponent + venue (HOME/AWAY) + tip-off time (ET)
+//   - One sport-specific "headline matchup" line (goalie / defense / starter)
+// Hides itself silently when no leagueContext is present.
+function GameContextStrip({ insight }) {
+  const ctx = insight?.leagueContext;
+  if (!ctx) return null;
+
+  const fmtTime = (iso) => {
+    if (!iso) return null;
+    try {
+      return new Date(iso).toLocaleTimeString('en-US', {
+        hour: 'numeric', minute: '2-digit',
+        timeZone: 'America/New_York', timeZoneName: 'short',
+      });
+    } catch { return null; }
+  };
+
+  const time = fmtTime(ctx.gameStartTime);
+  const oppLabel = ctx.opponentAbbr || ctx.opponentName || null;
+  const venueLabel = ctx.venue === 'home' ? 'HOME' : ctx.venue === 'away' ? 'AWAY' : null;
+
+  // Sport-specific headline matchup line
+  let headline = null;
+  if (insight?.sport === 'nhl' && ctx.goalie?.name) {
+    const sv = ctx.goalie.savePercentage != null
+      ? `SV% ${(ctx.goalie.savePercentage * 100).toFixed(1)}` : 'SV% —';
+    const recent = ctx.goalie.recentSavePct != null
+      ? `· last ${ctx.goalie.recentStarts ?? 5} ${(ctx.goalie.recentSavePct * 100).toFixed(1)}${ctx.goalie.isHot ? ' 🔥' : ctx.goalie.isCold ? ' ❄️' : ''}`
+      : '';
+    headline = {
+      icon: '🥅',
+      text: <>vs <strong>{ctx.goalie.name}</strong> · {sv} {recent} <em className={styles.gctTier}>({ctx.goalie.tier || '—'})</em></>,
+    };
+  } else if (insight?.sport === 'nba' && ctx.oppDefense?.teamName) {
+    const d = ctx.oppDefense;
+    const points  = d.pointsAllowedPG  != null ? `${d.pointsAllowedPG} PPG` : null;
+    const threes  = d.threesAllowedPG  != null ? `${d.threesAllowedPG} 3PM` : null;
+    const reb     = d.reboundsAllowedPG != null ? `${d.reboundsAllowedPG} reb` : null;
+    headline = {
+      icon: '🛡',
+      text: <>{d.teamName} D allows <strong>{[points, threes, reb].filter(Boolean).join(' · ') || '—'}</strong>/g</>,
+    };
+  } else if (insight?.sport === 'mlb' && ctx.starter?.name) {
+    const hand = ctx.starter.hand ? ` (${ctx.starter.hand}HP)` : '';
+    const era  = ctx.starter.era != null ? ` · ${ctx.starter.era} ERA` : '';
+    headline = {
+      icon: '⚾',
+      text: <>vs <strong>{ctx.starter.name}</strong>{hand}{era}</>,
+    };
+  }
+
+  // Tags below the headline (playoff / B2B / hot/cold goalie / platoon edge)
+  const tags = [];
+  if (insight?.sport === 'nhl') {
+    if (ctx.isPlayoff)    tags.push({ label: 'Playoff', tone: 'amber' });
+    if (ctx.isBackToBack) tags.push({ label: 'B2B (opp)', tone: 'amber' });
+  }
+  if (insight?.sport === 'nba') {
+    if (ctx.isPlayoff) tags.push({ label: ctx.round || 'Playoff', tone: 'amber' });
+  }
+  if (insight?.sport === 'mlb' && ctx.platoon?.edge) {
+    tags.push({
+      label: `Platoon ${ctx.platoon.edge}`,
+      tone: ctx.platoon.edge === 'favorable' ? 'green' : ctx.platoon.edge === 'tough' ? 'red' : 'blue',
+    });
+  }
+
+  if (!oppLabel && !time && !headline) return null;
+
+  return (
+    <div className={styles.gameContext}>
+      <div className={styles.gctTopRow}>
+        {oppLabel && (
+          <span className={styles.gctOpp}>
+            <span className={styles.gctVs}>vs</span>
+            <strong>{oppLabel}</strong>
+          </span>
+        )}
+        {venueLabel && (
+          <span className={`${styles.gctVenue} ${ctx.venue === 'home' ? styles.gctVenueHome : styles.gctVenueAway}`}>
+            {venueLabel}
+          </span>
+        )}
+        {time && <span className={styles.gctTime}>{time}</span>}
+      </div>
+      {headline && (
+        <div className={styles.gctHeadline}>
+          <span className={styles.gctIcon}>{headline.icon}</span>
+          <span className={styles.gctText}>{headline.text}</span>
+        </div>
+      )}
+      {tags.length > 0 && (
+        <div className={styles.gctTags}>
+          {tags.map((t, i) => (
+            <span key={i} className={`${styles.chip} ${styles[`chip_${t.tone}`] || ''}`}>{t.label}</span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── NHL matchup signals (renders below the two windows) ───────
+// Surfaces the new backend fields: home/away split, head-to-head, season mix,
+// and quality flags (B2B, playoff, thin sample, force-confidence).
+function NHLSignals({ insight, statLabel }) {
+  const hasSplit  = Number.isFinite(insight?.homeStatAvg) || Number.isFinite(insight?.awayStatAvg);
+  const hasH2H    = Number.isFinite(insight?.h2hStatAvg) && (insight?.h2hCount ?? 0) >= 2;
+  const hasMix    = !!insight?.isMixedSeason
+                  || (insight?.playoffGameCount ?? 0) > 0;
+  const chips = [];
+  if (insight?.isPlayoff)       chips.push({ label: 'Playoff', tone: 'amber' });
+  if (insight?.isBackToBack)    chips.push({ label: 'B2B (opp)', tone: 'amber' });
+  if (insight?.isPPDependent)   chips.push({ label: `PP-dep ${insight.ppDependencyPct ?? ''}%`.trim(), tone: 'blue' });
+  if (insight?.onGoalStreak)    chips.push({ label: 'Goal streak', tone: 'green' });
+  if (insight?.onGoalSlump)     chips.push({ label: 'Goal slump', tone: 'red' });
+  if (insight?.hasInconsistentTOI) chips.push({ label: `Inconsistent TOI (CV ${insight.toiCV})`, tone: 'red' });
+  if (insight?.tooThin)         chips.push({ label: 'Thin sample', tone: 'red' });
+  if (insight?.forceConfidence) chips.push({ label: `Forced ${insight.forceConfidence}`, tone: 'red' });
+
+  // Nothing to show
+  if (!hasSplit && !hasH2H && !hasMix && chips.length === 0) return null;
+
+  // Determine tonight's side label using insight.aiLog?.gameContext or homeStatAvg presence
+  // We don't have a direct playerSide on insight; infer from larger split presence.
+  // (Pipeline's isPlayoff/isBackToBack are persisted; playerSide is implicit here.)
+  const tonightSide = insight?.playerTeam === 'home' ? 'home'
+                    : insight?.playerTeam === 'away' ? 'away'
+                    : null;
+
+  return (
+    <div className={styles.nhlSignals}>
+      {hasSplit && (
+        <div className={styles.signalRow}>
+          <span className={styles.signalLabel}>Home / Away</span>
+          <span className={styles.signalVal}>
+            <strong style={{ color: tonightSide === 'home' ? '#22c55e' : 'inherit' }}>
+              H {Number.isFinite(insight.homeStatAvg) ? insight.homeStatAvg : '—'}
+              {Number.isFinite(insight.homeGames) ? ` (${insight.homeGames}g)` : ''}
+            </strong>
+            <span className={styles.signalSep}>·</span>
+            <strong style={{ color: tonightSide === 'away' ? '#22c55e' : 'inherit' }}>
+              A {Number.isFinite(insight.awayStatAvg) ? insight.awayStatAvg : '—'}
+              {Number.isFinite(insight.awayGames) ? ` (${insight.awayGames}g)` : ''}
+            </strong>
+          </span>
+        </div>
+      )}
+
+      {hasH2H && (
+        <div className={styles.signalRow}>
+          <span className={styles.signalLabel}>
+            Head-to-head{insight.opposingTeamAbbrev ? ` vs ${insight.opposingTeamAbbrev}` : ''}
+          </span>
+          <span className={styles.signalVal}>
+            <strong>{insight.h2hStatAvg}</strong>
+            <span className={styles.signalSub}> over {insight.h2hCount}g</span>
+          </span>
+        </div>
+      )}
+
+      {hasMix && (
+        <div className={styles.signalRow}>
+          <span className={styles.signalLabel}>Season mix</span>
+          <span className={styles.signalVal}>
+            {(insight.regularGameCount ?? 0)} reg
+            <span className={styles.signalSep}>·</span>
+            {(insight.playoffGameCount ?? 0)} playoff
+          </span>
+        </div>
+      )}
+
+      {chips.length > 0 && (
+        <div className={styles.signalChips}>
+          {chips.map((c, i) => (
+            <span key={i} className={`${styles.chip} ${styles[`chip_${c.tone}`] || ''}`}>
+              {c.label}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── NBA matchup signals (parity with NHLSignals) ───────────────
+function NBASignals({ insight }) {
+  const ctx = insight?.leagueContext;
+  const oppDef = ctx?.oppDefense;
+  const hasDef = oppDef && (
+    oppDef.pointsAllowedPG != null ||
+    oppDef.threesAllowedPG != null ||
+    oppDef.reboundsAllowedPG != null
+  );
+
+  const chips = [];
+  if (ctx?.isPlayoff)                  chips.push({ label: ctx.round || 'Playoff', tone: 'amber' });
+  if (insight?.hasInconsistentMinutes) chips.push({ label: `Inconsistent minutes (CV ${insight.minuteCV ?? '?'})`, tone: 'red' });
+  if (insight?.tooThin)                chips.push({ label: 'Thin sample', tone: 'red' });
+
+  if (!hasDef && chips.length === 0) return null;
+
+  return (
+    <div className={styles.nhlSignals}>
+      {hasDef && (
+        <div className={styles.signalRow}>
+          <span className={styles.signalLabel}>
+            Opp defense{oppDef.teamName ? ` (${oppDef.teamName})` : ''}
+          </span>
+          <span className={styles.signalVal}>
+            {oppDef.pointsAllowedPG  != null && <><strong>{oppDef.pointsAllowedPG}</strong> PPG</>}
+            {oppDef.threesAllowedPG  != null && <><span className={styles.signalSep}>·</span><strong>{oppDef.threesAllowedPG}</strong> 3PM</>}
+            {oppDef.reboundsAllowedPG != null && <><span className={styles.signalSep}>·</span><strong>{oppDef.reboundsAllowedPG}</strong> reb</>}
+          </span>
+        </div>
+      )}
+      {Number.isFinite(insight?.avgPlusMinus) && (
+        <div className={styles.signalRow}>
+          <span className={styles.signalLabel}>+/-</span>
+          <span className={styles.signalVal}>
+            <strong style={{ color: insight.avgPlusMinus > 0 ? '#22c55e' : insight.avgPlusMinus < 0 ? '#ef4444' : 'inherit' }}>
+              {insight.avgPlusMinus > 0 ? '+' : ''}{insight.avgPlusMinus}
+            </strong>
+          </span>
+        </div>
+      )}
+      {chips.length > 0 && (
+        <div className={styles.signalChips}>
+          {chips.map((c, i) => (
+            <span key={i} className={`${styles.chip} ${styles[`chip_${c.tone}`] || ''}`}>{c.label}</span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── MLB matchup signals (parity with NHLSignals) ───────────────
+function MLBSignals({ insight }) {
+  const ctx = insight?.leagueContext;
+  const starter = ctx?.starter;
+  const platoon = ctx?.platoon;
+  const park    = ctx?.ballpark;
+
+  const chips = [];
+  if (platoon?.edge) {
+    chips.push({
+      label: `Platoon ${platoon.edge}${platoon.batterHand && platoon.pitcherHand ? ` (${platoon.batterHand} vs ${platoon.pitcherHand}HP)` : ''}`,
+      tone: platoon.edge === 'favorable' ? 'green' : platoon.edge === 'tough' ? 'red' : 'blue',
+    });
+  }
+  if (park?.homeTeamName) {
+    chips.push({ label: `Park: ${park.homeTeamName}`, tone: 'blue' });
+  }
+
+  const hasStarter = starter?.name;
+  if (!hasStarter && chips.length === 0) return null;
+
+  return (
+    <div className={styles.nhlSignals}>
+      {hasStarter && (
+        <div className={styles.signalRow}>
+          <span className={styles.signalLabel}>Opposing starter</span>
+          <span className={styles.signalVal}>
+            <strong>{starter.name}</strong>
+            {starter.hand && <span className={styles.signalSub}>({starter.hand}HP)</span>}
+            {starter.era != null && <><span className={styles.signalSep}>·</span><strong>{starter.era}</strong> ERA</>}
+            {starter.k9  != null && <><span className={styles.signalSep}>·</span><strong>{starter.k9}</strong> K/9</>}
+          </span>
+        </div>
+      )}
+      {chips.length > 0 && (
+        <div className={styles.signalChips}>
+          {chips.map((c, i) => (
+            <span key={i} className={`${styles.chip} ${styles[`chip_${c.tone}`] || ''}`}>{c.label}</span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Stat Windows ───────────────────────────────────────────────
 // FIX: MLB stats are saved as flat fields on the Insight document.
 // Backend InsightService.create() saves hitsPerG, tbPerG, battingAvg, obp, slg,
@@ -225,30 +509,33 @@ function StatWindows({ insight }) {
 
     if (isPitcher) {
       return (
-        <div className={styles.windows}>
-          <div className={styles.window}>
-            <div className={styles.windowHdr}>
-              <span className={styles.windowDot} style={{ background: '#6366f1' }} />
-              <span className={styles.windowTitle}>Season Baseline</span>
-              <span className={styles.windowSub}>Last {baselineCount} starts</span>
+        <>
+          <div className={styles.windows}>
+            <div className={styles.window}>
+              <div className={styles.windowHdr}>
+                <span className={styles.windowDot} style={{ background: '#6366f1' }} />
+                <span className={styles.windowTitle}>Season Baseline</span>
+                <span className={styles.windowSub}>Last {baselineCount} starts</span>
+              </div>
+              <StatRow label="K/start"    value={insight.baselineStatAvg} />
+              <StatRow label="ERA"        value={insight.era} />
+              <StatRow label="WHIP"       value={insight.whip} />
+              <StatRow label="IP/start"   value={insight.ipPerStart} />
             </div>
-            <StatRow label="K/start"    value={insight.baselineStatAvg} />
-            <StatRow label="ERA"        value={insight.era} />
-            <StatRow label="WHIP"       value={insight.whip} />
-            <StatRow label="IP/start"   value={insight.ipPerStart} />
-          </div>
-          <div className={styles.window}>
-            <div className={styles.windowHdr}>
-              <span className={styles.windowDot} style={{ background: '#22c55e' }} />
-              <span className={styles.windowTitle}>Recent Form</span>
-              <span className={styles.windowSub}>Last {formCount} starts</span>
+            <div className={styles.window}>
+              <div className={styles.windowHdr}>
+                <span className={styles.windowDot} style={{ background: '#22c55e' }} />
+                <span className={styles.windowTitle}>Recent Form</span>
+                <span className={styles.windowSub}>Last {formCount} starts</span>
+              </div>
+              {/* focusStatAvg = edge window K/start (primary signal) */}
+              <StatRow label="K/start"      value={insight.focusStatAvg} />
+              <StatRow label="Form K/start" value={insight.formKPerStart} />
+              <StatRow label="K/9"          value={insight.k9} />
             </div>
-            {/* focusStatAvg = edge window K/start (primary signal) */}
-            <StatRow label="K/start"      value={insight.focusStatAvg} />
-            <StatRow label="Form K/start" value={insight.formKPerStart} />
-            <StatRow label="K/9"          value={insight.k9} />
           </div>
-        </div>
+          <MLBSignals insight={insight} />
+        </>
       );
     }
 
@@ -260,40 +547,43 @@ function StatWindows({ insight }) {
     const trendClr  = (!isNaN(formNum) && !isNaN(lineNum)) ? (trendUp ? '#22c55e' : '#ef4444') : undefined;
 
     return (
-      <div className={styles.windows}>
-        <div className={styles.window}>
-          <div className={styles.windowHdr}>
-            <span className={styles.windowDot} style={{ background: '#6366f1' }} />
-            <span className={styles.windowTitle}>Season Baseline</span>
-            <span className={styles.windowSub}>Last {baselineCount} games</span>
+      <>
+        <div className={styles.windows}>
+          <div className={styles.window}>
+            <div className={styles.windowHdr}>
+              <span className={styles.windowDot} style={{ background: '#6366f1' }} />
+              <span className={styles.windowTitle}>Season Baseline</span>
+              <span className={styles.windowSub}>Last {baselineCount} games</span>
+            </div>
+            <StatRow label={`${statLabel}/g`} value={insight.baselineStatAvg} />
+            <StatRow label="AVG"              value={insight.battingAvg} />
+            <StatRow label="OBP"              value={insight.obp} />
+            <StatRow label="SLG"              value={insight.slg} />
+            <StatRow label="OPS"              value={insight.ops} />
           </div>
-          <StatRow label={`${statLabel}/g`} value={insight.baselineStatAvg} />
-          <StatRow label="AVG"              value={insight.battingAvg} />
-          <StatRow label="OBP"              value={insight.obp} />
-          <StatRow label="SLG"              value={insight.slg} />
-          <StatRow label="OPS"              value={insight.ops} />
-        </div>
-        <div className={styles.window}>
-          <div className={styles.windowHdr}>
-            <span className={styles.windowDot} style={{ background: '#22c55e' }} />
-            <span className={styles.windowTitle}>Recent Form</span>
-            <span className={styles.windowSub}>Last {formCount} games</span>
+          <div className={styles.window}>
+            <div className={styles.windowHdr}>
+              <span className={styles.windowDot} style={{ background: '#22c55e' }} />
+              <span className={styles.windowTitle}>Recent Form</span>
+              <span className={styles.windowSub}>Last {formCount} games</span>
+            </div>
+            {/* focusStatAvg = edge window avg (15g), formStatAvg = form window avg (10g) */}
+            <StatRow label={`${statLabel}/g (15g)`} value={insight.focusStatAvg} />
+            <StatRow label={`${statLabel}/g (10g)`} value={insight.formStatAvg} highlight={trendClr} />
+            <StatRow label="Hits/g"  value={insight.hitsPerG} />
+            <StatRow label="TB/g"    value={insight.tbPerG} />
+            <StatRow label="Runs/g"  value={insight.runsPerG} />
           </div>
-          {/* focusStatAvg = edge window avg (15g), formStatAvg = form window avg (10g) */}
-          <StatRow label={`${statLabel}/g (15g)`} value={insight.focusStatAvg} />
-          <StatRow label={`${statLabel}/g (10g)`} value={insight.formStatAvg} highlight={trendClr} />
-          <StatRow label="Hits/g"  value={insight.hitsPerG} />
-          <StatRow label="TB/g"    value={insight.tbPerG} />
-          <StatRow label="Runs/g"  value={insight.runsPerG} />
         </div>
-      </div>
+        <MLBSignals insight={insight} />
+      </>
     );
   }
 
-  // NHL — shots/goals/assists
+  // NHL — shots/goals/assists, plus matchup signals row
   if (sport === 'nhl') {
     const statLabel    = getStatLabel('nhl', statType);
-    const formCount    = insight?.formGamesCount    ?? 5;
+    const formCount    = insight?.formGamesCount    ?? insight?.formWindowSize ?? 5;
     const edgeCount    = insight?.edgeGamesCount    ?? 10;
     const baseCount    = insight?.baselineGamesCount ?? 30;
     const formNum      = parseFloat(insight.formStatAvg);
@@ -301,30 +591,52 @@ function StatWindows({ insight }) {
     const trendUp      = !isNaN(formNum) && !isNaN(lineNum) && formNum > lineNum;
     const trendClr     = (!isNaN(formNum) && !isNaN(lineNum)) ? (trendUp ? '#22c55e' : '#ef4444') : undefined;
 
+    // ES/PP split is only relevant for goals & points
+    const showEsPp = (statType === 'goals' || statType === 'points')
+      && (Number.isFinite(insight.esGoalsPerG) || Number.isFinite(insight.ppGoalsPerG));
+
     return (
-      <div className={styles.windows}>
-        <div className={styles.window}>
-          <div className={styles.windowHdr}>
-            <span className={styles.windowDot} style={{ background: '#6366f1' }} />
-            <span className={styles.windowTitle}>Season Baseline</span>
-            <span className={styles.windowSub}>Last {baseCount} games</span>
+      <>
+        <div className={styles.windows}>
+          <div className={styles.window}>
+            <div className={styles.windowHdr}>
+              <span className={styles.windowDot} style={{ background: '#6366f1' }} />
+              <span className={styles.windowTitle}>Season Baseline</span>
+              <span className={styles.windowSub}>Last {baseCount} games</span>
+            </div>
+            <StatRow label={`${statLabel}/g`} value={insight.baselineStatAvg} />
+            <StatRow label="Goals/g"   value={insight.goalsPerG} />
+            <StatRow label="Assists/g" value={insight.assistsPerG} />
+            <StatRow label="Shots/g"   value={insight.shotsPerG} />
+            {insight.lineTier && (
+              <StatRow label="Line tier" value={insight.lineTier} />
+            )}
           </div>
-          <StatRow label={`${statLabel}/g`} value={insight.baselineStatAvg} />
-          <StatRow label="Goals/g"   value={insight.goalsPerG} />
-          <StatRow label="Assists/g" value={insight.assistsPerG} />
-          <StatRow label="Shots/g"   value={insight.shotsPerG} />
-        </div>
-        <div className={styles.window}>
-          <div className={styles.windowHdr}>
-            <span className={styles.windowDot} style={{ background: '#22c55e' }} />
-            <span className={styles.windowTitle}>Recent Form</span>
-            <span className={styles.windowSub}>Last {formCount} games</span>
+          <div className={styles.window}>
+            <div className={styles.windowHdr}>
+              <span className={styles.windowDot} style={{ background: '#22c55e' }} />
+              <span className={styles.windowTitle}>Recent Form</span>
+              <span className={styles.windowSub}>Last {formCount} games</span>
+            </div>
+            <StatRow label={`${statLabel}/g (${edgeCount}g)`} value={insight.focusStatAvg} />
+            <StatRow label={`${statLabel}/g (${formCount}g)`} value={insight.formStatAvg} highlight={trendClr} />
+            <StatRow label="TOI/g"     value={insight.toiPerG != null ? `${insight.toiPerG}min` : null} />
+            {showEsPp && (
+              <StatRow
+                label="ES / PP goals"
+                value={`${insight.esGoalsPerG ?? '—'} / ${insight.ppGoalsPerG ?? '—'}`}
+              />
+            )}
+            {Number.isFinite(insight.pmPerG) && (
+              <StatRow
+                label="+/-"
+                value={`${insight.pmPerG > 0 ? '+' : ''}${insight.pmPerG}`}
+              />
+            )}
           </div>
-          <StatRow label={`${statLabel}/g (${edgeCount}g)`} value={insight.focusStatAvg} />
-          <StatRow label={`${statLabel}/g (${formCount}g)`} value={insight.formStatAvg} highlight={trendClr} />
-          <StatRow label="TOI/g"     value={insight.toiPerG != null ? `${insight.toiPerG}min` : null} />
         </div>
-      </div>
+        <NHLSignals insight={insight} statLabel={statLabel} />
+      </>
     );
   }
 
@@ -350,31 +662,34 @@ function StatWindows({ insight }) {
   const trendClr = (!isNaN(formNum) && !isNaN(lineNum)) ? (trendUp ? '#22c55e' : '#ef4444') : undefined;
 
   return (
-    <div className={styles.windows}>
-      <div className={styles.window}>
-        <div className={styles.windowHdr}>
-          <span className={styles.windowDot} style={{ background: '#6366f1' }} />
-          <span className={styles.windowTitle}>Season Baseline</span>
-          <span className={styles.windowSub}>Last {baselineGamesCount} games</span>
+    <>
+      <div className={styles.windows}>
+        <div className={styles.window}>
+          <div className={styles.windowHdr}>
+            <span className={styles.windowDot} style={{ background: '#6366f1' }} />
+            <span className={styles.windowTitle}>Season Baseline</span>
+            <span className={styles.windowSub}>Last {baselineGamesCount} games</span>
+          </div>
+          <StatRow label="Season avg"  value={baselineStatAvg} />
+          <StatRow label="Minutes"     value={baselineMinutes} />
+          <StatRow label="TS%"         value={trueShootingPct != null && trueShootingPct <= 100 ? `${trueShootingPct}%` : null} />
+          <StatRow label="eFG%"        value={effectiveFGPct  != null && effectiveFGPct  <= 100 ? `${effectiveFGPct}%`  : null} />
+          <StatRow label="USG%"        value={approxUSGPct    ? `${approxUSGPct}%`    : null} />
         </div>
-        <StatRow label="Season avg"  value={baselineStatAvg} />
-        <StatRow label="Minutes"     value={baselineMinutes} />
-        <StatRow label="TS%"         value={trueShootingPct != null && trueShootingPct <= 100 ? `${trueShootingPct}%` : null} />
-        <StatRow label="eFG%"        value={effectiveFGPct  != null && effectiveFGPct  <= 100 ? `${effectiveFGPct}%`  : null} />
-        <StatRow label="USG%"        value={approxUSGPct    ? `${approxUSGPct}%`    : null} />
-      </div>
-      <div className={styles.window}>
-        <div className={styles.windowHdr}>
-          <span className={styles.windowDot} style={{ background: '#22c55e' }} />
-          <span className={styles.windowTitle}>Last {formGamesCount} Games</span>
-          <span className={styles.windowSub}>Current form</span>
+        <div className={styles.window}>
+          <div className={styles.windowHdr}>
+            <span className={styles.windowDot} style={{ background: '#22c55e' }} />
+            <span className={styles.windowTitle}>Last {formGamesCount} Games</span>
+            <span className={styles.windowSub}>Current form</span>
+          </div>
+          <StatRow label="Form avg"    value={formStat}        highlight={trendClr} />
+          <StatRow label="Minutes"     value={formMinutes} />
+          <StatRow label="10-game avg" value={focusStatAvg} />
+          <StatRow label="vs Line"     value={!isNaN(formNum) && !isNaN(lineNum) ? `${trendUp ? '▲ OVER' : '▼ UNDER'} signal` : '—'} highlight={trendClr} />
         </div>
-        <StatRow label="Form avg"    value={formStat}        highlight={trendClr} />
-        <StatRow label="Minutes"     value={formMinutes} />
-        <StatRow label="10-game avg" value={focusStatAvg} />
-        <StatRow label="vs Line"     value={!isNaN(formNum) && !isNaN(lineNum) ? `${trendUp ? '▲ OVER' : '▼ UNDER'} signal` : '—'} highlight={trendClr} />
       </div>
-    </div>
+      <NBASignals insight={insight} />
+    </>
   );
 }
 
@@ -497,6 +812,9 @@ export default function InsightModal({ isOpen, onClose, insight, prop }) {
             </div>
 
             <div className={styles.divider} />
+
+            {/* Game context strip — opponent / venue / time / matchup headline */}
+            <GameContextStrip insight={insight} />
 
             {/* Stat windows — only shown when data exists */}
             {hasStatData(insight) && <StatWindows insight={insight} />}

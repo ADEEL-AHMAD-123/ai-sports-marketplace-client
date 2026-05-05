@@ -1,25 +1,34 @@
-/* PropCard.module.scss */
+/* PropCard.module.scss — redesigned for hierarchy + state clarity */
 
 .card {
   position: relative;
   background: var(--color-bg-surface);
   border: 1px solid var(--color-bg-border);
-  border-radius: var(--radius-xl);
-  padding: 20px;
-  display: flex; flex-direction: column; gap: 14px;
+  border-radius: var(--radius-xl, 16px);
+  padding: 16px 16px 14px;
+  display: flex; flex-direction: column; gap: 12px;
   overflow: hidden;
-  transition: border-color var(--transition-normal), box-shadow var(--transition-normal);
+  transition: border-color var(--transition-normal, 0.2s),
+              box-shadow var(--transition-normal, 0.2s),
+              transform var(--transition-normal, 0.2s);
   cursor: default;
 
   &:hover {
-    border-color: rgba(var(--color-accent-rgb), 0.3);
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    border-color: rgba(var(--color-accent-rgb), 0.28);
+    box-shadow: 0 6px 22px rgba(0, 0, 0, 0.18);
   }
 }
 
 .cardUnlocked {
-  border-color: rgba(var(--color-accent-rgb), 0.3) !important;
-  background: linear-gradient(160deg, var(--color-bg-surface), rgba(var(--color-accent-rgb), 0.04)) !important;
+  border-color: rgba(var(--color-accent-rgb), 0.32) !important;
+  background:
+    linear-gradient(160deg, var(--color-bg-surface) 60%, rgba(var(--color-accent-rgb), 0.06)) !important;
+}
+
+.cardBlocked {
+  opacity: 0.65;
+  filter: grayscale(0.2);
+  &:hover { transform: none !important; box-shadow: none; border-color: var(--color-bg-border); }
 }
 
 .unlockedBar {
@@ -27,153 +36,159 @@
   background: linear-gradient(90deg, var(--color-accent), rgba(var(--color-accent-rgb), 0.2));
 }
 
-/* Header */
-.header  { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
-.playerName { font-family: var(--font-display); font-size: 1.0625rem; font-weight: 700; color: var(--color-text-primary); letter-spacing: -0.02em; }
-.teamName   { font-size: 0.8125rem; color: var(--color-text-muted); margin-top: 2px; }
-
-.badges { display: flex; gap: 4px; flex-shrink: 0; margin-top: 2px; }
-.badgeHC {
-  font-size: 0.625rem; font-weight: 800; color: var(--color-accent);
-  background: var(--color-accent-dim); border: 1px solid rgba(var(--color-accent-rgb), 0.25);
-  border-radius: var(--radius-full); padding: 2px 7px; letter-spacing: 0.05em;
+/* ── Header ──────────────────────────────────────────────────────── */
+.header {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
 }
-.badgeBV {
-  font-size: 0.625rem; font-weight: 800; color: var(--color-warning);
-  background: rgba(255,171,0,0.1); border: 1px solid rgba(255,171,0,0.25);
-  border-radius: var(--radius-full); padding: 2px 7px; letter-spacing: 0.05em;
+.playerInfo { min-width: 0; flex: 1; }
+.playerName {
+  font-family: var(--font-display);
+  font-size: 1.0625rem; font-weight: 800; letter-spacing: -0.02em;
+  color: var(--color-text-primary);
+  line-height: 1.2;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
 }
-.badgeUnlocked {
-  font-size: 0.625rem; font-weight: 800; color: var(--color-accent);
-  background: var(--color-accent-dim); border: 1px solid rgba(var(--color-accent-rgb), 0.25);
-  border-radius: var(--radius-full); padding: 2px 7px;
-}
-// Injury badges — shown BEFORE unlock so users can decide whether to spend a credit
-.badgeQ {
-  font-size: 0.625rem; font-weight: 800; color: var(--color-warning);
-  background: rgba(255, 171, 0, 0.12); border: 1px solid rgba(255, 171, 0, 0.3);
-  border-radius: var(--radius-full); padding: 2px 7px; cursor: help;
-}
-.badgeOut {
-  font-size: 0.625rem; font-weight: 800; color: var(--color-danger);
-  background: rgba(var(--color-danger-rgb), 0.1); border: 1px solid rgba(var(--color-danger-rgb), 0.3);
-  border-radius: var(--radius-full); padding: 2px 7px; cursor: help;
-}
-.badgeDTD {
-  font-size: 0.625rem; font-weight: 800; color: var(--color-danger);
-  background: rgba(var(--color-danger-rgb), 0.1); border: 1px solid rgba(var(--color-danger-rgb), 0.3);
-  border-radius: var(--radius-full); padding: 2px 7px; cursor: help;
+.teamName {
+  font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em;
+  color: var(--color-text-muted); text-transform: uppercase;
+  margin-top: 3px;
 }
 
-/* Prop row */
-.propRow   { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
-.statBlock { display: flex; flex-direction: column; gap: 2px; }
-.statType  { font-size: 0.8125rem; color: var(--color-text-muted); text-transform: capitalize; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.badges { display: flex; gap: 4px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; max-width: 50%; }
 
-/* MLB pitcher hand badge — shown alongside stat type */
+.badgeHC, .badgeBV, .badgeUnlocked, .badgeQ, .badgeOut, .badgeDTD {
+  font-size: 0.625rem; font-weight: 800; letter-spacing: 0.05em;
+  border-radius: var(--radius-full, 99px); padding: 2px 7px;
+  white-space: nowrap;
+}
+.badgeHC       { color: var(--color-accent);  background: var(--color-accent-dim);                 border: 1px solid rgba(var(--color-accent-rgb), 0.25); }
+.badgeBV       { color: var(--color-warning); background: rgba(255,171,0,0.10);                    border: 1px solid rgba(255,171,0,0.25); }
+.badgeUnlocked { color: var(--color-accent);  background: var(--color-accent-dim);                 border: 1px solid rgba(var(--color-accent-rgb), 0.25); }
+.badgeQ        { color: var(--color-warning); background: rgba(255,171,0,0.12);                    border: 1px solid rgba(255,171,0,0.30); cursor: help; }
+.badgeOut      { color: var(--color-danger);  background: rgba(var(--color-danger-rgb), 0.10);     border: 1px solid rgba(var(--color-danger-rgb), 0.30); cursor: help; }
+.badgeDTD      { color: var(--color-danger);  background: rgba(var(--color-danger-rgb), 0.10);     border: 1px solid rgba(var(--color-danger-rgb), 0.30); cursor: help; }
+
+/* ── Stat + line row (visual anchor of the card) ───────────────── */
+.propRow {
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 12px;
+}
+.statBlock { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.statType {
+  font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--color-text-muted);
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
 .pitcherHandBadge {
   font-size: 0.625rem; font-weight: 700; letter-spacing: 0.05em;
   color: var(--color-warning);
-  background: rgba(255,171,0,0.1);
+  background: rgba(255,171,0,0.10);
   border: 1px solid rgba(255,171,0,0.25);
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-full, 99px);
   padding: 1px 6px;
   text-transform: uppercase;
 }
-.line      { font-family: var(--font-display); font-size: 2rem; font-weight: 800; color: var(--color-text-primary); letter-spacing: -0.04em; line-height: 1; }
+.line {
+  font-family: var(--font-display);
+  font-size: 2rem; font-weight: 900; letter-spacing: -0.04em; line-height: 1;
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+}
 
-.oddsBlock { display: flex; flex-direction: column; gap: 5px; align-items: flex-end; }
-.oddsItem  { display: flex; align-items: center; gap: 5px; }
-.oddsDir   { font-size: 0.75rem; color: var(--color-text-muted); }
-.oddsVal   { font-family: var(--font-mono); font-size: 0.875rem; font-weight: 600; color: var(--color-text-secondary); }
+.oddsBlock { display: flex; flex-direction: column; gap: 4px; align-items: flex-end; flex-shrink: 0; }
+.oddsItem  { display: inline-flex; align-items: center; gap: 5px; }
+.oddsDirOver  { font-size: 0.6875rem; color: var(--color-accent); }
+.oddsDirUnder { font-size: 0.6875rem; color: var(--color-danger); }
+.oddsVal {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.8125rem; font-weight: 700; letter-spacing: -0.01em;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
 
-/* Confidence bar */
-.confBar   { display: flex; align-items: center; gap: 10px; }
-.confTrack { flex: 1; height: 5px; background: var(--color-bg-elevated); border-radius: var(--radius-full); overflow: hidden; }
-.confFill  { height: 100%; border-radius: var(--radius-full); }
-.confLabel { font-family: var(--font-mono); font-size: 0.8125rem; font-weight: 600; flex-shrink: 0; }
+/* ── Confidence + edge ─────────────────────────────────────────── */
+.metricsRow {
+  display: flex; align-items: center; gap: 10px;
+}
+.metricsLeft { flex: 1; min-width: 0; }
 
-/* Edge */
-.edgeRow   { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--color-bg-elevated); border-radius: var(--radius-md); }
-.edgeLabel { font-size: 0.8125rem; color: var(--color-text-muted); }
-.edgeVal   { font-family: var(--font-mono); font-size: 0.875rem; font-weight: 700; }
-
-.statusRow {
-  display: flex; flex-direction: column; gap: 4px;
-  padding: 10px 12px;
+.confBar { display: flex; align-items: center; gap: 8px; }
+.confTrack {
+  flex: 1; height: 5px;
   background: var(--color-bg-elevated);
-  border: 1px solid var(--color-bg-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-full, 99px);
+  overflow: hidden;
 }
-.statusRowDanger {
-  border-color: rgba(var(--color-danger-rgb), 0.22);
-  background: linear-gradient(180deg, rgba(var(--color-danger-rgb), 0.08), var(--color-bg-elevated));
+.confFill { height: 100%; border-radius: var(--radius-full, 99px); }
+.confLabel {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.75rem; font-weight: 800; flex-shrink: 0;
+  font-variant-numeric: tabular-nums; min-width: 30px; text-align: right;
 }
-.statusLabel {
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+
+.edgePill {
+  flex-shrink: 0;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.75rem; font-weight: 800;
+  padding: 4px 9px;
+  border-radius: var(--radius-full, 99px);
+  border: 1px solid;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Blocker message ──────────────────────────────────────────── */
+.blockerMessage {
+  display: flex; align-items: center; gap: 7px;
+  padding: 8px 11px;
+  background: rgba(var(--color-danger-rgb), 0.08);
+  border: 1px solid rgba(var(--color-danger-rgb), 0.22);
+  border-radius: var(--radius-md, 10px);
+  font-size: 0.75rem; font-weight: 600; line-height: 1.35;
   color: var(--color-danger);
 }
-.statusText {
-  font-size: 0.8125rem;
-  line-height: 1.45;
-  color: var(--color-text-secondary);
+.blockerIcon { display: inline-flex; flex-shrink: 0; }
+.blockerText { flex: 1; }
+
+/* ── Footer: bookmaker + CTA ──────────────────────────────────── */
+.cardFooter {
+  display: flex; flex-direction: column; gap: 10px;
+  margin-top: 2px;
 }
 
-/* Bookmaker */
-.bookmaker { font-size: 0.75rem; color: var(--color-text-muted); }
+.bookmaker {
+  font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.04em;
+  color: var(--color-text-muted); text-transform: uppercase;
+  align-self: flex-start;
+}
 
-/* CTA */
 .cta {
-  width: 100%; height: 44px;
+  width: 100%; height: 42px;
   display: flex; align-items: center; justify-content: center; gap: 8px;
   background: var(--color-accent); color: var(--color-text-inverse);
-  border: none; border-radius: var(--radius-full);
-  font-family: var(--font-body); font-size: 0.9375rem; font-weight: 700;
+  border: none; border-radius: var(--radius-full, 99px);
+  font-family: var(--font-body); font-size: 0.875rem; font-weight: 700;
   cursor: pointer;
-  transition: opacity var(--transition-fast), box-shadow var(--transition-fast);
+  transition: opacity var(--transition-fast, 0.15s),
+              box-shadow var(--transition-fast, 0.15s),
+              background var(--transition-fast, 0.15s);
   svg { flex-shrink: 0; }
-  &:hover:not(:disabled) { opacity: 0.88; box-shadow: var(--shadow-accent); }
+  &:hover:not(:disabled) { opacity: 0.92; box-shadow: var(--shadow-accent); }
   &:disabled { opacity: 0.55; cursor: not-allowed; }
 }
 .ctaDone {
   background: var(--color-bg-elevated) !important;
   color: var(--color-accent) !important;
-  border: 1px solid rgba(var(--color-accent-rgb), 0.3);
+  border: 1px solid rgba(var(--color-accent-rgb), 0.30);
   &:hover:not(:disabled) { background: var(--color-accent-dim) !important; box-shadow: none; }
 }
 
-.spinner {
-  width: 18px; height: 18px;
-  border: 2px solid rgba(255,255,255,0.3);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* ── Mobile ──────────────────────────────────────────────────────────────── */
+/* ── Mobile tweaks ─────────────────────────────────────────────── */
 @media (max-width: 400px) {
-  .card {
-    padding: 16px;
-  }
-
-  .playerName {
-    font-size: 1rem;
-  }
-
-  .cta {
-    height: 48px;
-    font-size: 0.875rem;
-  }
-
-  .statType {
-    font-size: 0.875rem;
-  }
-
-  .line {
-    font-size: 1.25rem;
-  }
+  .card { padding: 14px 14px 12px; gap: 10px; }
+  .playerName { font-size: 1rem; }
+  .line { font-size: 1.625rem; }
+  .cta { height: 44px; font-size: 0.875rem; }
 }

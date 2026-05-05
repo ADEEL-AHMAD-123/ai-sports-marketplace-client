@@ -421,6 +421,127 @@
   letter-spacing: -0.02em;
 }
 
+/* ── Game context strip (renders right above the stat windows) ─────── */
+.gameContext {
+  margin: 0 28px 12px;
+  padding: 12px 14px;
+  background: var(--m-bg-elevated);
+  border: 1px solid var(--m-border-inner);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gctTopRow {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  font-size: 0.875rem;
+}
+
+.gctOpp {
+  display: inline-flex; align-items: baseline; gap: 6px;
+  color: var(--m-text-primary);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-size: 1rem;
+  strong { font-weight: 800; }
+}
+
+.gctVs {
+  font-weight: 500; color: var(--m-text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
+}
+
+.gctVenue {
+  padding: 3px 8px; border-radius: 6px;
+  font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.gctVenueHome { color: #22c55e; background: rgba(34,197,94,0.10); border: 1px solid rgba(34,197,94,0.25); }
+.gctVenueAway { color: #94a3b8; background: rgba(148,163,184,0.10); border: 1px solid rgba(148,163,184,0.25); }
+
+.gctTime {
+  margin-left: auto;
+  color: var(--m-text-secondary); font-size: 0.8125rem; font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.gctHeadline {
+  display: flex; align-items: center; gap: 8px;
+  padding-top: 4px;
+  border-top: 1px dashed var(--m-border-inner);
+  font-size: 0.8125rem;
+  color: var(--m-text-secondary);
+  strong { color: var(--m-text-primary); font-weight: 700; }
+  em { font-style: normal; }
+}
+.gctIcon { font-size: 1rem; }
+.gctText { flex: 1; line-height: 1.45; }
+.gctTier { color: var(--m-text-muted); font-weight: 500; }
+
+.gctTags {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+
+/* ── NHL matchup signals (below stat windows) ────────────────────── */
+.nhlSignals {
+  margin: 8px 28px 0;
+  padding: 12px 14px;
+  background: var(--m-bg-elevated);
+  border: 1px solid var(--m-border-inner);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.signalRow {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 2px 0;
+  font-size: 0.8125rem;
+}
+
+.signalLabel {
+  color: var(--m-text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.6875rem;
+}
+
+.signalVal {
+  color: var(--m-text-primary);
+  font-family: var(--font-mono, monospace);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  display: inline-flex; align-items: baseline; gap: 4px;
+}
+
+.signalSep {
+  color: var(--m-text-muted); margin: 0 4px; font-weight: 400;
+}
+
+.signalSub {
+  color: var(--m-text-muted); font-weight: 400; font-size: 0.75rem; margin-left: 4px;
+}
+
+.signalChips {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-top: 4px;
+}
+
+.chip {
+  padding: 3px 9px; border-radius: 99px;
+  font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.03em;
+  background: rgba(255,255,255,0.06);
+  color: var(--m-text-primary);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+.chip_amber { color: #f59e0b; background: rgba(245,158,11,0.10); border-color: rgba(245,158,11,0.30); }
+.chip_green { color: #22c55e; background: rgba(34,197,94,0.10);  border-color: rgba(34,197,94,0.30); }
+.chip_red   { color: #ef4444; background: rgba(239,68,68,0.10);  border-color: rgba(239,68,68,0.30); }
+.chip_blue  { color: #6366f1; background: rgba(99,102,241,0.12); border-color: rgba(99,102,241,0.30); }
+
 /* Data quality + AI confidence tags */
 .tagStrong {
   padding: 4px 10px; border-radius: 99px;
