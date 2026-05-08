@@ -10,6 +10,24 @@
   padding: 0 var(--home-section-pad-x, 48px);
 }
 
+/* On mobile, pull the slate container in by ~8px — the cards visually
+   extend closer to the page edges (more card width on screen) while the
+   per-card padding inside grows so content still has proper breathing
+   room. The header/title above the cards still respects the page's
+   home-section-pad-x so the heading stays aligned with other sections. */
+@media (max-width: 640px) {
+  .container {
+    padding: 0 calc(var(--home-section-pad-x, 20px) - 8px);
+  }
+  /* Re-pad the header so it stays aligned with surrounding sections */
+  .header { padding: 0 8px; }
+}
+@media (max-width: 480px) {
+  .container {
+    padding: 0 calc(var(--home-section-pad-x, 20px) - 8px);
+  }
+}
+
 .header {
   display: flex; align-items: flex-end; justify-content: space-between;
   margin-bottom: 20px; flex-wrap: wrap; gap: 8px;
@@ -87,7 +105,10 @@
   .market  { display: none; }
 }
 
-/* ── Mobile: redesigned card layout ────────────────────────── */
+/* ── Mobile (≤ 640px): VERTICAL team stack ─────────────────────
+   Each team becomes its own column — logo on top, abbr + name below.
+   Horizontal padding tightened so the card claims more usable width
+   on narrow phones. */
 @media (max-width: 640px) {
   .row {
     display: flex;
@@ -107,22 +128,22 @@
     }
   }
 
-  /* explicit 3-col grid: team | center | team */
+  /* 3-col grid: team | center | team — but each team is now vertical */
   .rowTop {
     display: grid;
     grid-template-columns: 1fr auto 1fr;
-    align-items: center;
-    gap: 6px;
-    padding: 14px 16px 12px;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 14px 18px 12px; /* generous inside breathing room */
     width: 100%;
   }
 
-  /* badge left, CTA right */
+  /* Badge left, CTA right */
   .rowBottom {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 9px 16px 11px;
+    padding: 10px 18px 12px;
     border-top: 1px solid var(--color-bg-border);
     gap: 8px;
     width: 100%;
@@ -131,27 +152,73 @@
   .divider { display: none; }
   .market  { display: none; }
 
-  /* shrink logos */
-  .logoImg {
-    width: 40px !important;
-    height: 40px !important;
+  /* ── Vertical team stack ──
+     Away team DOM is [logo, info]    → column          → logo on top ✓
+     Home team DOM is [info, logo]    → column-REVERSE  → logo on top ✓
+     Without column-reverse on .teamRight the home side renders name
+     above logo, breaking visual symmetry. */
+  .team {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 6px;
+    text-align: center;
+    min-width: 0;
+  }
+  .teamRight {
+    flex-direction: column-reverse !important;
+    align-items: center !important;
+    gap: 6px;
+    text-align: center;
+    min-width: 0;
+  }
+  .teamInfo,
+  .teamInfoRight { text-align: center !important; }
+
+  /* Prominent logos — they're the dominant team identity at this width */
+  .logoImg,
+  .logoFallback {
+    width: 46px !important;
+    height: 46px !important;
     padding: 2px;
   }
-  .logoFallback {
-    width: 40px !important;
-    height: 40px !important;
-    font-size: 10px !important;
+  .logoFallback { font-size: 0.6875rem !important; }
+
+  /* Abbr stays bold and readable */
+  .teamAbbr {
+    font-size: 1.0625rem;
+    letter-spacing: -0.025em;
+    line-height: 1.05;
+    margin: 0;
+  }
+  /* Name: full width of column, truncates only when truly needed */
+  .teamName {
+    font-size: 0.6875rem;
+    margin-top: 2px;
+    max-width: 100%;
+    line-height: 1.25;
+    color: var(--color-text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
-  /* team text */
-  .team { gap: 8px; }
-  .teamAbbr { font-size: 1rem; }
-  .teamName { font-size: 0.6875rem; max-width: 80px; }
+  /* Center column — vertical (vs / date / time stacked) */
+  .center {
+    padding: 0 4px;
+    gap: 4px;
+    margin-top: 12px; /* visually align center against the logo row */
+  }
+  .vsText {
+    font-size: 0.625rem;
+    letter-spacing: 0.10em;
+  }
+  .timeBlock   { gap: 1px; }
+  .timeDate    { font-size: 0.6875rem; }
+  .timeTag     { font-size: 0.6875rem; }
+  .timeTagSoon { font-size: 0.75rem; }
+  .timeTagLive { font-size: 0.625rem; }
 
-  /* tighter center */
-  .center { padding: 0 2px; gap: 2px; }
-
-  /* mobile CTA — nested inside .rowBottom for specificity over global display:none */
+  /* Mobile CTA — nested for specificity over global display:none */
   .rowBottom {
     .marketMobile {
       display: inline-flex;
@@ -171,39 +238,29 @@
   }
 }
 
-/* ── Small phones (≤ 400px): logo + abbr only, no full names ────
-   At 320–400px screens the 3-col grid loses width to the team-name
-   text, which then truncates to ellipsis (e.g. "Toronto Maple…").
-   Cleaner: rely on logo + abbreviation as team identity (industry
-   pattern — ESPN, Yahoo, DraftKings all do this) and reclaim the
-   width for proper proportions. */
-@media (max-width: 400px) {
+/* ── Tiniest phones (≤ 340px): hide name, keep generous inside pad ─
+   iPhone SE 1st gen (320×568) and similar legacy widths.
+   Vertical stack stays from the ≤640 block above; we just hide the
+   tiny name caption and tighten everything one notch — but keep the
+   inside-card padding generous so content still doesn't crowd edges. */
+@media (max-width: 340px) {
   .rowTop {
     padding: 12px 14px 10px;
-    gap: 10px;
+    gap: 6px;
   }
   .rowBottom {
-    padding: 8px 14px 10px;
+    padding: 9px 14px 11px;
   }
-
-  /* Bigger logo, no name — abbr is the identity */
-  .logoImg, .logoFallback {
-    width: 44px !important;
-    height: 44px !important;
+  .logoImg,
+  .logoFallback {
+    width: 42px !important;
+    height: 42px !important;
   }
-  .logoFallback { font-size: 11px !important; }
-
-  .team       { gap: 9px; }
-  .teamAbbr   { font-size: 1.125rem; letter-spacing: -0.025em; }
-  .teamName   { display: none; }
-
-  /* Tighter, taller center column so the time/badge block reads clean */
-  .center        { padding: 0 4px; gap: 3px; }
-  .vsText        { font-size: 0.625rem; letter-spacing: 0.10em; }
-  .timeDate      { font-size: 0.6875rem; }
-  .timeTag       { font-size: 0.6875rem; }
-  .timeTagSoon   { font-size: 0.75rem; }
-  .timeTagLive   { font-size: 0.625rem; }
+  .teamAbbr { font-size: 1rem; }
+  .teamName { display: none; }
+  .center   { margin-top: 10px; }
+  .vsText   { font-size: 0.5625rem; }
+  .timeDate, .timeTag { font-size: 0.625rem; }
 }
 
 /* Teams */
