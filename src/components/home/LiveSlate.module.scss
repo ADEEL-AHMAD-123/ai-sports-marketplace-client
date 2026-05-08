@@ -1,8 +1,14 @@
 /* LiveSlate.module.scss */
 
-.section   { padding: 44px 0 0; }
-.container { max-width: var(--max-width); margin: 0 auto; padding: 0 48px; }
-@media (max-width: 640px) { .container { padding: 0 16px; } }
+.section {
+  /* Top + bottom rhythm so the section breathes into ScoutClosings */
+  padding: var(--home-section-pad-y, 44px) 0;
+}
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 var(--home-section-pad-x, 48px);
+}
 
 .header {
   display: flex; align-items: flex-end; justify-content: space-between;
@@ -163,6 +169,41 @@
       color: var(--color-text-muted);
     }
   }
+}
+
+/* ── Small phones (≤ 400px): logo + abbr only, no full names ────
+   At 320–400px screens the 3-col grid loses width to the team-name
+   text, which then truncates to ellipsis (e.g. "Toronto Maple…").
+   Cleaner: rely on logo + abbreviation as team identity (industry
+   pattern — ESPN, Yahoo, DraftKings all do this) and reclaim the
+   width for proper proportions. */
+@media (max-width: 400px) {
+  .rowTop {
+    padding: 12px 14px 10px;
+    gap: 10px;
+  }
+  .rowBottom {
+    padding: 8px 14px 10px;
+  }
+
+  /* Bigger logo, no name — abbr is the identity */
+  .logoImg, .logoFallback {
+    width: 44px !important;
+    height: 44px !important;
+  }
+  .logoFallback { font-size: 11px !important; }
+
+  .team       { gap: 9px; }
+  .teamAbbr   { font-size: 1.125rem; letter-spacing: -0.025em; }
+  .teamName   { display: none; }
+
+  /* Tighter, taller center column so the time/badge block reads clean */
+  .center        { padding: 0 4px; gap: 3px; }
+  .vsText        { font-size: 0.625rem; letter-spacing: 0.10em; }
+  .timeDate      { font-size: 0.6875rem; }
+  .timeTag       { font-size: 0.6875rem; }
+  .timeTagSoon   { font-size: 0.75rem; }
+  .timeTagLive   { font-size: 0.625rem; }
 }
 
 /* Teams */

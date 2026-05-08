@@ -1,5 +1,5 @@
 // src/pages/user/MatchPage.jsx
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -10,23 +10,67 @@ import { PropCardSkeleton } from '@/components/ui/Skeleton';
 import { getFilterDefsForSport, getSportConfig } from '@/config/sportConfig';
 import styles from './MatchPage.module.scss';
 
-const BackIcon    = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>;
+const BackIcon    = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>;
 const RefreshIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>;
 
-// Format game time as ET — sports bettors always want ET
+// Team logo with initials fallback
+function TeamLogo({ logoUrl, name, size = 48 }) {
+  const [err, setErr] = useState(false);
+  const initials = (name || '?').split(' ').map(w => w[0]).join('').slice(0, 3).toUpperCase();
+  if (!logoUrl || err) {
+    return (
+      <div className={styles.logoFallback} style={{ width: size, height: size, fontSize: Math.round(size * 0.30) }}>
+        {initials}
+      </div>
+    );
+  }
+  return (
+    <img
+      src={logoUrl}
+      alt={name}
+      width={size}
+      height={size}
+      className={styles.logoImg}
+      loading="lazy"
+      decoding="async"
+      onError={() => setErr(true)}
+    />
+  );
+}
+
+// Compute a 3-letter abbreviation as a fallback when the prop didn't include one
+const deriveAbbr = (name) => {
+  if (!name) return null;
+  const words = String(name).split(' ').filter(Boolean);
+  if (!words.length) return null;
+  if (words.length === 1) return words[0].slice(0, 3).toUpperCase();
+  // Strip the city, take last word's first 3 letters (e.g. "Maple Leafs" → "MAP")
+  const last = words[words.length - 1];
+  return last.slice(0, 3).toUpperCase();
+};
+
 const fmtTimeET = (iso) => {
   if (!iso) return null;
   try {
     return new Date(iso).toLocaleTimeString('en-US', {
       hour: 'numeric', minute: '2-digit',
-      timeZone: 'America/New_York',
-      timeZoneName: 'short',
+      timeZone: 'America/New_York', timeZoneName: 'short',
     });
   } catch { return null; }
 };
 
-const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
-const card    = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.3 } } };
+const fmtDateShort = (iso) => {
+  if (!iso) return null;
+  try {
+    return new Date(iso).toLocaleDateString('en-US', {
+      weekday: 'short', month: 'short', day: 'numeric',
+      timeZone: 'America/New_York',
+    });
+  } catch { return null; }
+};
+
+const stagger = { hidden: {}, show: { transition: { staggerChildren: 0.04 } } };
+const card    = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0, transition: { duration: 0.25 } } };
 
 export default function MatchPage() {
   const { sport, eventId } = useParams();
@@ -35,164 +79,185 @@ export default function MatchPage() {
   const sportCfg     = getSportConfig(sport);
   const FILTERS      = getFilterDefsForSport(sport);
 
-  // Always reset to 'all' on mount
   useEffect(() => { dispatch(resetFilter()); }, [eventId]);
 
   const { props, isLoading, error, refresh } = useProps(sport, eventId);
 
-  // Dynamic page title
   const firstProp = props?.[0];
   useEffect(() => {
     const away = firstProp?.awayTeam;
     const home = firstProp?.homeTeam;
-    if (away && home) {
-      document.title = `${away} vs ${home} · Props | EdgeIQ`;
-    } else {
-      document.title = `${sportCfg.label} Player Props | EdgeIQ`;
-    }
+    document.title = (away && home)
+      ? `${away} vs ${home} · Props | EdgeIQ`
+      : `${sportCfg.label} Player Props | EdgeIQ`;
     return () => { document.title = 'EdgeIQ — AI Sports Insights'; };
   }, [firstProp, sportCfg]);
 
-  // Count per filter for badges
   const counts = {
     all:            props.length,
     highConfidence: props.filter(p => p.isHighConfidence).length,
     bestValue:      props.filter(p => p.isBestValue).length,
   };
 
-  // Client-side filter for instant response
   const visible = activeFilter === 'all' ? props
     : activeFilter === 'highConfidence' ? props.filter(p => p.isHighConfidence)
     : props.filter(p => p.isBestValue);
 
-  // Extract game context from first prop (all props share the same game)
-  // gameInfo comes from the prop or we can infer from the URL eventId
-  const gameTime   = firstProp?.gameStartTime ? fmtTimeET(firstProp.gameStartTime) : null;
-  const awayTeam   = firstProp?.awayTeam || null;
-  const homeTeam   = firstProp?.homeTeam || null;
+  const gameTime  = firstProp?.gameStartTime ? fmtTimeET(firstProp.gameStartTime) : null;
+  const gameDate  = firstProp?.gameStartTime ? fmtDateShort(firstProp.gameStartTime) : null;
+  const awayTeam  = firstProp?.awayTeam || null;
+  const homeTeam  = firstProp?.homeTeam || null;
+  const awayLogo  = firstProp?.awayTeamLogo || null;
+  const homeLogo  = firstProp?.homeTeamLogo || null;
+  const awayAbbr  = firstProp?.awayTeamAbbr || deriveAbbr(awayTeam);
+  const homeAbbr  = firstProp?.homeTeamAbbr || deriveAbbr(homeTeam);
   const hasContext = awayTeam && homeTeam;
 
   return (
     <div className={styles.page}>
-      <div className={styles.container}>
+      <section className={styles.section}>
+        <div className={styles.container}>
 
-        {/* Back nav */}
-        <Link to="/" className={styles.back}><BackIcon />Back to Games</Link>
+          {/* Back nav */}
+          <Link to="/" className={styles.back}>
+            <BackIcon />
+            <span>Back to Games</span>
+          </Link>
 
-        {/* Game context strip — shows which game you're looking at */}
-        {hasContext && (
-          <div className={styles.gameContext}>
-            <span className={styles.gameTeams}>
-              <strong>{awayTeam}</strong>
-              <span className={styles.gameVs}>vs</span>
-              <strong>{homeTeam}</strong>
-            </span>
-            {gameTime && (
-              <span className={styles.gameTime}>{gameTime}</span>
+          {/* ── Page header ────────────────────────────────────────── */}
+          <header className={styles.header}>
+            <div className={styles.eyebrow}>
+              <span className={styles.sportTag}>{sport?.toUpperCase()}</span>
+              <span className={styles.eyebrowDot}>·</span>
+              <span className={styles.eyebrowText}>Player Props</span>
+            </div>
+
+            {hasContext ? (
+              <div className={styles.matchup}>
+                {/* Away */}
+                <div className={styles.team}>
+                  <TeamLogo logoUrl={awayLogo} name={awayTeam} size={52} />
+                  <div className={styles.teamLabel}>
+                    <span className={styles.teamAbbr}>{awayAbbr || '—'}</span>
+                    <span className={styles.teamName}>{awayTeam}</span>
+                  </div>
+                </div>
+
+                {/* Center */}
+                <div className={styles.center}>
+                  <span className={styles.vsText}>VS</span>
+                  {gameDate && <span className={styles.dateText}>{gameDate}</span>}
+                  {gameTime && <span className={styles.timeText}>{gameTime}</span>}
+                </div>
+
+                {/* Home */}
+                <div className={`${styles.team} ${styles.teamRight}`}>
+                  <div className={`${styles.teamLabel} ${styles.teamLabelRight}`}>
+                    <span className={styles.teamAbbr}>{homeAbbr || '—'}</span>
+                    <span className={styles.teamName}>{homeTeam}</span>
+                  </div>
+                  <TeamLogo logoUrl={homeLogo} name={homeTeam} size={52} />
+                </div>
+              </div>
+            ) : (
+              <h1 className={styles.fallbackTitle}>{sportCfg.label} Player Props</h1>
             )}
-            <span className={styles.gameSport}>{sport?.toUpperCase()}</span>
-          </div>
-        )}
 
-        {/* Header */}
-        <div className={styles.header}>
-          <div>
-            <h1 className={styles.title}>Player Props</h1>
-            <p className={styles.sub}>Unlock AI scouting reports — 1 credit per insight</p>
-          </div>
-          <button className={styles.refreshBtn} onClick={refresh}>
-            <RefreshIcon />Refresh
-          </button>
-        </div>
-
-        {/* Filter bar */}
-        <div className={styles.filterBar}>
-          {FILTERS.map(({ key, label, hint, icon }) => {
-            const count  = counts[key];
-            const active = activeFilter === key;
-            return (
-              <button
-                key={key}
-                className={`${styles.filter} ${active ? styles.filterOn : ''}`}
-                onClick={() => dispatch(setActiveFilter(key))}
-              >
-                <span className={styles.filterIcon}>{icon}</span>
-                <span className={styles.filterLabel}>{label}</span>
-                {hint && <span className={styles.filterHint}>{hint}</span>}
-                {!isLoading && count > 0 && (
-                  <span className={`${styles.filterCount} ${active ? styles.filterCountOn : ''}`}>
-                    {count}
-                  </span>
+            <div className={styles.headerFooter}>
+              <span className={styles.count}>
+                {props.length} {props.length === 1 ? 'prop' : 'props'}
+                {counts.highConfidence > 0 && (
+                  <>
+                    <span className={styles.metaDot}>·</span>
+                    <span className={styles.countAccent}>{counts.highConfidence} HC</span>
+                  </>
                 )}
+              </span>
+              <button className={styles.refreshBtn} onClick={refresh} title="Refresh props">
+                <RefreshIcon />
+                <span>Refresh</span>
               </button>
-            );
-          })}
+            </div>
+          </header>
+
+          {/* ── Filter bar ──────────────────────────────────────────── */}
+          <nav className={styles.filterBar} aria-label="Filter props">
+            {FILTERS.map(({ key, label, icon }) => {
+              const count  = counts[key];
+              const active = activeFilter === key;
+              return (
+                <button
+                  key={key}
+                  className={`${styles.filter} ${active ? styles.filterOn : ''}`}
+                  onClick={() => dispatch(setActiveFilter(key))}
+                  aria-pressed={active}
+                >
+                  <span className={styles.filterIcon}>{icon}</span>
+                  <span className={styles.filterLabel}>{label}</span>
+                  {!isLoading && count > 0 && (
+                    <span className={`${styles.filterCount} ${active ? styles.filterCountOn : ''}`}>
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+            <span className={styles.filterNote}>1 credit per insight · auto-refund if AI fails</span>
+          </nav>
+
+          {isLoading && (
+            <div className={styles.grid}>
+              {[...Array(6)].map((_, i) => <PropCardSkeleton key={i} />)}
+            </div>
+          )}
+
+          {error && !isLoading && (
+            <div className={styles.empty}>
+              <p className={styles.emptyTitle}>Could not load props</p>
+              <p className={styles.emptySub}>Check your connection and try again.</p>
+              <button className={styles.emptyBtn} onClick={refresh}>Try again</button>
+            </div>
+          )}
+
+          {!isLoading && !error && visible.length === 0 && (
+            <div className={styles.empty}>
+              <p className={styles.emptyTitle}>
+                {activeFilter !== 'all'
+                  ? `No ${activeFilter === 'highConfidence' ? 'High Confidence' : 'Best Value'} props`
+                  : 'No props yet'}
+              </p>
+              <p className={styles.emptySub}>
+                {activeFilter !== 'all'
+                  ? `${counts.all} props available in All Props view`
+                  : 'Markets update during the day. Check back shortly.'}
+              </p>
+              {activeFilter !== 'all' && (
+                <button className={styles.emptyBtn} onClick={() => dispatch(resetFilter())}>
+                  View all {counts.all} props
+                </button>
+              )}
+            </div>
+          )}
+
+          {!isLoading && !error && visible.length > 0 && (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`${eventId}-${activeFilter}`}
+                className={styles.grid}
+                variants={stagger}
+                initial="hidden"
+                animate="show"
+              >
+                {visible.map(p => (
+                  <motion.div key={`${p.playerName}-${p.statType}`} variants={card}>
+                    <PropCard prop={p} sport={sport} />
+                  </motion.div>
+                ))}
+              </motion.div>
+            </AnimatePresence>
+          )}
         </div>
-
-        {/* Info strip */}
-        <div className={styles.notice}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          1 credit per insight · 3 free credits on signup · Auto-refund if AI fails
-        </div>
-
-        {/* Skeleton loading */}
-        {isLoading && (
-          <div className={styles.grid}>
-            {[...Array(6)].map((_, i) => <PropCardSkeleton key={i} />)}
-          </div>
-        )}
-
-        {/* Error */}
-        {error && !isLoading && (
-          <div className={styles.empty}>
-            <p className={styles.emptyIcon}>⚡</p>
-            <p className={styles.emptyTitle}>Could not load props</p>
-            <p className={styles.emptySub}>Check your server is running.</p>
-            <button className={styles.emptyBtn} onClick={refresh}>Try again</button>
-          </div>
-        )}
-
-        {/* Empty state */}
-        {!isLoading && !error && visible.length === 0 && (
-          <div className={styles.empty}>
-            <p className={styles.emptyIcon}>{activeFilter !== 'all' ? '🔍' : '⏳'}</p>
-            <p className={styles.emptyTitle}>
-              {activeFilter !== 'all'
-                ? `No ${activeFilter === 'highConfidence' ? 'High Confidence' : 'Best Value'} props`
-                : 'No props yet'}
-            </p>
-            <p className={styles.emptySub}>
-              {activeFilter !== 'all'
-                ? `${counts.all} props available in All Props view`
-                : 'Props are fetched every 30 minutes.'}
-            </p>
-            {activeFilter !== 'all' && (
-              <button className={styles.emptyBtn} onClick={() => dispatch(resetFilter())}>
-                View all {counts.all} props
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Props grid — 2 columns max for readability */}
-        {!isLoading && !error && visible.length > 0 && (
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={`${eventId}-${activeFilter}`}
-              className={styles.grid}
-              variants={stagger}
-              initial="hidden"
-              animate="show"
-            >
-              {visible.map(p => (
-                <motion.div key={`${p.playerName}-${p.statType}`} variants={card}>
-                  <PropCard prop={p} sport={sport} />
-                </motion.div>
-              ))}
-            </motion.div>
-          </AnimatePresence>
-        )}
-      </div>
+      </section>
     </div>
   );
 }

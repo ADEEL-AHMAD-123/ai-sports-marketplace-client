@@ -33,6 +33,7 @@ export default function Navbar(){
                     <motion.div className={styles.dropdown} initial={{opacity:0,y:-8,scale:0.96}} animate={{opacity:1,y:0,scale:1}} exit={{opacity:0,y:-8,scale:0.96}} transition={{duration:0.15}}>
                       <div className={styles.dropHead}><p className={styles.dropName}>{user?.name}</p><p className={styles.dropEmail}>{user?.email}</p></div>
                       <div className={styles.divider}/>
+                      <Link to="/history" className={styles.dropItem} onClick={()=>setOpen(false)}>My Predictions</Link>
                       <Link to="/wallet" className={styles.dropItem} onClick={()=>setOpen(false)}>Wallet</Link>
                       {user?.role==='admin'&&<Link to="/admin" className={styles.dropItem} onClick={()=>setOpen(false)}>Admin Panel</Link>}
                       <div className={styles.divider}/>

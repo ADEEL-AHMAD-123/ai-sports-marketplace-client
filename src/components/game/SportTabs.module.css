@@ -1,48 +1,53 @@
-/* SportTabs.module.css */
+/* SportTabs.module.css — sport pill tabs that align with the rest of the system */
+
 .tabs {
   display: flex;
-  gap: var(--space-2);
-  padding: var(--space-5) 0 0;
+  gap: 8px;
+  padding: 20px 0 0;
   overflow-x: auto;
   scrollbar-width: none;
 }
 .tabs::-webkit-scrollbar { display: none; }
 
 .tab {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  background: var(--bg-surface);
-  border: 1px solid var(--bg-border);
+  gap: 8px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-bg-border);
   border-radius: var(--radius-full);
-  padding: 7px 14px;
+  padding: 8px 16px;
   font-size: 0.875rem;
   font-family: var(--font-body);
-  color: var(--text-secondary);
+  font-weight: 600;
+  color: var(--color-text-secondary);
   cursor: pointer;
   white-space: nowrap;
-  transition: all var(--transition-fast);
+  transition: border-color var(--transition-fast),
+              color var(--transition-fast),
+              background var(--transition-fast);
   flex-shrink: 0;
 }
 .tab:hover:not(:disabled) {
-  border-color: var(--accent-green);
-  color: var(--text-primary);
+  border-color: rgba(var(--color-accent-rgb), 0.4);
+  color: var(--color-text-primary);
 }
 .active {
-  background: var(--accent-green-dim);
-  border-color: var(--accent-green);
-  color: var(--accent-green) !important;
+  background: var(--color-accent-dim);
+  border-color: rgba(var(--color-accent-rgb), 0.45);
+  color: var(--color-accent) !important;
 }
 .soon { opacity: 0.45; cursor: not-allowed; }
 .emoji { font-size: 0.9375rem; }
-.label { font-weight: 500; }
+.label { font-weight: 600; }
 .soonBadge {
   font-size: 0.625rem;
-  background: var(--bg-elevated);
-  border: 1px solid var(--bg-border);
-  border-radius: 4px;
-  padding: 1px 5px;
-  color: var(--text-muted);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-bg-border);
+  border-radius: var(--radius-sm);
+  padding: 1px 6px;
+  color: var(--color-text-muted);
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  font-weight: 700;
 }

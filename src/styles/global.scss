@@ -32,12 +32,17 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  // Prevent iOS rubber-band that makes the sticky navbar bounce on overscroll.
+  // Y-axis only; X-axis stays default so legitimate horizontal carousels still work.
+  overscroll-behavior-y: none;
 }
 
 body {
   background-color: var(--color-bg-base);
   color: var(--color-text-primary);
   font-family: var(--font-body);
+  // Match html so child scrollers can't propagate overscroll to the page.
+  overscroll-behavior-y: none;
   font-size: 0.9375rem;
   line-height: 1.6;
   min-height: 100vh;

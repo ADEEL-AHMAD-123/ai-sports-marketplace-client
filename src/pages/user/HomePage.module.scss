@@ -1,6 +1,39 @@
-/* HomePage.module.scss */
+/* HomePage.module.scss
+   Page wrapper with shared CSS custom properties used by every home section.
+   Each section reads --home-section-pad-y for consistent vertical rhythm.
+   Uses dvh (dynamic viewport height) so iOS Safari URL-bar changes don't
+   resize the page mid-scroll. */
+
 .page {
   min-height: calc(100vh - var(--nav-height));
+  min-height: calc(100dvh - var(--nav-height));
   background: var(--color-bg-base);
-  padding-bottom: 80px;
+  padding-bottom: 64px;
+
+  /* Shared rhythm tokens — every home section reads these */
+  --home-section-pad-y:    56px;
+  --home-section-pad-x:    48px;
+  --home-section-gap:      24px;  /* space between header and content */
+}
+
+@media (max-width: 1024px) {
+  .page {
+    --home-section-pad-y:  44px;
+    --home-section-pad-x:  32px;
+  }
+}
+@media (max-width: 640px) {
+  .page {
+    --home-section-pad-y:  36px;
+    --home-section-pad-x:  20px;
+    --home-section-gap:    18px;
+    padding-bottom: 48px;
+  }
+}
+@media (max-width: 480px) {
+  .page {
+    /* Slightly more breathing room on the smallest screens — content
+       was previously kissing the page edge at 16px which felt cramped. */
+    --home-section-pad-x:  20px;
+  }
 }

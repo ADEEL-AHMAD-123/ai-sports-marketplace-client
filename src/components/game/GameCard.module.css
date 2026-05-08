@@ -1,19 +1,22 @@
-/* GameCard.module.css */
+/* GameCard.module.css — premium card with proper theme tokens */
+
 .card {
   display: block;
   position: relative;
-  background: var(--bg-surface);
-  border: 1px solid var(--bg-border);
-  border-radius: var(--radius-lg);
-  padding: var(--space-5);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-bg-border);
+  border-radius: var(--radius-xl);
+  padding: 18px 20px;
   text-decoration: none;
   color: inherit;
-  transition: border-color var(--transition-normal), box-shadow var(--transition-normal), transform var(--transition-normal);
+  transition: border-color var(--transition-normal),
+              box-shadow var(--transition-normal),
+              transform var(--transition-normal);
   overflow: hidden;
 }
 .card:hover {
-  border-color: rgba(0,230,118,0.35);
-  box-shadow: var(--shadow-green);
+  border-color: rgba(var(--color-accent-rgb), 0.35);
+  box-shadow: var(--shadow-card), var(--shadow-accent);
   transform: translateY(-2px);
   color: inherit;
 }
@@ -21,51 +24,56 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(0,230,118,0.03) 0%, transparent 60%);
+  background: linear-gradient(135deg, rgba(var(--color-accent-rgb), 0.04) 0%, transparent 60%);
   pointer-events: none;
 }
 
 .liveBadge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  background: rgba(255,61,90,0.1);
-  border: 1px solid rgba(255,61,90,0.3);
+  gap: 6px;
+  background: rgba(var(--color-danger-rgb), 0.10);
+  border: 1px solid rgba(var(--color-danger-rgb), 0.30);
   border-radius: var(--radius-full);
-  padding: 2px 8px;
+  padding: 3px 9px;
   font-size: 0.6875rem;
   font-family: var(--font-mono);
-  font-weight: 500;
-  color: var(--accent-red);
+  font-weight: 700;
+  color: var(--color-danger);
   letter-spacing: 0.08em;
-  margin-bottom: var(--space-4);
+  margin-bottom: 14px;
 }
 .liveDot {
   width: 6px; height: 6px;
   border-radius: 50%;
-  background: var(--accent-red);
-  animation: glow-pulse 1.5s ease infinite;
+  background: var(--color-danger);
+  animation: livePulse 1.5s ease infinite;
+}
+@keyframes livePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.4; transform: scale(0.8); }
 }
 
 .teams {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  gap: var(--space-4);
-  margin-bottom: var(--space-5);
+  gap: 14px;
+  margin-bottom: 16px;
 }
-.team { display: flex; flex-direction: column; gap: 3px; }
-.teamRight { text-align: right; }
+.team       { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.teamRight  { text-align: right; }
 .teamAbbr {
   font-family: var(--font-display);
-  font-size: 1.5rem;
+  font-size: 1.375rem;
   font-weight: 800;
-  color: var(--text-primary);
+  color: var(--color-text-primary);
   letter-spacing: -0.03em;
+  line-height: 1;
 }
 .teamName {
   font-size: 0.75rem;
-  color: var(--text-muted);
+  color: var(--color-text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -78,42 +86,51 @@
   flex-direction: column;
   align-items: center;
   gap: 3px;
+  flex-shrink: 0;
+  padding: 0 4px;
 }
 .versusText {
   font-family: var(--font-mono);
   font-size: 0.6875rem;
-  color: var(--text-muted);
-  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+  letter-spacing: 0.12em;
 }
 .gameTime {
   font-family: var(--font-mono);
   font-size: 0.75rem;
-  color: var(--text-secondary);
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--bg-border);
+  padding-top: 14px;
+  border-top: 1px solid var(--color-bg-border);
 }
 .propsAvailable {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   font-size: 0.8125rem;
-  color: var(--accent-green);
+  font-weight: 600;
+  color: var(--color-accent);
 }
 .propsDot {
   width: 6px; height: 6px;
   border-radius: 50%;
-  background: var(--accent-green);
+  background: var(--color-accent);
 }
-.noProps { font-size: 0.8125rem; color: var(--text-muted); }
+.noProps {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
 .cta {
   font-size: 0.8125rem;
-  color: var(--text-muted);
+  font-weight: 600;
+  color: var(--color-text-muted);
   transition: color var(--transition-fast);
 }
-.card:hover .cta { color: var(--accent-green); }
+.card:hover .cta { color: var(--color-accent); }

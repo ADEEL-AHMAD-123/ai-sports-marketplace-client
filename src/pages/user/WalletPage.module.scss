@@ -1,13 +1,16 @@
 .page {
   min-height: calc(100vh - var(--nav-height));
+  min-height: calc(100dvh - var(--nav-height));
   padding-bottom: 64px;
 }
 
 .container {
   max-width: 680px;
   margin: 0 auto;
-  padding: 32px 24px;
+  padding: 32px 32px;
 }
+@media (max-width: 768px) { .container { padding: 28px 24px; } }
+@media (max-width: 480px) { .container { padding: 24px 20px; } }
 
 .title { font-size: 2rem; margin-bottom: 24px; }
 

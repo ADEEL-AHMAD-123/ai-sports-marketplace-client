@@ -1,33 +1,42 @@
-/* FilterBar.module.css */
+/* FilterBar.module.css — chips that match MatchPage filter language */
+
 .bar {
   display: flex;
-  gap: var(--space-2);
-  margin-top: var(--space-4);
+  gap: 8px;
+  margin-top: 16px;
   overflow-x: auto;
   scrollbar-width: none;
+  flex-wrap: wrap;
 }
 .bar::-webkit-scrollbar { display: none; }
 
 .btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: 6px;
   background: transparent;
-  border: 1px solid var(--bg-border);
+  border: 1px solid var(--color-bg-border);
   border-radius: var(--radius-full);
-  padding: 6px 14px;
+  padding: 7px 13px;
   font-size: 0.8125rem;
   font-family: var(--font-body);
-  color: var(--text-muted);
+  font-weight: 500;
+  color: var(--color-text-secondary);
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
-  transition: all var(--transition-fast);
+  transition: border-color var(--transition-fast),
+              color var(--transition-fast),
+              background var(--transition-fast);
 }
-.btn:hover { border-color: var(--bg-hover); color: var(--text-secondary); }
+.btn:hover {
+  border-color: rgba(var(--color-accent-rgb), 0.4);
+  color: var(--color-text-primary);
+}
 .active {
-  background: var(--bg-surface);
-  border-color: var(--accent-green);
-  color: var(--accent-green);
+  background: var(--color-accent-dim);
+  border-color: rgba(var(--color-accent-rgb), 0.45);
+  color: var(--color-accent);
+  font-weight: 700;
 }
-.icon { font-size: 0.875rem; }
+.icon { font-size: 0.8125rem; opacity: 0.85; }

@@ -1,217 +1,219 @@
-/* LeagueGrid.module.scss */
+/* LeagueGrid.module.scss — unified horizontal pill-bar across all viewports */
 
-.section   { padding: 56px 0 0; }
-.container { max-width: var(--max-width); margin: 0 auto; padding: 0 48px; }
-@media (max-width: 640px) { .container { padding: 0 20px; } }
+.section { padding: var(--home-section-pad-y, 56px) 0 0; }
 
+.container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 var(--home-section-pad-x, 48px);
+}
+
+/* ── Header ──────────────────────────────────────────────── */
 .header {
   display: flex; align-items: flex-end; justify-content: space-between;
-  margin-bottom: 24px; flex-wrap: wrap; gap: 8px;
+  margin-bottom: var(--home-section-gap, 24px);
+  flex-wrap: wrap; gap: 8px;
 }
-.title { font-family: var(--font-display); font-size: 1.5rem; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 5px; }
-.sub   { font-size: 0.9375rem; color: var(--color-text-muted); font-weight: 400; }
-.comingSoon { font-size: 0.8125rem; color: var(--color-text-muted); font-style: italic; white-space: nowrap; padding-bottom: 2px; }
+.title {
+  font-family: var(--font-display);
+  font-size: 1.5rem; font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--color-text-primary);
+  margin-bottom: 5px;
+}
+.sub {
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+  font-weight: 400;
+  max-width: 540px;
+  line-height: 1.5;
+}
+.comingSoon {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  padding-bottom: 2px;
+  letter-spacing: 0.02em;
+}
+@media (max-width: 1024px) { .title { font-size: 1.375rem; } }
 @media (max-width: 640px) {
   .title { font-size: 1.25rem; }
+  .sub   { font-size: 0.875rem; }
   .comingSoon { display: none; }
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 14px;
-}
-@media (max-width: 1100px) { .grid { grid-template-columns: repeat(3, 1fr); } }
-@media (max-width: 640px)  { .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; } }
-/* On very small screens keep 2-col but reduce padding */
-@media (max-width: 360px)  { .grid { grid-template-columns: repeat(2, 1fr); gap: 8px; } }
-
-/* Card */
-.card {
+/* ── Bar (scrollable on narrow screens) ──────────────────── */
+.bar {
   position: relative;
+
+  /* Edge-bleed scroll: the track extends to the page padding on mobile so
+     the last pill can scroll into the viewport edge naturally. */
+  margin: 0 calc(-1 * var(--home-section-pad-x, 48px));
+
+  /* Right-edge fade hint that there's more to scroll */
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0; right: 0;
+    width: 32px;
+    background: linear-gradient(to left, var(--color-bg-base), transparent);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+  }
+}
+
+.barTrack {
+  display: flex;
+  gap: 10px;
+  padding: 4px var(--home-section-pad-x, 48px); /* room for focus rings + match container padding */
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+@media (max-width: 1100px) {
+  /* Show the fade hint when the track will likely overflow */
+  .bar::after { opacity: 1; }
+}
+
+/* ── Pill ─────────────────────────────────────────────────── */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  scroll-snap-align: start;
   background: var(--color-bg-surface);
   border: 1px solid var(--color-bg-border);
-  border-radius: var(--radius-xl);
-  padding: 24px 20px 20px;
-  display: flex; flex-direction: column; align-items: flex-start;
-  gap: 10px; cursor: pointer; text-align: left;
-  overflow: hidden;
-  transition: border-color var(--transition-normal), box-shadow var(--transition-normal), background var(--transition-normal);
+  border-radius: var(--radius-full);
+  padding: 9px 16px 9px 10px;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: border-color var(--transition-fast),
+              background var(--transition-fast),
+              box-shadow var(--transition-fast),
+              transform var(--transition-fast);
 
-  &:hover:not(.cardDisabled) {
-    border-color: rgba(var(--color-accent-rgb), 0.5);
-    box-shadow: 0 8px 36px rgba(0,0,0,0.28), var(--shadow-accent);
-    .logoImg { transform: scale(1.06); }
-    .name    { color: var(--color-accent); }
+  &:hover:not(.pillDisabled) {
+    border-color: rgba(var(--color-accent-rgb), 0.45);
+    transform: translateY(-1px);
   }
-  &:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
-}
-@media (max-width: 640px) {
-  .card { padding: 16px 14px 14px; gap: 8px; }
-}
-
-.cardActive {
-  border-color: var(--color-accent) !important;
-  background: linear-gradient(160deg, var(--color-bg-surface) 40%, rgba(var(--color-accent-rgb), 0.07)) !important;
-  box-shadow: 0 6px 28px rgba(0,0,0,0.25), var(--shadow-accent) !important;
-  .name { color: var(--color-accent) !important; }
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
 }
 
-.cardDisabled { opacity: 0.35; cursor: not-allowed; }
-
-/* Active indicator */
-.activeLine {
-  position: absolute; top: 0; left: 0; right: 0; height: 3px;
-  background: linear-gradient(90deg, var(--color-accent), rgba(var(--color-accent-rgb), 0.2));
+.pillActive {
+  background: linear-gradient(135deg, var(--color-bg-surface) 0%, rgba(var(--color-accent-rgb), 0.08) 100%) !important;
+  border-color: rgba(var(--color-accent-rgb), 0.55) !important;
+  box-shadow: 0 4px 18px rgba(var(--color-accent-rgb), 0.12);
+  .pillName { color: var(--color-accent) !important; }
 }
 
-/* Logo */
-.logoWrap {
-  width: 64px; height: 64px;
+.pillDisabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Logo container */
+.pillLogo {
+  width: 36px; height: 36px;
+  display: inline-flex; align-items: center; justify-content: center;
   background: var(--color-bg-elevated);
   border: 1px solid var(--color-bg-border);
-  border-radius: var(--radius-lg);
-  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-full);
   overflow: hidden;
+  flex-shrink: 0;
 }
-@media (max-width: 640px) { .logoWrap { width: 48px; height: 48px; } }
 .logoImg {
-  width: 52px; height: 52px;
   object-fit: contain;
-  transition: transform var(--transition-normal);
+  max-width: 70%;
+  max-height: 70%;
 }
-@media (max-width: 640px) { .logoImg { width: 36px; height: 36px; } }
 .logoFallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-family: var(--font-display);
-  font-size: 0.875rem; font-weight: 800;
-  color: var(--color-text-muted);
+  font-weight: 800;
+  color: var(--color-text-secondary);
 }
 
-/* Info */
-.info   { display: flex; flex-direction: column; gap: 3px; width: 100%; }
-.name   { font-family: var(--font-display); font-size: 1.25rem; font-weight: 800; color: var(--color-text-primary); letter-spacing: -0.03em; transition: color var(--transition-fast); }
-.full   { font-size: 0.875rem; color: var(--color-text-secondary); font-weight: 400; }
-.region { font-size: 0.75rem; color: var(--color-text-muted); }
-@media (max-width: 640px) {
-  .name   { font-size: 1rem; }
-  .full   { font-size: 0.75rem; }
-  .region { display: none; }
+/* Body — name + status */
+.pillBody {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  line-height: 1;
 }
+.pillName {
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-weight: 800;
+  color: var(--color-text-primary);
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  transition: color var(--transition-fast);
+}
+.pillStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+.pillLive  { color: var(--color-accent); }
+.pillSoon  { color: var(--color-text-muted); }
 
-/* Badges */
-.liveBadge {
-  display: inline-flex; align-items: center; gap: 5px;
-  font-size: 0.6875rem; font-weight: 700; color: var(--color-accent);
-  background: var(--color-accent-dim); border: 1px solid rgba(var(--color-accent-rgb), 0.25);
-  border-radius: var(--radius-full); padding: 3px 10px;
-  text-transform: uppercase; letter-spacing: 0.06em;
-}
-.liveDot {
-  width: 5px; height: 5px; border-radius: 50%; background: var(--color-accent);
+.pillDot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--color-accent);
   animation: pulseDot 2s ease infinite;
 }
 @keyframes pulseDot {
   0%, 100% { opacity: 1; }
-  50%       { opacity: 0.4; }
-}
-.soonBadge {
-  font-size: 0.6875rem; font-weight: 600; color: var(--color-text-muted);
-  background: var(--color-bg-elevated); border: 1px solid var(--color-bg-border);
-  border-radius: var(--radius-full); padding: 3px 10px;
-  text-transform: uppercase; letter-spacing: 0.05em;
+  50%      { opacity: 0.4; }
 }
 
-/* ── Mobile tabs (hidden on desktop, shown ≤640px) ─────────── */
-.tabsWrap { display: none; }
-
+/* ── Mobile tweaks ───────────────────────────────────────── */
 @media (max-width: 640px) {
-  /* Hide desktop grid */
-  .grid   { display: none; }
-  .header { display: none; }
-
-  /* Show tabs */
-  .tabsWrap {
-    display: block;
-    padding: 0 0 4px;
-    /* gradient fade on right to hint scrollability */
-    position: relative;
-    &::after {
-      content: '';
-      position: absolute;
-      right: 0; top: 0; bottom: 4px;
-      width: 32px;
-      background: linear-gradient(to left, var(--color-bg-base), transparent);
-      pointer-events: none;
-    }
+  .pill {
+    gap: 10px;
+    padding: 8px 14px 8px 8px;
   }
-
-  .tabs {
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    padding: 4px 2px 12px;
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none;
-    &::-webkit-scrollbar { display: none; }
-    /* Snap to tabs */
-    scroll-snap-type: x mandatory;
+  .pillLogo {
+    width: 32px; height: 32px;
   }
-
-  .tab {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    padding: 12px 16px 10px;
-    min-width: 72px;
-    background: var(--color-bg-surface);
-    border: 1.5px solid var(--color-bg-border);
-    border-radius: var(--radius-lg);
-    cursor: pointer;
-    flex-shrink: 0;
-    scroll-snap-align: start;
-    transition: all var(--transition-fast);
-    position: relative;
-    overflow: hidden;
+  .pillName {
+    font-size: 0.875rem;
   }
+}
 
-  .tabActive {
-    border-color: var(--color-accent) !important;
-    background: linear-gradient(160deg, var(--color-bg-surface), rgba(var(--color-accent-rgb), 0.08)) !important;
-    &::after {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0; height: 2px;
-      background: var(--color-accent);
-    }
-    .tabName { color: var(--color-accent) !important; }
+@media (max-width: 400px) {
+  .pill {
+    padding: 7px 12px 7px 7px;
   }
-
-  .tabDisabled { opacity: 0.4; cursor: not-allowed; }
-
-  .tabLogo {
-    width: 36px; height: 36px;
-    display: flex; align-items: center; justify-content: center;
-    background: var(--color-bg-elevated);
-    border: 1px solid var(--color-bg-border);
-    border-radius: var(--radius-md);
-    overflow: hidden;
-    .logoImg { width: 28px; height: 28px; }
-    .logoFallback { font-size: 0.625rem; }
+  .pillLogo {
+    width: 28px; height: 28px;
   }
-
-  .tabName {
-    font-family: var(--font-display);
-    font-size: 0.8125rem; font-weight: 800;
-    color: var(--color-text-primary);
-    letter-spacing: -0.02em;
-    line-height: 1;
-    transition: color var(--transition-fast);
+  .pillName {
+    font-size: 0.8125rem;
   }
-
-  .tabSoon {
-    font-size: 0.5rem; font-weight: 700;
-    color: var(--color-text-muted);
-    text-transform: uppercase; letter-spacing: 0.06em;
+  .pillStatus {
+    font-size: 0.5625rem;
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pillDot, .pill { animation: none !important; transition: none !important; transform: none !important; }
 }
