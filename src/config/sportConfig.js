@@ -149,7 +149,7 @@ export const SPORT_CONFIG = {
     isActive: false,
     leagueId: 1,
     teamBase: 'american-football',
-    leagueLogoUrl: 'https://media.api-sports.io/american-football/leagues/1.png',
+    leagueLogoUrl: 'https://a.espncdn.com/i/teamlogos/leagues/500/nfl.png',
     statLabels: {}, statUnits: {}, advancedMetrics: [], predNote: 'Coming soon.',
     badges: {
       highConfidenceLabel: 'HC', bestValueLabel: 'BV',
