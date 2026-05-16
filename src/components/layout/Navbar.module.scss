@@ -206,16 +206,68 @@
     color: var(--color-text-inverse);
   }
 }
+/* Label swap: full on desktop, short on tight phones — see media queries below */
+.registerLabelFull  { display: inline; }
+.registerLabelShort { display: none; }
 .curtain {
   position: fixed;
   inset: 0;
   z-index: -1;
 }
+
+/* ── Mobile: tighten everything so logged-out CTAs fit ──────── */
+@media (max-width: 640px) {
+  .inner { padding: 0 20px; }
+  .right { gap: 8px; }
+  .authRow { gap: 10px; }
+}
+
 @media (max-width: 480px) {
-  .inner {
-    padding: 0 16px;
+  .inner { padding: 0 16px; }
+  .right { gap: 6px; }
+
+  /* Smaller logo text — keep the mark prominent */
+  .logoText { font-size: 1.0625rem; }
+
+  /* Theme button — shrink to match other 32px touch targets */
+  .themeBtn {
+    width: 32px; height: 32px;
+    svg { width: 14px; height: 14px; }
   }
-  .creditsLbl {
-    display: none;
+  .avatarBtn { width: 32px; height: 32px; font-size: 0.8125rem; }
+
+  /* Logged-in: hide "credits" label, just the count */
+  .creditsLbl { display: none; }
+  .credits { padding: 5px 10px 5px 8px; }
+  .creditsNum { font-size: 0.875rem; }
+
+  /* Logged-out CTAs */
+  .authRow { gap: 8px; }
+  .loginLink { font-size: 0.875rem; }
+  .registerBtn {
+    padding: 7px 14px;
+    font-size: 0.8125rem;
+  }
+}
+
+/* ── Smallest phones (≤ 380px) — surface only the primary CTA ───
+   Hide the "Log in" text link to make room. Users with accounts can
+   tap the primary button and switch to Log in from the sign-up screen
+   — both auth pages cross-link. */
+@media (max-width: 480px) {
+  /* Swap "Get Started" → "Sign Up" — saves ~30px of horizontal width */
+  .registerLabelFull  { display: none; }
+  .registerLabelShort { display: inline; }
+}
+
+@media (max-width: 380px) {
+  .inner { padding: 0 12px; }
+  .logoText { font-size: 1rem; }
+
+  .loginLink { display: none; }
+
+  .registerBtn {
+    padding: 7px 12px;
+    font-size: 0.75rem;
   }
 }

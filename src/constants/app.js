@@ -5,8 +5,8 @@ export const SPORTS = [
   { key: 'nba',    label: 'NBA',    emoji: '🏀', active: true  },
   { key: 'mlb',    label: 'MLB',    emoji: '⚾', active: true  },
   { key: 'nhl',    label: 'NHL',    emoji: '🏒', active: true  },
-  { key: 'nfl',    label: 'NFL',    emoji: '🏈', active: false },
-  { key: 'soccer', label: 'Soccer', emoji: '⚽', active: false },
+  { key: 'nfl',    label: 'NFL',    emoji: '🏈', active: true  },
+  { key: 'soccer', label: 'Soccer', emoji: '⚽', active: true  },
 ];
 
 // ── Filters ───────────────────────────────────────────────────
@@ -81,11 +81,27 @@ export const CRON_JOBS = [
     group: 'sport',
   },
   {
+    key:   'prop-watcher-nfl',
+    label: 'Prop Watcher — NFL',
+    icon:  '🏈',
+    desc:  'NFL only: fetch props, resolve player IDs, score confidence + edge.',
+    when:  'Run to test NFL in isolation.',
+    group: 'sport',
+  },
+  {
     key:   'prop-watcher-nhl',
     label: 'Prop Watcher — NHL',
     icon:  '🏒',
     desc:  'NHL only: fetch props, score shots/goals/assists.',
     when:  'Run to test NHL in isolation.',
+    group: 'sport',
+  },
+  {
+    key:   'prop-watcher-soccer',
+    label: 'Prop Watcher — Soccer',
+    icon:  '⚽',
+    desc:  'Soccer only: fetch EPL player props and score goals/assists/SOT.',
+    when:  'Run to test Soccer in isolation.',
     group: 'sport',
   },
   {
@@ -113,11 +129,27 @@ export const CRON_JOBS = [
     group: 'sport',
   },
   {
+    key:   'post-game-sync-nfl',
+    label: 'Post-Game Sync — NFL',
+    icon:  '🏈',
+    desc:  'NFL only: game lifecycle + outcome grading.',
+    when:  'Run to test NFL lifecycle in isolation.',
+    group: 'sport',
+  },
+  {
     key:   'post-game-sync-nhl',
     label: 'Post-Game Sync — NHL',
     icon:  '🏒',
     desc:  'NHL only: game lifecycle + outcome grading.',
     when:  'Run to test NHL lifecycle in isolation.',
+    group: 'sport',
+  },
+  {
+    key:   'post-game-sync-soccer',
+    label: 'Post-Game Sync — Soccer',
+    icon:  '⚽',
+    desc:  'Soccer only: game lifecycle + outcome grading.',
+    when:  'Run to test Soccer lifecycle in isolation.',
     group: 'sport',
   },
   {

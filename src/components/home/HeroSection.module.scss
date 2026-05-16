@@ -164,9 +164,43 @@
   white-space: nowrap;
   text-align: center;
 }
+@media (max-width: 640px) {
+  /* Allow long labels like "Powered Analysis" / "3 Credits Start" to wrap
+     to a second line instead of overflowing the cell. */
+  .statLbl {
+    white-space: normal;
+    line-height: 1.25;
+    /* Cap to 2 lines and ellipsis any rare 3-line case */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
 @media (max-width: 480px) {
   .statVal { font-size: 0.8125rem; }
   .statLbl { font-size: 0.5625rem; letter-spacing: 0.04em; }
+}
+/* On the smallest phones, drop to 2x2 grid so each cell has roomy width
+   and labels stay single-line. */
+@media (max-width: 380px) {
+  .statsStrip {
+    grid-template-columns: 1fr 1px 1fr !important;
+    grid-auto-rows: auto;
+  }
+  /* Hide the dividers between row 1 and row 2 (3rd and 6th .statDivider
+     in the markup land between rows). They'd otherwise stretch into wrong
+     positions; using border on .stat below replaces them visually. */
+  .statDivider:nth-child(4) { display: none; }
+  .stat {
+    padding: 10px 8px;
+    border-bottom: 1px solid var(--color-bg-border);
+  }
+  .stat:nth-last-of-type(-n+2) { border-bottom: none; }
+  .statLbl {
+    white-space: nowrap;
+    line-clamp: 1; -webkit-line-clamp: 1;
+  }
 }
 .statDivider { width: 1px; background: var(--color-bg-border); flex-shrink: 0; }
 
@@ -333,8 +367,8 @@
 
 .badgeEdge {
   display: inline-flex; align-items: center; gap: 6px;
-  background: rgba(255, 171, 0, 0.12); color: var(--color-warning);
-  border: 1px solid rgba(255, 171, 0, 0.30);
+  background: rgba(var(--color-warning-rgb), 0.12); color: var(--color-warning);
+  border: 1px solid rgba(var(--color-warning-rgb), 0.30);
   border-radius: var(--radius-full);
   font-size: 0.875rem; font-weight: 700; padding: 6px 14px;
   white-space: nowrap;
@@ -347,7 +381,38 @@
   font-size: 0.875rem; font-weight: 700; padding: 6px 14px;
   white-space: nowrap;
 }
-@media (max-width: 480px) { .badgeEdge, .badgeConf { font-size: 0.75rem; padding: 5px 11px; } }
+.badgeMiss {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(var(--color-danger-rgb), 0.10);
+  color: var(--color-danger);
+  border: 1px solid rgba(var(--color-danger-rgb), 0.30);
+  border-radius: var(--radius-full);
+  font-size: 0.875rem; font-weight: 700; padding: 6px 14px;
+  white-space: nowrap;
+}
+.badgePush {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--color-bg-elevated);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-bg-border);
+  border-radius: var(--radius-full);
+  font-size: 0.875rem; font-weight: 700; padding: 6px 14px;
+  white-space: nowrap;
+}
+.badgePending {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--color-bg-elevated);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-bg-border);
+  border-radius: var(--radius-full);
+  font-size: 0.875rem; font-weight: 600; padding: 6px 14px;
+  white-space: nowrap;
+}
+@media (max-width: 480px) {
+  .badgeEdge, .badgeConf, .badgeMiss, .badgePush, .badgePending {
+    font-size: 0.75rem; padding: 5px 11px;
+  }
+}
 
 /* ── Carousel controls ───────────────────────────────────── */
 .controls {

@@ -11,9 +11,7 @@ const NAV = [
   { to: '/admin',           label: 'Dashboard', icon: '⊞',  end: true },
   { to: '/admin/users',     label: 'Users',     icon: '👥' },
   { to: '/admin/outcomes',  label: 'Outcomes',  icon: '📊' },
-  { to: '/admin/players',   label: 'Players',   icon: '🆔' },
   { to: '/admin/jobs',      label: 'Jobs',      icon: '⚙️' },
-  { to: '/admin/ai-logs',   label: 'AI Logs',   icon: '📋' },
 ];
 
 export default function AdminLayout() {

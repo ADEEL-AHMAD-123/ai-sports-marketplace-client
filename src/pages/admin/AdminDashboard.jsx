@@ -1,11 +1,26 @@
-// pages/admin/AdminDashboard.jsx — Overview only, no tabs
+// pages/admin/AdminDashboard.jsx — premium overview
+//
+// Information hierarchy (top → bottom):
+//   1. Hero metrics — 3 high-level marquee numbers (Users, Insights, Hit Rate)
+//   2. Today snapshot — a compact "what's happening right now" strip
+//   3. Per-sport accuracy — 5-up grid of sport tiles with live + lifetime
+//   4. Distribution bars — confidence / quality / over-under / outcomes
+//   5. Quick actions — 4 navigation cards
+//
+// Design intent:
+//   • Restraint over density. Group related metrics into clusters.
+//   • Theme tokens only — no inline colors.
+//   • Mono for tabular data, display for marquee numbers.
+//   • Responsive: hero metrics wrap to single column on mobile.
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminStats } from '@/hooks/useAdmin';
 import styles from './AdminDashboard.module.scss';
 
-const fmt  = (n, d = 0) => n == null ? '—' : Number(n).toLocaleString('en-US', { maximumFractionDigits: d });
-const pct  = (n) => n == null ? '—' : `${n}%`;
+const fmt = (n, d = 0) => n == null ? '—' : Number(n).toLocaleString('en-US', { maximumFractionDigits: d });
+const pct = (n) => n == null ? '—' : `${n}%`;
+
 function timeAgo(date) {
   const s = Math.floor((Date.now() - new Date(date)) / 1000);
   if (s < 60)    return `${s}s ago`;
@@ -14,46 +29,82 @@ function timeAgo(date) {
   return `${Math.floor(s / 86400)}d ago`;
 }
 
-function StatCard({ label, value, sub, tooltip, accent }) {
+const SPORTS = ['nba', 'mlb', 'nhl', 'nfl', 'soccer'];
+const SPORT_LABEL = { nba: 'NBA', mlb: 'MLB', nhl: 'NHL', nfl: 'NFL', soccer: 'Soccer' };
+
+// ── Hero metric — large, branded ──────────────────────────────────────────────
+function HeroMetric({ label, value, sub, accent }) {
   return (
-    <div className={styles.statCard} title={tooltip || ''}>
-      {tooltip && <span className={styles.tipDot}>?</span>}
-      <p className={styles.statLabel}>{label}</p>
-      <p className={styles.statValue} style={accent ? { color: accent } : {}}>{value ?? '—'}</p>
-      {sub && <p className={styles.statSub}>{sub}</p>}
+    <div className={`${styles.heroMetric} ${accent ? styles.heroMetricAccent : ''}`}>
+      <span className={styles.heroLabel}>{label}</span>
+      <span className={styles.heroValue}>{value}</span>
+      {sub && <span className={styles.heroSub}>{sub}</span>}
     </div>
   );
 }
 
-function MiniBar({ label, values, total, colorMap }) {
+// ── Compact stat tile ─────────────────────────────────────────────────────────
+function StatTile({ label, value, sub, tone }) {
+  return (
+    <div className={`${styles.statTile} ${tone ? styles[`statTile_${tone}`] : ''}`}>
+      <span className={styles.statTileLabel}>{label}</span>
+      <span className={styles.statTileValue}>{value}</span>
+      {sub && <span className={styles.statTileSub}>{sub}</span>}
+    </div>
+  );
+}
+
+// ── Sport accuracy tile ───────────────────────────────────────────────────────
+function SportTile({ sport, summary }) {
+  const wins   = summary?.wins   || 0;
+  const losses = summary?.losses || 0;
+  const pushes = summary?.pushes || 0;
+  const decisive = wins + losses;
+  const winRate = decisive ? Math.round((wins * 100) / decisive) : null;
+  const tone = winRate == null ? '' : winRate >= 60 ? 'good' : winRate >= 40 ? 'mid' : 'bad';
+  return (
+    <div className={`${styles.sportTile} ${styles[`sportTile_${sport}`]}`}>
+      <span className={styles.sportLabel}>{SPORT_LABEL[sport]}</span>
+      <span className={`${styles.sportRate} ${tone ? styles[`sportRate_${tone}`] : ''}`}>
+        {winRate != null ? `${winRate}%` : '—'}
+      </span>
+      <span className={styles.sportRecord}>
+        {decisive ? `${wins}W · ${losses}L${pushes ? ` · ${pushes}P` : ''}` : 'no data'}
+      </span>
+    </div>
+  );
+}
+
+// ── Distribution bar ──────────────────────────────────────────────────────────
+function DistBar({ label, values, total, colorMap }) {
   if (!total || !values) return null;
-  const items = Object.entries(values).map(([k, v]) => ({
-    key: k, pct: Math.round((v / total) * 100), count: v,
-  })).filter(i => i.pct > 0);
+  const items = Object.entries(values)
+    .map(([k, v]) => ({ key: k, count: v, pct: Math.round((v / total) * 100) }))
+    .filter(i => i.pct > 0);
 
   return (
-    <div className={styles.miniBar}>
-      <div className={styles.miniBarHead}>
-        <span className={styles.miniBarLabel}>{label}</span>
-        <span className={styles.miniBarTotal}>{total}</span>
+    <div className={styles.distBar}>
+      <div className={styles.distHead}>
+        <span className={styles.distLabel}>{label}</span>
+        <span className={styles.distTotal}>{fmt(total)}</span>
       </div>
-      <div className={styles.miniBarTrack}>
+      <div className={styles.distTrack}>
         {items.map(({ key, pct }) => (
           <div
             key={key}
+            className={styles.distSeg}
             style={{ width: `${pct}%`, background: colorMap?.[key] || 'var(--color-info)' }}
-            className={styles.miniBarSeg}
             title={`${key}: ${pct}%`}
           />
         ))}
       </div>
-      <div className={styles.miniBarLegend}>
+      <div className={styles.distLegend}>
         {items.map(({ key, count, pct }) => (
-          <span key={key} className={styles.miniBarItem}>
-            <span className={styles.miniBarDot} style={{ background: colorMap?.[key] }} />
-            <span className={styles.miniBarKey}>{key}</span>
-            <span className={styles.miniBarCount}>{count}</span>
-            <span className={styles.miniBarPct}>({pct}%)</span>
+          <span key={key} className={styles.distLegendItem}>
+            <span className={styles.distDot} style={{ background: colorMap?.[key] }} />
+            <span className={styles.distLegendKey}>{key}</span>
+            <span className={styles.distLegendCount}>{count}</span>
+            <span className={styles.distLegendPct}>{pct}%</span>
           </span>
         ))}
       </div>
@@ -61,123 +112,166 @@ function MiniBar({ label, values, total, colorMap }) {
   );
 }
 
-function QuickLinkCard({ icon, label, sub, to, accent }) {
+// ── Quick link card ───────────────────────────────────────────────────────────
+function QuickAction({ icon, label, sub, to }) {
   const navigate = useNavigate();
   return (
-    <button className={styles.quickCard} onClick={() => navigate(to)}>
-      <span className={styles.quickIcon} style={{ color: accent }}>{icon}</span>
-      <div>
-        <p className={styles.quickLabel}>{label}</p>
-        <p className={styles.quickSub}>{sub}</p>
+    <button className={styles.quickAction} onClick={() => navigate(to)}>
+      <span className={styles.quickIcon}>{icon}</span>
+      <div className={styles.quickText}>
+        <span className={styles.quickLabel}>{label}</span>
+        <span className={styles.quickSub}>{sub}</span>
       </div>
       <span className={styles.quickArrow}>→</span>
     </button>
   );
 }
 
+// ── Main ──────────────────────────────────────────────────────────────────────
 export default function AdminDashboard() {
   const { stats: s, isLoading, lastRefresh } = useAdminStats();
 
   const insightTotal = s?.insights?.total || 0;
   const outcomeTotal = s?.outcomes?.graded || 0;
-  const hcPct = insightTotal ? Math.round((s.insights.highConfidence / insightTotal) * 100) : 0;
-  const bvPct = insightTotal ? Math.round((s.insights.bestValue      / insightTotal) * 100) : 0;
-
-  const outcomeBySport = Object.fromEntries(
-    Object.entries(s?.outcomes?.bySport || {}).map(([k, v]) => [k, v.graded || 0])
-  );
 
   return (
     <div className={styles.page}>
+
       {/* Header */}
-      <div className={styles.pageHeader}>
-        <div>
-          <h1 className={styles.pageTitle}>Dashboard</h1>
-          <p className={styles.pageSub}>
-            {isLoading ? 'Refreshing…' : lastRefresh ? `Updated ${timeAgo(lastRefresh)}` : 'Loading…'}
-            {' · '}auto-refreshes every 60s
+      <header className={styles.header}>
+        <div className={styles.headerMain}>
+          <span className={styles.eyebrow}>Admin Overview</span>
+          <h1 className={styles.title}>Dashboard</h1>
+          <p className={styles.subtitle}>
+            {isLoading
+              ? 'Refreshing…'
+              : lastRefresh ? `Updated ${timeAgo(lastRefresh)} · auto-refresh every 60s` : 'Loading platform stats…'}
           </p>
         </div>
-      </div>
+      </header>
 
-      {/* Platform health */}
-      <div className={styles.sectionLabel}>Platform</div>
-      <div className={styles.statGrid}>
-        <StatCard label="Total Users"    value={fmt(s?.users?.total)}                    sub={`+${s?.users?.newToday??0} today`}                                  tooltip="All registered accounts" />
-        <StatCard label="New This Week"  value={fmt(s?.users?.newThisWeek)}               sub="registered"                                                          accent="var(--color-info)" />
-        <StatCard label="Credits Spent"  value={fmt(s?.economy?.totalCreditsSpent)}       sub="all time (1 credit = 1 insight)"                                    accent="var(--color-warning)" tooltip="Total credits deducted for insight unlocks" />
-        <StatCard label="Revenue"        value={`$${s?.economy?.totalRevenueUSD??'0.00'}`} sub="via Stripe"                                                         accent="var(--color-accent)" tooltip="Total USD collected from credit purchases" />
-        <StatCard label="Live Props"     value={fmt(s?.live?.availableProps)}              sub="scored + available now"                                              accent="var(--color-purple)" />
-        <StatCard label="Games Today"    value={fmt(s?.live?.scheduledGames)}              sub="scheduled or live (72h window)" />
-      </div>
+      {/* Hero metrics */}
+      <section className={styles.heroGrid}>
+        <HeroMetric
+          label="Total Users"
+          value={fmt(s?.users?.total)}
+          sub={s ? `+${s.users.newToday || 0} today · +${s.users.newThisWeek || 0} this week` : '—'}
+        />
+        <HeroMetric
+          label="Insights Generated"
+          value={fmt(insightTotal)}
+          sub={s ? `${s.insights.generatedToday || 0} today · ${s.insights.generatedThisWeek || 0} this week` : '—'}
+        />
+        <HeroMetric
+          label="Hit Rate"
+          value={pct(s?.outcomes?.winRateExPush)}
+          sub={s ? `${s.outcomes?.wins || 0}W · ${s.outcomes?.losses || 0}L · ${outcomeTotal} graded` : '—'}
+          accent
+        />
+      </section>
 
-      {/* Insights */}
-      <div className={styles.sectionLabel}>Insights</div>
-      <div className={styles.statGrid}>
-        <StatCard label="Total Generated" value={fmt(insightTotal)}                      sub={`${s?.insights?.generatedToday??0} today · ${s?.insights?.generatedThisWeek??0} this week`} accent="var(--color-info)" tooltip="AI-generated betting insights unlocked by users" />
-        <StatCard label="High Confidence" value={`${fmt(s?.insights?.highConfidence)} (${hcPct}%)`} sub="≥57% hit rate"   accent="var(--color-accent)" tooltip="Insights where recent hit rate is high" />
-        <StatCard label="Best Value"      value={`${fmt(s?.insights?.bestValue)} (${bvPct}%)`}       sub="≥15% edge vs line" accent="var(--color-warning)" tooltip="Insights where model avg diverges ≥15% from the line" />
-        <StatCard label="Avg Edge (30d)"  value={s?.insights?.avgEdge30d != null ? `${s.insights.avgEdge30d}%` : '—'} sub="absolute avg all insights" accent="var(--color-info)" tooltip="Higher = more divergence vs book's line" />
-      </div>
+      {/* Today / Live snapshot */}
+      <section>
+        <h2 className={styles.sectionTitle}>Live snapshot</h2>
+        <div className={styles.statRow}>
+          <StatTile
+            label="Live Props"
+            value={fmt(s?.live?.availableProps)}
+            sub="scored & available"
+          />
+          <StatTile
+            label="Games Today"
+            value={fmt(s?.live?.scheduledGames)}
+            sub="scheduled or live"
+          />
+          <StatTile
+            label="Credits Spent"
+            value={fmt(s?.economy?.totalCreditsSpent)}
+            sub="all time"
+          />
+          <StatTile
+            label="Revenue"
+            value={`$${s?.economy?.totalRevenueUSD || '0.00'}`}
+            sub="via Stripe"
+            tone="accent"
+          />
+          <StatTile
+            label="High Confidence"
+            value={fmt(s?.insights?.highConfidence)}
+            sub={insightTotal ? `${Math.round((s.insights.highConfidence / insightTotal) * 100)}% of insights` : '—'}
+            tone="accent"
+          />
+          <StatTile
+            label="Best Value"
+            value={fmt(s?.insights?.bestValue)}
+            sub={insightTotal ? `${Math.round((s.insights.bestValue / insightTotal) * 100)}% of insights` : '—'}
+            tone="warning"
+          />
+        </div>
+      </section>
 
-      {/* Outcomes */}
-      <div className={styles.sectionLabel}>Prediction Outcomes</div>
-      <div className={styles.statGrid}>
-        <StatCard label="Total Graded"   value={fmt(s?.outcomes?.graded)}                     sub={`${s?.outcomes?.unresolved??0} unresolved`}                    accent="var(--color-info)" tooltip="Resolved outcomes from completed games" />
-        <StatCard label="Win Rate"       value={pct(s?.outcomes?.winRateExPush)}               sub={`${s?.outcomes?.wins??0}W · ${s?.outcomes?.losses??0}L · ${s?.outcomes?.pushes??0}P`} accent="var(--color-accent)" tooltip="Win % excluding pushes" />
-        <StatCard label="Avg Edge (Wins)" value={s?.outcomes?.avgEdgeOnWins   != null ? `${s.outcomes.avgEdgeOnWins}%` : '—'}   sub={`on ${s?.outcomes?.wins??0} wins`}    accent="var(--color-accent)" />
-        <StatCard label="Avg Edge (Loss)" value={s?.outcomes?.avgEdgeOnLosses != null ? `${s.outcomes.avgEdgeOnLosses}%` : '—'} sub={`on ${s?.outcomes?.losses??0} losses`} accent="var(--color-danger)" />
-        <StatCard label="NBA Win Rate"   value={pct(s?.outcomes?.bySport?.nba?.winRateExPush)} sub={`${s?.outcomes?.bySport?.nba?.graded??0} graded`}              accent="var(--color-warning)" />
-        <StatCard label="MLB Win Rate"   value={pct(s?.outcomes?.bySport?.mlb?.winRateExPush)} sub={`${s?.outcomes?.bySport?.mlb?.graded??0} graded`}              accent="var(--color-purple)" />
-        <StatCard label="NHL Win Rate"   value={pct(s?.outcomes?.bySport?.nhl?.winRateExPush)} sub={`${s?.outcomes?.bySport?.nhl?.graded??0} graded`}              accent="var(--color-info)" />
-        <StatCard label="HC Hit Rate"    value={pct(s?.outcomes?.byConfidence?.['80-100']?.winRateExPush)} sub={`${s?.outcomes?.byConfidence?.['80-100']?.graded??0} in 80-100 band`} accent="var(--color-accent)" tooltip="Win rate for high-confidence scored insights" />
-      </div>
+      {/* Per-sport accuracy */}
+      <section>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>Per-Sport Accuracy</h2>
+          <span className={styles.sectionMeta}>Window: last 30 days</span>
+        </div>
+        <div className={styles.sportGrid}>
+          {SPORTS.map(sp => (
+            <SportTile key={sp} sport={sp} summary={s?.outcomes?.bySport?.[sp]} />
+          ))}
+        </div>
+      </section>
 
-      {/* Distribution bars */}
+      {/* Distributions */}
       {s && insightTotal > 0 && (
-        <>
-          <div className={styles.sectionLabel}>Distributions</div>
-          <div className={styles.distRow}>
-            <MiniBar
+        <section>
+          <h2 className={styles.sectionTitle}>Distributions</h2>
+          <div className={styles.distGrid}>
+            <DistBar
               label="AI Confidence"
               values={s.insights.byConfidence}
               total={insightTotal}
               colorMap={{ high: 'var(--color-accent)', medium: 'var(--color-warning)', low: 'var(--color-danger)' }}
             />
-            <MiniBar
+            <DistBar
               label="Data Quality"
               values={s.insights.byDataQuality}
               total={insightTotal}
               colorMap={{ strong: 'var(--color-accent)', moderate: 'var(--color-warning)', weak: 'var(--color-danger)' }}
             />
-            <MiniBar
+            <DistBar
               label="Over / Under"
               values={s.insights.byRecommendation}
               total={insightTotal}
               colorMap={{ over: 'var(--color-accent)', under: 'var(--color-info)' }}
             />
-            <MiniBar
+            <DistBar
               label="Outcome Split"
               values={s.outcomes?.byResult}
               total={outcomeTotal}
               colorMap={{ win: 'var(--color-accent)', loss: 'var(--color-danger)', push: 'var(--color-warning)' }}
             />
           </div>
-        </>
+        </section>
       )}
 
-      {/* Quick nav */}
-      <div className={styles.sectionLabel}>Quick Actions</div>
-      <div className={styles.quickGrid}>
-        <QuickLinkCard to="/admin/outcomes" icon="📊" label="Outcome Audit"   sub="Full graded results + per-game performance"  accent="var(--color-accent)" />
-        <QuickLinkCard to="/admin/users"    icon="👥" label="Manage Users"    sub="Credits, activation, transaction history"     accent="var(--color-info)" />
-        <QuickLinkCard to="/admin/players"  icon="🆔" label="Player ID Cache" sub="Resolve, inspect, clear stale player IDs"    accent="var(--color-warning)" />
-        <QuickLinkCard to="/admin/jobs"     icon="⚙️" label="Run Jobs"        sub="Trigger per-sport or full sync manually"     accent="var(--color-purple)" />
-        <QuickLinkCard to="/admin/ai-logs"  icon="📋" label="AI Logs"         sub="Inspect AI prompt/response for each insight" accent="var(--color-text-muted)" />
-      </div>
+      {/* Quick actions */}
+      <section>
+        <h2 className={styles.sectionTitle}>Quick Actions</h2>
+        <div className={styles.quickGrid}>
+          <QuickAction to="/admin/outcomes" icon="📊" label="Outcome Audit"  sub="Per-game accuracy + lifetime archive" />
+          <QuickAction to="/admin/users"    icon="👥" label="Manage Users"   sub="Credits, status, transaction history" />
+          <QuickAction to="/admin/jobs"     icon="⚙️" label="Run Jobs"       sub="Trigger per-sport sync manually" />
+          <QuickAction to="/admin/ai-logs"  icon="📋" label="AI Logs"        sub="Inspect prompts + responses" />
+        </div>
+      </section>
 
       {!s && !isLoading && (
-        <div className={styles.emptyState}>Could not load stats — check the server.</div>
+        <div className={styles.emptyState}>
+          <p className={styles.emptyTitle}>Could not load stats</p>
+          <p className={styles.emptySub}>Check the server is running and try refreshing.</p>
+        </div>
       )}
     </div>
   );

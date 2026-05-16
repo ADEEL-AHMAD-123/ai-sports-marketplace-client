@@ -24,9 +24,7 @@ import NotFoundPage       from '@/pages/NotFoundPage';
 import AdminDashboard    from '@/pages/admin/AdminDashboard';
 import AdminUsersPage    from '@/pages/admin/AdminUsersPage';
 import AdminOutcomesPage from '@/pages/admin/AdminOutcomesPage';
-import AdminPlayersPage  from '@/pages/admin/AdminPlayersPage';
 import AdminJobsPage     from '@/pages/admin/AdminJobsPage';
-import AdminAILogsPage   from '@/pages/admin/AdminAILogsPage';
 
 export default function App() {
   const dispatch   = useDispatch();
@@ -72,9 +70,7 @@ export default function App() {
             <Route index             element={<AdminDashboard />} />
             <Route path="users"      element={<AdminUsersPage />} />
             <Route path="outcomes"   element={<AdminOutcomesPage />} />
-            <Route path="players"    element={<AdminPlayersPage />} />
             <Route path="jobs"       element={<AdminJobsPage />} />
-            <Route path="ai-logs"    element={<AdminAILogsPage />} />
           </Route>
         </Route>
 

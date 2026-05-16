@@ -228,50 +228,8 @@ export function useAILogs() {
   return { logs, pages, page, setPage, isLoading };
 }
 
-// ── useAdminPlayers ───────────────────────────────────────────────────────────
-// Used by PlayerHealthPanel
-
-export const fetchPlayerHealth = createApiThunk({
-  typePrefix: 'admin/fetchPlayerHealth',
-  method:     'GET',
-  url:        ({ sport = 'nba', limit = 200 } = {}) => `/admin/players/health?sport=${sport}&limit=${limit}`,
-});
-
-export const clearPlayerCache = createApiThunk({
-  typePrefix: 'admin/clearPlayerCache',
-  method:     'DELETE',
-  url:        ({ name, sport = 'nba' }) => `/admin/players/${encodeURIComponent(name)}/cache?sport=${sport}`,
-});
-
-export function useAdminPlayers(sport = 'nba') {
-  const dispatch = useDispatch();
-  const [players,  setPlayers]  = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [clearing,  setClearing]  = useState(null);
-
-  const load = useCallback(async () => {
-    setIsLoading(true);
-    const result = await dispatch(fetchPlayerHealth({ sport }));
-    if (fetchPlayerHealth.fulfilled.match(result)) {
-      setPlayers(result.payload.players || []);
-    }
-    setIsLoading(false);
-  }, [dispatch, sport]);
-
-  useEffect(() => { load(); }, [load]);
-
-  const clearCache = async (name) => {
-    if (!window.confirm(`Clear ${sport.toUpperCase()} ID cache for "${name}"?\n\nWill be re-resolved on next Prop Watcher run.`)) return;
-    setClearing(name);
-    const result = await dispatch(clearPlayerCache({ name, sport }));
-    if (clearPlayerCache.fulfilled.match(result)) {
-      toast.success(`Cache cleared for ${name}`);
-      await load();
-    } else {
-      toast.error(result.payload?.message || 'Failed to clear cache');
-    }
-    setClearing(null);
-  };
-
-  return { players, isLoading, clearing, load, clearCache };
-}
+// useAdminPlayers / fetchPlayerHealth / clearPlayerCache were removed.
+// The Players admin page no longer exists — player ID resolution is handled
+// automatically by InsightOutcomeService and the postGameSync grading path.
+// If a stale cached player ID needs clearing, it's done via Redis directly,
+// not through admin UI.

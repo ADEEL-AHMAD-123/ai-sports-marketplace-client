@@ -46,7 +46,10 @@ export default function Navbar(){
           ):(
             <div className={styles.authRow}>
               <Link to="/login" className={styles.loginLink}>Log in</Link>
-              <Link to="/register" className={styles.registerBtn}>Get Started</Link>
+              <Link to="/register" className={styles.registerBtn}>
+                <span className={styles.registerLabelFull}>Get Started</span>
+                <span className={styles.registerLabelShort}>Sign Up</span>
+              </Link>
             </div>
           )}
         </div>
