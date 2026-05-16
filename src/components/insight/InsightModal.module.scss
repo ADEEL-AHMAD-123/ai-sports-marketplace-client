@@ -276,6 +276,7 @@
   border: 1px solid rgba(245,158,11,0.25);
 }
 
+/* ── Explainer banner — clarify edge vs confidence ──────────────*/
 /* ── Divider ───────────────────────────────────────────────────*/
 .divider {
   height: 1px;
@@ -474,8 +475,36 @@
   strong { color: var(--m-text-primary); font-weight: 700; }
   em { font-style: normal; }
 }
-.gctIcon { font-size: 1rem; }
-.gctText { flex: 1; line-height: 1.45; }
+.gctIcon {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--m-border-inner);
+  background: var(--m-bg-elevated);
+  color: var(--m-text-muted);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.gctText {
+  flex: 1;
+  line-height: 1.5;
+}
+.gctHeadlineTitle {
+  color: var(--m-text-primary);
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.gctHeadlineDetail {
+  margin-top: 1px;
+  color: color-mix(in srgb, var(--m-text-secondary) 70%, var(--m-text-primary) 30%);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
 .gctTier { color: var(--m-text-muted); font-weight: 500; }
 
 .gctTags {
@@ -555,7 +584,7 @@
 }
 .tagAiConf {
   padding: 4px 10px; border-radius: 99px;
-  font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.05em; text-transform: capitalize;
+  font-size: 0.65625rem; font-weight: 600; letter-spacing: 0.04em; text-transform: none;
   color: var(--m-text-muted); background: var(--m-bg-elevated); border: 1px solid var(--m-border-inner);
 }
 

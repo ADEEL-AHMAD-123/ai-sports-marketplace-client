@@ -164,10 +164,14 @@
   font-size: 0.8125rem; font-weight: 600;
   color: var(--color-text-secondary);
   cursor: pointer;
-  transition: border-color var(--transition-fast), color var(--transition-fast);
+  transition: border-color var(--transition-fast), color var(--transition-fast), opacity var(--transition-fast);
   flex-shrink: 0;
   svg { flex-shrink: 0; }
-  &:hover { border-color: var(--color-accent); color: var(--color-accent); }
+  &:hover:not(:disabled) { border-color: var(--color-accent); color: var(--color-accent); }
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 }
 
 /* ── Mobile (≤ 640px): scoreboard-style matchup ────────────────

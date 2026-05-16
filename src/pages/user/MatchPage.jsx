@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
+import toast from 'react-hot-toast';
 import { useProps } from '@/hooks/useOdds';
 import { setActiveFilter, selectActiveFilter, resetFilter } from '@/store/slices/uiSlice';
 import PropCard from '@/components/insight/PropCard';
@@ -81,7 +82,7 @@ export default function MatchPage() {
 
   useEffect(() => { dispatch(resetFilter()); }, [eventId]);
 
-  const { props, isLoading, error, refresh } = useProps(sport, eventId);
+  const { props, isLoading, error, refresh, refreshFromBookies, isRefreshing } = useProps(sport, eventId);
 
   const firstProp = props?.[0];
   useEffect(() => {
@@ -173,9 +174,23 @@ export default function MatchPage() {
                   </>
                 )}
               </span>
-              <button className={styles.refreshBtn} onClick={refresh} title="Refresh props">
+              <button
+                className={styles.refreshBtn}
+                onClick={async () => {
+                  const loadingToast = toast.loading('Fetching live odds from bookies...');
+                  const result = await refreshFromBookies();
+                  toast.dismiss(loadingToast);
+                  if (result.success) {
+                    toast.success(`Updated ${result.count} props from bookies`);
+                  } else {
+                    toast.error(result.message);
+                  }
+                }}
+                disabled={isRefreshing}
+                title="Refresh props from live bookies"
+              >
                 <RefreshIcon />
-                <span>Refresh</span>
+                <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
               </button>
             </div>
           </header>

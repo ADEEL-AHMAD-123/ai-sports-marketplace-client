@@ -1,11 +1,90 @@
-// AdminLayout.module.scss
+/* AdminLayout.module.scss — responsive shell with mobile drawer
+   STRICT theme tokens only. Works in dark + light.
+
+   Structure:
+     .shell            (flex column — vertical stack: [mobileBar] [body])
+       .mobileBar      (full-width, mobile only)
+       .backdrop       (fixed overlay, mobile only)
+       .body           (flex row — [sidebar] [main])
+         .sidebar
+         .main
+
+   Why column: the mobile bar needs to span the full viewport width.
+   Making the shell a flex row would force the mobileBar into a column
+   beside sidebar+main — which is the bug we just fixed. */
+
 .shell {
   display: flex;
+  flex-direction: column;
   min-height: 100vh;
   background: var(--color-bg-base);
 }
 
-// ── Sidebar ───────────────────────────────────────────────────
+/* The actual layout row — sidebar + main side-by-side on desktop */
+.body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Mobile top bar (hidden on desktop) ───────────────────── */
+.mobileBar {
+  display: none;
+  position: sticky; top: 0; z-index: 90;
+  height: 56px;
+  padding: 0 12px;
+  background: var(--color-bg-surface);
+  border-bottom: 1px solid var(--color-bg-border);
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+.hamburger {
+  width: 40px; height: 40px;
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: 1px solid var(--color-bg-border);
+  color: var(--color-text-primary);
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color var(--transition-fast),
+              background var(--transition-fast),
+              color var(--transition-fast);
+  &:hover  { border-color: var(--color-accent); color: var(--color-accent); }
+  &:active { background: var(--color-bg-elevated); }
+}
+.mobileTitleWrap {
+  display: flex; align-items: center; gap: 8px;
+  flex: 1; min-width: 0;
+}
+.mobileIcon {
+  font-size: 1.0625rem;
+  flex-shrink: 0;
+}
+.mobileTitle {
+  font-family: var(--font-display);
+  font-size: 0.9375rem; font-weight: 800;
+  color: var(--color-text-primary);
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mobileThemeBtn {
+  width: 40px; height: 40px;
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: 1px solid var(--color-bg-border);
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color var(--transition-fast);
+  &:hover { border-color: var(--color-accent); }
+}
+
+/* ── Sidebar (desktop sticky / mobile drawer) ─────────────── */
 .sidebar {
   width: var(--sidebar-width);
   background: var(--color-bg-surface);
@@ -22,23 +101,21 @@
 }
 
 .sideTop {
-  padding: 24px 20px 16px;
+  padding: 20px 18px 14px;
   border-bottom: 1px solid var(--color-bg-border);
 }
-
+.sideTopRow {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
 .logoBtn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: flex; align-items: center; gap: 8px;
   background: none;
   border: none;
   cursor: pointer;
   padding: 0;
-  margin-bottom: 12px;
 }
-
-/* .logoMark removed — EdgeMark SVG component used instead */
-
 .logoText {
   font-family: var(--font-display);
   font-size: 1.125rem;
@@ -46,8 +123,21 @@
   color: var(--color-text-primary);
   letter-spacing: -0.03em;
 }
-
 .accent { color: var(--color-accent); }
+
+/* Drawer close — hidden on desktop, visible inside drawer on mobile */
+.drawerCloseBtn {
+  display: none;
+  width: 32px; height: 32px;
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: 1px solid var(--color-bg-border);
+  color: var(--color-text-secondary);
+  align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+  &:hover { border-color: var(--color-accent); color: var(--color-accent); }
+}
 
 .adminBadge {
   display: inline-block;
@@ -55,14 +145,14 @@
   border: 1px solid rgba(var(--color-accent-rgb), 0.3);
   color: var(--color-accent);
   font-size: 0.625rem;
-  font-weight: 700;
-  padding: 3px 8px;
+  font-weight: 800;
+  padding: 3px 9px;
   border-radius: var(--radius-full);
-  letter-spacing: 0.1em;
+  letter-spacing: 0.10em;
   text-transform: uppercase;
 }
 
-// ── Nav ───────────────────────────────────────────────────────
+/* ── Nav ───────────────────────────────────────────────────── */
 .nav {
   padding: 12px 10px;
   flex: 1;
@@ -75,28 +165,26 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 9px 12px;
+  padding: 10px 12px;
   border-radius: var(--radius-md);
   font-size: 0.875rem;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text-secondary);
   text-decoration: none;
-  transition: background var(--transition-fast), color var(--transition-fast);
+  transition: background var(--transition-fast),
+              color var(--transition-fast),
+              border-color var(--transition-fast);
   border: 1px solid transparent;
-
   &:hover {
     background: var(--color-bg-hover);
     color: var(--color-text-primary);
   }
 }
-
 .active {
   background: var(--color-accent-dim) !important;
   color: var(--color-accent) !important;
-  border-color: rgba(var(--color-accent-rgb), 0.2) !important;
-  font-weight: 600;
+  border-color: rgba(var(--color-accent-rgb), 0.30) !important;
 }
-
 .navIcon {
   font-size: 0.9375rem;
   width: 20px;
@@ -104,7 +192,7 @@
   flex-shrink: 0;
 }
 
-// ── Bottom ────────────────────────────────────────────────────
+/* ── Bottom ────────────────────────────────────────────────── */
 .sideBottom {
   padding: 14px 16px;
   border-top: 1px solid var(--color-bg-border);
@@ -116,49 +204,71 @@
   gap: 10px;
   margin-bottom: 12px;
 }
-
 .userAvatar {
-  width: 32px;
-  height: 32px;
+  width: 34px; height: 34px;
   border-radius: 50%;
-  background: var(--color-accent-dim);
-  border: 1px solid rgba(var(--color-accent-rgb), 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: linear-gradient(
+    135deg,
+    var(--color-accent-dim) 0%,
+    color-mix(in srgb, var(--color-accent-dim) 50%, var(--color-bg-elevated)) 100%
+  );
+  border: 1px solid rgba(var(--color-accent-rgb), 0.30);
+  display: flex; align-items: center; justify-content: center;
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 800;
   font-size: 0.875rem;
   color: var(--color-accent);
   flex-shrink: 0;
 }
-
 .userInfo { min-width: 0; }
-.userName { font-size: 0.875rem; font-weight: 600; color: var(--color-text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.userRole { font-size: 0.6875rem; color: var(--color-text-muted); }
+.userName {
+  font-size: 0.875rem; font-weight: 700;
+  color: var(--color-text-primary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.userRole {
+  font-size: 0.6875rem; font-weight: 600;
+  color: var(--color-text-secondary);
+  letter-spacing: 0.02em;
+}
 
 .sideActions { display: flex; gap: 6px; }
-
 .actionBtn {
   flex: 1;
   background: var(--color-bg-elevated);
   border: 1px solid var(--color-bg-border);
   border-radius: var(--radius-md);
-  padding: 6px 4px;
-  font-size: 0.75rem;
+  padding: 7px 6px;
+  font-size: 0.75rem; font-weight: 600;
   color: var(--color-text-secondary);
   cursor: pointer;
   font-family: var(--font-body);
   white-space: nowrap;
-  transition: all var(--transition-fast);
-
+  transition: border-color var(--transition-fast),
+              color var(--transition-fast),
+              background var(--transition-fast);
   &:hover {
     border-color: var(--color-accent);
     color: var(--color-text-primary);
   }
 }
 
-// ── Main content ──────────────────────────────────────────────
+/* ── Backdrop (mobile drawer overlay) ─────────────────────── */
+.backdrop {
+  display: none;
+  position: fixed; inset: 0;
+  background: var(--color-overlay);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 95;
+  animation: backdropIn var(--transition-fast) ease;
+}
+@keyframes backdropIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Main content ──────────────────────────────────────────── */
 .main {
   flex: 1;
   padding: 32px;
@@ -167,7 +277,52 @@
   min-width: 0;
 }
 
+/* ── Mobile (≤ 768px) ─────────────────────────────────────────
+   • Mobile bar appears (full-width, sticky top)
+   • Body flex row stays — but sidebar is removed from the flow:
+     position: fixed, off-canvas via translateX(-100%).
+   • Main takes 100% width because the sidebar no longer occupies its slot
+   • Toggling .sidebarOpen slides it in from the left
+   • Backdrop covers the page underneath the drawer
+   • Body scroll-locked from JS while drawer is open */
 @media (max-width: 768px) {
-  .sidebar { display: none; }
-  .main { padding: 20px 16px; }
+  .mobileBar  { display: flex; }
+  .backdrop   { display: block; }
+
+  /* Critical: drawer must be off-canvas + take it out of the body's flex flow */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    height: 100dvh;
+    width: min(86vw, 320px);
+    z-index: 100;
+    transform: translateX(-100%);
+    transition: transform var(--transition-normal);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
+  }
+  .sidebarOpen { transform: translateX(0); }
+  .drawerCloseBtn { display: inline-flex; }
+
+  /* Now the body row only contains <main> in normal flow.
+     Force main to fill since sidebar is fixed-position. */
+  .main {
+    width: 100%;
+    padding: 20px 16px;
+    min-height: calc(100dvh - 56px);
+  }
+}
+
+/* Smallest phones — tighter spacing */
+@media (max-width: 480px) {
+  .mobileBar { padding: 0 10px; }
+  .hamburger, .mobileThemeBtn { width: 38px; height: 38px; }
+  .mobileTitle { font-size: 0.875rem; }
+  .main { padding: 16px 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar { transition: none !important; }
+  .backdrop { animation: none !important; }
 }

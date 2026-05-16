@@ -33,6 +33,10 @@ const oddsSlice = createSlice({
     clearGamesForSport(state, { payload: sport }) {
       delete state.gamesBySport[sport];
     },
+    setPropsForEvent(state, { payload }) {
+      const { eventId, data } = payload;
+      state.propsByEvent[eventId] = data;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -51,7 +55,7 @@ const oddsSlice = createSlice({
   },
 });
 
-export const { clearPropsForEvent, clearGamesForSport } = oddsSlice.actions;
+export const { clearPropsForEvent, clearGamesForSport, setPropsForEvent } = oddsSlice.actions;
 export default oddsSlice.reducer;
 
 // ── Simple primitive selectors — no array creation, no memoization needed ──

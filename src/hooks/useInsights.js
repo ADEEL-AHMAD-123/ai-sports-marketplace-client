@@ -119,7 +119,10 @@ export function useUnlock(prop, sport) {
         toast.error(result.payload?.message || fallback);
       }
       else if (status === 409) {
-        toast.error('Odds moved too fast. We refreshed lines for you — try once more.');
+        toast.error(
+          'Odds moved too fast. Click the Refresh button to get live updates from bookies, then try again.',
+          { duration: 4000 }
+        );
         refreshProps();
       } else {
         toast.error(result.payload?.message || 'Failed to unlock insight.');

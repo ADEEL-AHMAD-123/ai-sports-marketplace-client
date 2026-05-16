@@ -54,8 +54,18 @@ function LogRow({ log, index }) {
 
       {/* Edge + confidence */}
       <div className={styles.metrics}>
-        <span className={styles.edge}>+{log.edge}% edge</span>
-        <span className={styles.conf}>{log.confidence}% conf.</span>
+        <span 
+          className={styles.edge}
+          title="Model Edge: How much projected value differs from the sportsbook line."
+        >
+          +{log.edge}% edge
+        </span>
+        <span 
+          className={styles.conf}
+          title="Signal Confidence: How consistently recent games supported this lean. Not a win probability."
+        >
+          {log.confidence}% conf.
+        </span>
       </div>
 
       {/* Result badge + time */}

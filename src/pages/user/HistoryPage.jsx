@@ -54,8 +54,12 @@ function InsightCard({ insight }) {
 
         <div className={styles.cardRight}>
           <div className={styles.metrics}>
-            <StatBadge label="Edge" value={edgeStr} />
-            <StatBadge label="Conf" value={`${insight.confidenceScore ?? '—'}%`} />
+            <span title="Model Edge: How much projected value differs from the sportsbook line.">
+              <StatBadge label="Edge" value={edgeStr} />
+            </span>
+            <span title="Signal Confidence: How consistently recent games supported this lean. Not a win probability.">
+              <StatBadge label="Conf" value={`${insight.confidenceScore ?? '—'}%`} />
+            </span>
             {insight.isHighConfidence && <span className={styles.tagHC}>HC</span>}
             {insight.isBestValue && <span className={styles.tagBV}>BV</span>}
           </div>

@@ -44,8 +44,8 @@ export const SPORT_CONFIG = {
       },
     },
     filters: {
-      highConfidenceHint: 'Top consistency for NBA window',
-      bestValueHint: '15%+ edge on line',
+      highConfidenceHint: 'Signal Confidence 57+: recent games show consistent lean. Not win probability.',
+      bestValueHint: '15%+ edge: projected value far from line. More edge = higher pricing gap.',
     },
     injury: {
       supported: true,
@@ -90,8 +90,8 @@ export const SPORT_CONFIG = {
       },
     },
     filters: {
-      highConfidenceHint: 'Consistent over recent MLB game logs',
-      bestValueHint: '15%+ edge on line',
+      highConfidenceHint: 'Signal Confidence 57+: recent games show consistent lean. Not win probability.',
+      bestValueHint: '15%+ edge: projected value far from line. More edge = higher pricing gap.',
     },
     injury: {
       supported: true,
@@ -132,8 +132,8 @@ export const SPORT_CONFIG = {
       },
     },
     filters: {
-      highConfidenceHint: 'Consistent over recent NHL game logs',
-      bestValueHint: '15%+ edge on line',
+      highConfidenceHint: 'Signal Confidence 57+: recent games show consistent lean. Not win probability.',
+      bestValueHint: '15%+ edge: projected value far from line. More edge = higher pricing gap.',
     },
     injury: {
       supported: true,
@@ -172,7 +172,10 @@ export const SPORT_CONFIG = {
       highConfidenceLabel: 'HC', bestValueLabel: 'BV',
       statTypeBadges: {}, dataQualityRules: {},
     },
-    filters: { highConfidenceHint: '', bestValueHint: '' },
+    filters: {
+      highConfidenceHint: 'Signal Confidence 57+: recent games show consistent lean. Not win probability.',
+      bestValueHint: '15%+ edge: projected value far from line. More edge = higher pricing gap.',
+    },
     injury: { supported: true, provider: 'api-football-injuries', providerLabel: 'API-Football Injuries' },
     showPitcherHand: false, showEnvironment: false,
   },
@@ -191,7 +194,10 @@ export const SPORT_CONFIG = {
       highConfidenceLabel: 'HC', bestValueLabel: 'BV',
       statTypeBadges: {}, dataQualityRules: { strongMinConfidence: 65, weakMaxConfidence: 79 },
     },
-    filters: { highConfidenceHint: 'Consistent over recent soccer games', bestValueHint: '15%+ edge on line' },
+    filters: {
+      highConfidenceHint: 'Signal Confidence 57+: recent games show consistent lean. Not win probability.',
+      bestValueHint: '15%+ edge: projected value far from line. More edge = higher pricing gap.',
+    },
     injury: { supported: true, provider: 'api-football-injuries', providerLabel: 'API-Football Injuries' },
     showPitcherHand: false, showEnvironment: false,
   },

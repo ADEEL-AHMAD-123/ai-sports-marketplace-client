@@ -49,7 +49,10 @@ function GameBadge({ game }) {
   // topConfidence is the highest confidenceScore among this game's HC-tagged props
   if (game.topConfidence && game.topConfidence >= 57) {
     return (
-      <span className={styles.badgeConf}>
+      <span 
+        className={styles.badgeConf}
+        title="Signal Confidence: How consistently recent games support High Confidence picks. Not a win probability."
+      >
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
         {game.topConfidence}% Conf
       </span>
@@ -59,7 +62,10 @@ function GameBadge({ game }) {
   // topEdge is the highest |edgePercentage| among this game's BV-tagged props
   if (game.topEdge && game.topEdge >= 15) {
     return (
-      <span className={styles.badgeEdge}>
+      <span 
+        className={styles.badgeEdge}
+        title="Model Edge: How much projected value differs from the sportsbook line."
+      >
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
         +{game.topEdge}% Edge
       </span>

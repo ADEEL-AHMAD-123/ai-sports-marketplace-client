@@ -54,6 +54,37 @@ function getInsightSections(insight) {
   return { summary, factors, risks, raw: [], isStructured: false };
 }
 
+function getBalancedSummary(insight, summaryLines, sport) {
+  const out = Array.isArray(summaryLines) ? [...summaryLines] : [];
+  if (sport !== 'nhl') return out;
+
+  const line = Number(insight?.bettingLine);
+  const avg10 = Number(insight?.focusStatAvg);
+  const avg5 = Number(insight?.formStatAvg);
+  const h2h = Number(insight?.h2hStatAvg);
+  const recentN = insight?.formGamesCount || 5;
+
+  if (!Number.isFinite(line) || !Number.isFinite(avg10)) return out;
+
+  const mainLean = avg10 >= line ? 'over' : 'under';
+  const recentLean = Number.isFinite(avg5) ? (avg5 >= line ? 'over' : 'under') : null;
+  const h2hLean = Number.isFinite(h2h) ? (h2h >= line ? 'over' : 'under') : null;
+
+  const signals = [];
+  if (recentLean && recentLean !== mainLean) {
+    signals.push(`last ${recentN} trend leans ${recentLean.toUpperCase()} (${avg5.toFixed(2)} vs line ${line})`);
+  }
+  if (h2hLean && h2hLean !== mainLean) {
+    signals.push(`head-to-head leans ${h2hLean.toUpperCase()} (${h2h.toFixed(2)} vs line ${line})`);
+  }
+
+  if (signals.length) {
+    out.push(`Counter-signal: ${signals.join(' · ')}.`);
+  }
+
+  return out;
+}
+
 // ── Animated confidence arc ────────────────────────────────────
 function ConfidenceArc({ score }) {
   const pct   = Math.min(100, Math.max(0, score || 0));
@@ -236,13 +267,22 @@ function GameContextStrip({ insight }) {
   let headline = null;
   if (insight?.sport === 'nhl' && ctx.goalie?.name) {
     const sv = ctx.goalie.savePercentage != null
-      ? `SV% ${(ctx.goalie.savePercentage * 100).toFixed(1)}` : 'SV% —';
+      ? `${(ctx.goalie.savePercentage * 100).toFixed(1)}%` : '—';
     const recent = ctx.goalie.recentSavePct != null
-      ? `· last ${ctx.goalie.recentStarts ?? 5} ${(ctx.goalie.recentSavePct * 100).toFixed(1)}${ctx.goalie.isHot ? ' 🔥' : ctx.goalie.isCold ? ' ❄️' : ''}`
-      : '';
+      ? `${(ctx.goalie.recentSavePct * 100).toFixed(1)}%`
+      : null;
+    const recentStarts = ctx.goalie.recentStarts ?? 5;
+    const tier = ctx.goalie.tier
+      ? String(ctx.goalie.tier)
+          .replace(/_/g, ' ')
+          .replace(/\b\w/g, (c) => c.toUpperCase())
+      : null;
+    const detailParts = [`SV% ${sv}`];
+    if (recent) detailParts.push(`Last ${recentStarts} starts SV% ${recent}`);
+    if (tier) detailParts.push(`Form ${tier}`);
     headline = {
-      icon: '🥅',
-      text: <>vs <strong>{ctx.goalie.name}</strong> · {sv} {recent} <em className={styles.gctTier}>({ctx.goalie.tier || '—'})</em></>,
+      title: `Projected Goalie Matchup: ${ctx.goalie.name}`,
+      detail: detailParts.join(' · '),
     };
   } else if (insight?.sport === 'nba' && ctx.oppDefense?.teamName) {
     const d = ctx.oppDefense;
@@ -250,14 +290,14 @@ function GameContextStrip({ insight }) {
     const threes  = d.threesAllowedPG  != null ? `${d.threesAllowedPG} 3PM` : null;
     const reb     = d.reboundsAllowedPG != null ? `${d.reboundsAllowedPG} reb` : null;
     headline = {
-      icon: '🛡',
+      icon: 'Defense Matchup',
       text: <>{d.teamName} D allows <strong>{[points, threes, reb].filter(Boolean).join(' · ') || '—'}</strong>/g</>,
     };
   } else if (insight?.sport === 'mlb' && ctx.starter?.name) {
     const hand = ctx.starter.hand ? ` (${ctx.starter.hand}HP)` : '';
     const era  = ctx.starter.era != null ? ` · ${ctx.starter.era} ERA` : '';
     headline = {
-      icon: '⚾',
+      icon: 'Starter Matchup',
       text: <>vs <strong>{ctx.starter.name}</strong>{hand}{era}</>,
     };
   }
@@ -298,8 +338,17 @@ function GameContextStrip({ insight }) {
       </div>
       {headline && (
         <div className={styles.gctHeadline}>
-          <span className={styles.gctIcon}>{headline.icon}</span>
-          <span className={styles.gctText}>{headline.text}</span>
+          {headline.title ? (
+            <div className={styles.gctText}>
+              <div className={styles.gctHeadlineTitle}>{headline.title}</div>
+              {headline.detail && <div className={styles.gctHeadlineDetail}>{headline.detail}</div>}
+            </div>
+          ) : (
+            <>
+              <span className={styles.gctIcon}>{headline.icon}</span>
+              <span className={styles.gctText}>{headline.text}</span>
+            </>
+          )}
         </div>
       )}
       {tags.length > 0 && (
@@ -726,6 +775,7 @@ export default function InsightModal({ isOpen, onClose, insight, prop }) {
   const edge   = insight.edgePercentage;
   const sport  = insight.sport || prop?.sport;
   const { summary, factors, risks, raw } = getInsightSections(insight);
+  const summaryLines = getBalancedSummary(insight, summary, sport);
 
   const handleOverlayClick = (e) => {
     if (e.target === overlayRef.current) onClose();
@@ -781,17 +831,25 @@ export default function InsightModal({ isOpen, onClose, insight, prop }) {
               )}
 
               {edge != null && edge !== 0 && (
-                <div className={styles.metric}>
+                <div
+                  className={styles.metric}
+                  title="Model Edge: Difference between the model projection and sportsbook line. Not a win probability."
+                  aria-label="Model Edge metric"
+                >
                   <span className={styles.metricVal} style={{ color: edge > 0 ? '#22c55e' : '#ef4444' }}>
                     {edge > 0 ? '+' : ''}{edge}%
                   </span>
-                  <span className={styles.metricLbl}>Edge</span>
+                  <span className={styles.metricLbl}>Model Edge</span>
                 </div>
               )}
 
-              <div className={styles.metric}>
+              <div
+                className={styles.metric}
+                title="Signal Confidence: Consistency of recent-game support for this lean based on hit rate. Not a win probability."
+                aria-label="Signal Confidence metric"
+              >
                 <span className={styles.metricVal}>{conf}%</span>
-                <span className={styles.metricLbl}>Confidence</span>
+                <span className={styles.metricLbl}>Signal Confidence</span>
               </div>
 
               {(insight.isHighConfidence || insight.isBestValue || insight.dataQuality || insight.aiConfidenceLabel) && (
@@ -805,7 +863,12 @@ export default function InsightModal({ isOpen, onClose, insight, prop }) {
                     <span className={styles.tagWeak}>⚠ Limited Data</span>
                   )}
                   {insight.aiConfidenceLabel && (
-                    <span className={styles.tagAiConf}>AI: {insight.aiConfidenceLabel}</span>
+                    <span
+                      className={styles.tagAiConf}
+                      title="AI Certainty reflects output stability of the AI response. Signal Confidence reflects model/stat reliability."
+                    >
+                      AI Certainty: {insight.aiConfidenceLabel}
+                    </span>
                   )}
                 </div>
               )}
@@ -823,14 +886,14 @@ export default function InsightModal({ isOpen, onClose, insight, prop }) {
 
             {/* Insight sections */}
             <div className={styles.body}>
-              {summary.length > 0 && (
+              {summaryLines.length > 0 && (
                 <motion.div
                   className={styles.summary}
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.25, duration: 0.4 }}
                 >
-                  {summary.map((line, i) => (
+                  {summaryLines.map((line, i) => (
                     <p key={i} className={styles.summaryText}>{line}</p>
                   ))}
                 </motion.div>
@@ -853,7 +916,7 @@ export default function InsightModal({ isOpen, onClose, insight, prop }) {
                 delay={0.45}
               />
 
-              {!factors.length && !risks.length && !summary.length && (
+              {!factors.length && !risks.length && !summaryLines.length && (
                 <motion.div
                   className={styles.rawText}
                   initial={{ opacity: 0 }}

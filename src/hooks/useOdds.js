@@ -7,11 +7,11 @@
 //  - Redux store holds data only for the current session (not persisted)
 //  - On page refresh: Redux clears → fresh fetch from backend → backend serves from Redis or DB
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   fetchGames, fetchProps,
-  clearGamesForSport, clearPropsForEvent,
+  clearGamesForSport, clearPropsForEvent, setPropsForEvent,
   selectGamesLoading, selectGamesError,
   selectPropsLoading, selectPropsError,
 } from '@/store/slices/oddsSlice';
@@ -50,6 +50,7 @@ export function useOdds() {
 /**
  * useProps(sport, eventId)
  * Always fetches fresh from backend when eventId or filter changes.
+ * Also provides refreshFromBookies() for forcing a live API refresh when odds stale.
  */
 export function useProps(sport, eventId) {
   const dispatch     = useDispatch();
@@ -57,6 +58,7 @@ export function useProps(sport, eventId) {
   const isLoading    = useSelector(selectPropsLoading);
   const error        = useSelector(selectPropsError);
   const props        = useSelector((s) => s.odds.propsByEvent[eventId] ?? EMPTY);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const load = () => {
     dispatch(fetchProps({
@@ -77,5 +79,55 @@ export function useProps(sport, eventId) {
     load();
   };
 
-  return { props, isLoading, error, refresh, activeFilter };
+  /**
+   * refreshFromBookies()
+   * Force fetch fresh props directly from bookies API.
+   * Used when user hits "Odds moved too fast" and needs updated lines.
+   */
+  const refreshFromBookies = async () => {
+    setIsRefreshing(true);
+    try {
+      const response = await fetch(
+        `/api/odds/${sport}/games/${eventId}/refresh`,
+        { method: 'POST' }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to refresh from bookies');
+      }
+
+      const result = await response.json();
+      
+      if (result.success && result.data) {
+        // Update Redux store with fresh props
+        dispatch(setPropsForEvent({ eventId, data: result.data }));
+      }
+
+      return {
+        success: true,
+        message: result.message,
+        count: result.data?.length || 0,
+      };
+    } catch (err) {
+      console.error('[useProps] Refresh from bookies error:', err);
+      return {
+        success: false,
+        message: err.message || 'Failed to refresh from bookies',
+        count: 0,
+      };
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  return {
+    props,
+    isLoading,
+    error,
+    refresh,
+    refreshFromBookies,
+    isRefreshing,
+    activeFilter,
+  };
 }

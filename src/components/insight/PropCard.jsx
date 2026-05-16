@@ -24,7 +24,10 @@ function ConfBar({ score }) {
     : score >= 60 ? 'var(--color-warning)'
     : 'var(--color-danger)';
   return (
-    <div className={styles.confBar}>
+    <div 
+      className={styles.confBar}
+      title="Signal Confidence: How consistently recent games support this lean. NOT a win probability."
+    >
       <div className={styles.confTrack}>
         <motion.div
           className={styles.confFill}
@@ -151,6 +154,7 @@ export default function PropCard({ prop, sport }) {
             {displayEdge != null && displayEdge !== 0 && (
               <span
                 className={styles.edgePill}
+                title={displayEdge > 0 ? 'Projected value exceeds line (Over lean)' : 'Projected value below line (Under lean)'}
                 style={{
                   color: displayEdge > 0 ? 'var(--color-accent)' : 'var(--color-danger)',
                   background: displayEdge > 0 ? 'var(--color-accent-dim)' : 'rgba(var(--color-danger-rgb), 0.10)',
