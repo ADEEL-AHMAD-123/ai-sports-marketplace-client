@@ -300,9 +300,15 @@
     z-index: 100;
     transform: translateX(-100%);
     transition: transform var(--transition-normal);
+    /* No box-shadow when closed — it bled past the off-canvas position and
+       cast a visible shadow on the viewport's left edge */
+    box-shadow: none;
+  }
+  /* Shadow only appears once the drawer is actually on-screen */
+  .sidebarOpen {
+    transform: translateX(0);
     box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
   }
-  .sidebarOpen { transform: translateX(0); }
   .drawerCloseBtn { display: inline-flex; }
 
   /* Now the body row only contains <main> in normal flow.
