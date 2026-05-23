@@ -53,7 +53,7 @@ export const CRON_JOBS = [
     label: 'Morning Scraper',
     icon:  '📅',
     desc:  "Fetches today's games from The Odds API for all active sports and saves them to MongoDB.",
-    when:  'Runs automatically at 7AM UTC every day.',
+    when:  'Runs automatically at 7:00 AM and 4:00 PM ET every day.',
     group: 'scheduled',
   },
   {
