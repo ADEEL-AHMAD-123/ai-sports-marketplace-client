@@ -183,6 +183,7 @@ export default function PropCard({ prop, sport }) {
         <div className={styles.cardFooter}>
           {prop.bookmaker && <span className={styles.bookmaker}>{prop.bookmaker}</span>}
           <button
+            type="button"
             className={`${styles.cta} ${isUnlocked ? styles.ctaDone : ''}`}
             onClick={handleClick}
             disabled={isUnlocking || isInjuryBlocked}

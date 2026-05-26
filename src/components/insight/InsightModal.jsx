@@ -263,6 +263,14 @@ function GameContextStrip({ insight }) {
   const oppLabel = ctx.opponentAbbr || ctx.opponentName || null;
   const venueLabel = ctx.venue === 'home' ? 'HOME' : ctx.venue === 'away' ? 'AWAY' : null;
 
+  // Fallback when the player's side can't be resolved (common for soccer):
+  // show the full matchup so the strip is meaningful instead of just a time.
+  const awaySide = ctx.awayAbbr || ctx.awayTeam || null;
+  const homeSide = ctx.homeAbbr || ctx.homeTeam || null;
+  const matchupLabel = (!oppLabel && awaySide && homeSide)
+    ? `${awaySide} vs ${homeSide}`
+    : null;
+
   // Sport-specific headline matchup line
   let headline = null;
   if (insight?.sport === 'nhl' && ctx.goalie?.name) {
@@ -318,17 +326,24 @@ function GameContextStrip({ insight }) {
     });
   }
 
-  if (!oppLabel && !time && !headline) return null;
+  // Don't render a box for time-only — that just looks like a bug. The strip
+  // needs at least an opponent, a matchup, or a sport-specific headline to
+  // earn its space.
+  if (!oppLabel && !matchupLabel && !headline) return null;
 
   return (
     <div className={styles.gameContext}>
       <div className={styles.gctTopRow}>
-        {oppLabel && (
+        {oppLabel ? (
           <span className={styles.gctOpp}>
             <span className={styles.gctVs}>vs</span>
             <strong>{oppLabel}</strong>
           </span>
-        )}
+        ) : matchupLabel ? (
+          <span className={styles.gctOpp}>
+            <strong>{matchupLabel}</strong>
+          </span>
+        ) : null}
         {venueLabel && (
           <span className={`${styles.gctVenue} ${ctx.venue === 'home' ? styles.gctVenueHome : styles.gctVenueAway}`}>
             {venueLabel}
@@ -689,6 +704,100 @@ function StatWindows({ insight }) {
     );
   }
 
+  // Soccer — season baseline + recent form, with per-match splits when present.
+  // The split rows skip the stat this prop is already about (e.g. don't show
+  // "SOT/match" again when the prop IS shots-on-target — the headline row
+  // covers it). Recent Form labels each row with its actual game window so
+  // "0.54 vs 0.55" reads as "Last 8 vs Last 5" instead of cryptic "(8)/(5)".
+  if (sport === 'soccer') {
+    const statLabel = getStatLabel('soccer', statType);
+    const formCount = insight?.formGamesCount     ?? 5;
+    const edgeCount = insight?.edgeGamesCount     ?? 8;
+    const baseCount = insight?.baselineGamesCount ?? 15;
+    const formNum   = parseFloat(insight.formStatAvg);
+    const lineNum   = parseFloat(insight.bettingLine);
+    const trendUp   = !isNaN(formNum) && !isNaN(lineNum) && formNum > lineNum;
+    const trendClr  = (!isNaN(formNum) && !isNaN(lineNum)) ? (trendUp ? '#22c55e' : '#ef4444') : undefined;
+
+    // Context splits — exclude the prop's own stat (already shown as the
+    // headline row) and any null entries.
+    const splitRows = [
+      { key: 'goals',           label: 'Goals/match',   value: insight.soccerGoalsPerG },
+      { key: 'assists',         label: 'Assists/match', value: insight.soccerAssistsPerG },
+      { key: 'shots_on_target', label: 'SOT/match',     value: insight.soccerShotsOnTargetPerG },
+    ].filter((r) => r.key !== statType && r.value != null);
+
+    return (
+      <div className={styles.windows}>
+        <div className={styles.window}>
+          <div className={styles.windowHdr}>
+            <span className={styles.windowDot} style={{ background: '#6366f1' }} />
+            <span className={styles.windowTitle}>Season Baseline</span>
+            <span className={styles.windowSub}>Last {baseCount} matches</span>
+          </div>
+          <StatRow label={`${statLabel}/match`} value={insight.baselineStatAvg} />
+          {splitRows.map((r) => (
+            <StatRow key={r.key} label={r.label} value={r.value} />
+          ))}
+        </div>
+        <div className={styles.window}>
+          <div className={styles.windowHdr}>
+            <span className={styles.windowDot} style={{ background: '#22c55e' }} />
+            <span className={styles.windowTitle}>Recent Form</span>
+            <span className={styles.windowSub}>{statLabel} average</span>
+          </div>
+          <StatRow label={`Last ${edgeCount} matches`} value={insight.focusStatAvg} />
+          <StatRow label={`Last ${formCount} matches`} value={insight.formStatAvg} highlight={trendClr} />
+          {insight.soccerMinutesPerG != null && (
+            <StatRow label="Minutes/match" value={`${insight.soccerMinutesPerG}'`} />
+          )}
+          {insight.soccerConversionPct != null && (
+            <StatRow label="Shot conversion" value={`${insight.soccerConversionPct}%`} />
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // NFL — season baseline + recent form (three-window averages)
+  if (sport === 'nfl') {
+    const statLabel = getStatLabel('nfl', statType);
+    const formCount = insight?.formGamesCount     ?? 5;
+    const edgeCount = insight?.edgeGamesCount     ?? 8;
+    const baseCount = insight?.baselineGamesCount ?? 17;
+    const formNum   = parseFloat(insight.formStatAvg);
+    const lineNum   = parseFloat(insight.bettingLine);
+    const trendUp   = !isNaN(formNum) && !isNaN(lineNum) && formNum > lineNum;
+    const trendClr  = (!isNaN(formNum) && !isNaN(lineNum)) ? (trendUp ? '#22c55e' : '#ef4444') : undefined;
+
+    return (
+      <div className={styles.windows}>
+        <div className={styles.window}>
+          <div className={styles.windowHdr}>
+            <span className={styles.windowDot} style={{ background: '#6366f1' }} />
+            <span className={styles.windowTitle}>Season Baseline</span>
+            <span className={styles.windowSub}>Last {baseCount} games</span>
+          </div>
+          <StatRow label={`${statLabel}/g`} value={insight.baselineStatAvg} />
+          <StatRow label={`${statLabel}/g (${edgeCount}g)`} value={insight.focusStatAvg} />
+        </div>
+        <div className={styles.window}>
+          <div className={styles.windowHdr}>
+            <span className={styles.windowDot} style={{ background: '#22c55e' }} />
+            <span className={styles.windowTitle}>Recent Form</span>
+            <span className={styles.windowSub}>Last {formCount} games</span>
+          </div>
+          <StatRow label={`${statLabel}/g`} value={insight.formStatAvg} highlight={trendClr} />
+          <StatRow
+            label="vs Line"
+            value={!isNaN(formNum) && !isNaN(lineNum) ? `${trendUp ? '▲ OVER' : '▼ UNDER'} signal` : '—'}
+            highlight={trendClr}
+          />
+        </div>
+      </div>
+    );
+  }
+
   // NBA — reads existing flat fields (unchanged)
   const {
     focusStatAvg, bettingLine: line, statType: nbaStatType,
@@ -753,6 +862,11 @@ function hasStatData(insight) {
   }
   if (sport === 'nhl') {
     return insight.focusStatAvg != null || insight.shotsPerG != null;
+  }
+  if (sport === 'soccer' || sport === 'nfl') {
+    return insight.focusStatAvg != null
+      || insight.formStatAvg != null
+      || insight.baselineStatAvg != null;
   }
   return insight.baselineStatAvg != null || insight.formPoints != null;
 }
@@ -882,7 +996,9 @@ export default function InsightModal({ isOpen, onClose, insight, prop }) {
             {/* Stat windows — only shown when data exists */}
             {hasStatData(insight) && <StatWindows insight={insight} />}
 
-            <div className={styles.divider} style={{ margin: '0 28px 0' }} />
+            {/* Uses the default .divider margin so there's breathing room
+                between the stat windows and the AI summary below. */}
+            <div className={styles.divider} />
 
             {/* Insight sections */}
             <div className={styles.body}>

@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import toast from 'react-hot-toast';
 import { useProps } from '@/hooks/useOdds';
 import { setActiveFilter, selectActiveFilter, resetFilter } from '@/store/slices/uiSlice';
 import PropCard from '@/components/insight/PropCard';
@@ -11,8 +10,7 @@ import { PropCardSkeleton } from '@/components/ui/Skeleton';
 import { getFilterDefsForSport, getSportConfig } from '@/config/sportConfig';
 import styles from './MatchPage.module.scss';
 
-const BackIcon    = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>;
-const RefreshIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>;
+const BackIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>;
 
 // Team logo with initials fallback
 function TeamLogo({ logoUrl, name, size = 48 }) {
@@ -82,7 +80,7 @@ export default function MatchPage() {
 
   useEffect(() => { dispatch(resetFilter()); }, [eventId]);
 
-  const { props, isLoading, error, refresh, refreshFromBookies, isRefreshing } = useProps(sport, eventId);
+  const { props, isLoading, error, refresh } = useProps(sport, eventId);
 
   const firstProp = props?.[0];
   useEffect(() => {
@@ -174,24 +172,6 @@ export default function MatchPage() {
                   </>
                 )}
               </span>
-              <button
-                className={styles.refreshBtn}
-                onClick={async () => {
-                  const loadingToast = toast.loading('Fetching live odds from bookies...');
-                  const result = await refreshFromBookies();
-                  toast.dismiss(loadingToast);
-                  if (result.success) {
-                    toast.success(`Updated ${result.count} props from bookies`);
-                  } else {
-                    toast.error(result.message);
-                  }
-                }}
-                disabled={isRefreshing}
-                title="Refresh props from live bookies"
-              >
-                <RefreshIcon />
-                <span>{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
-              </button>
             </div>
           </header>
 

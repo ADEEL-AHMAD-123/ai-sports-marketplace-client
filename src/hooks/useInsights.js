@@ -14,6 +14,8 @@ import { setCredits, selectCredits, selectIsLoggedIn } from '@/store/slices/auth
 
 const NULL = null;
 
+const API_BASE = (import.meta.env.VITE_API_URL || '/api').replace(/\/$/, '');
+
 const buildInsightKey = ({ playerName, statType, eventId, oddsEventId }) => {
   const resolvedEventId = eventId ?? oddsEventId;
   return `${playerName}_${statType}_${resolvedEventId}`;
@@ -60,6 +62,22 @@ export function useUnlock(prop, sport) {
     },
   }));
 
+  // Silently pull fresh lines from bookies, then re-sync props into state.
+  // Best-effort: a cooldown (429) or any failure is swallowed — the unlock
+  // retry still proceeds with the server-reported current line. The user
+  // never sees this happen; there is no manual refresh step.
+  const silentLineRefresh = async () => {
+    try {
+      await fetch(`${API_BASE}/odds/${sport}/games/${prop.oddsEventId}/refresh`, {
+        method: 'POST',
+        headers: { Accept: 'application/json' },
+      });
+    } catch {
+      /* ignore — best-effort */
+    }
+    refreshProps();
+  };
+
   const unlock = async () => {
     // Already unlocked — return immediately so modal opens
     if (isUnlocked && insight) return { success: true, alreadyUnlocked: true };
@@ -75,13 +93,17 @@ export function useUnlock(prop, sport) {
 
     let result = await attemptUnlock(prop.line);
 
-    // If the line moved, auto-retry once with the latest line from server.
-    if (unlockInsight.rejected.match(result) && result.payload?.status === 409) {
-      const currentLine = result.payload?.currentLine;
-      if (typeof currentLine === 'number' && currentLine !== prop.line) {
-        toast('Line moved. Retrying with latest odds...', { icon: '↻' });
-        result = await attemptUnlock(currentLine);
-      }
+    // Odds moved while unlocking — refresh from bookies and retry once,
+    // transparently. The user is never asked to click a refresh button.
+    const oddsMoved =
+      (unlockInsight.rejected.match(result)  && result.payload?.status === 409) ||
+      (unlockInsight.fulfilled.match(result) && result.payload?.preflightFailed);
+
+    if (oddsMoved) {
+      const serverLine = result.payload?.currentLine;
+      await silentLineRefresh();
+      const retryLine = typeof serverLine === 'number' ? serverLine : prop.line;
+      result = await attemptUnlock(retryLine);
     }
 
     if (unlockInsight.fulfilled.match(result)) {
@@ -94,41 +116,42 @@ export function useUnlock(prop, sport) {
         dispatch(setCredits(Math.max(0, credits - 1)));
       }
 
+      // Still blocked after the silent refresh + retry — soft, neutral note.
       if (payload?.preflightFailed) {
-        toast.error(payload.message || 'Odds shifted — please refresh.');
+        toast('Odds are updating — give it a moment and try again.', { icon: '↻' });
+        refreshProps();
         return { success: false };
       }
 
-      if (payload?.creditDeducted) {
-        toast.success('Insight unlocked! 1 credit used.');
-      } else {
-        toast.success('Retrieved from cache — no credit used.');
-      }
-
-      refreshProps();
-
+      toast.success(payload?.creditDeducted
+        ? 'Insight unlocked! 1 credit used.'
+        : 'Insight ready — no credit used.');
+      // No props re-fetch here — the unlock state lives in Redux and the card
+      // re-renders from it. Re-fetching the whole list caused a skeleton flash
+      // that looked like a page refresh. (The odds-moved path above already
+      // re-synced via silentLineRefresh when the line actually changed.)
+      dispatch(clearBlockedInsight(key));
       return { success: true };
-    } else {
-      const status = result.payload?.status;
-      const injuryInfo = result.payload?.details?.injuryInfo || result.payload?.injuryInfo;
-      if (status === 402)      toast.error('Not enough credits.');
-      else if (status === 422 && injuryInfo?.skip) {
-        const fallback = injuryInfo?.reason
-          ? `Player unavailable (${injuryInfo.reason}). Insight not generated.`
-          : 'Player unavailable. Insight not generated.';
-        toast.error(result.payload?.message || fallback);
-      }
-      else if (status === 409) {
-        toast.error(
-          'Odds moved too fast. Click the Refresh button to get live updates from bookies, then try again.',
-          { duration: 4000 }
-        );
-        refreshProps();
-      } else {
-        toast.error(result.payload?.message || 'Failed to unlock insight.');
-      }
-      return { success: false };
     }
+
+    // Rejected
+    const status     = result.payload?.status;
+    const injuryInfo = result.payload?.details?.injuryInfo || result.payload?.injuryInfo;
+    if (status === 402) {
+      toast.error('Not enough credits.');
+    } else if (status === 422 && injuryInfo?.skip) {
+      const fallback = injuryInfo?.reason
+        ? `Player unavailable (${injuryInfo.reason}). Insight not generated.`
+        : 'Player unavailable. Insight not generated.';
+      toast.error(result.payload?.message || fallback);
+    } else if (status === 409) {
+      // Odds still moving after the silent refresh + retry — soft, neutral.
+      toast('Odds are updating — give it a moment and try again.', { icon: '↻' });
+      refreshProps();
+    } else {
+      toast.error(result.payload?.message || 'Failed to unlock insight.');
+    }
+    return { success: false };
   };
 
   return {

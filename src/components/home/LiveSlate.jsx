@@ -163,7 +163,7 @@ export default function LiveSlate() {
         {error && (
           <div className={styles.empty}>
             <p className={styles.emptyTitle}>Backend offline</p>
-            <p className={styles.emptySub}>Start your server at localhost:5000 to load live games.</p>
+            <p className={styles.emptySub}>Start your server at localhost:5050 to load live games.</p>
             <button className={styles.retryBtn} onClick={refresh}>Retry</button>
           </div>
         )}
