@@ -126,16 +126,16 @@ export default function LiveSlate() {
   const activeSport = useSelector(selectActiveSport);
   const { games, isLoading, error, refresh } = useOdds();
 
-  // Only show games that have props available
-  const gamesWithProps = games.filter((g) => Number(g.propCount || 0) > 0 || g.hasProps);
-
-  const sortedGames = [...gamesWithProps].sort((a, b) => {
+  // Show every tracked game — cards without props yet render a "Lines
+  // pending" chip via GameBadge below, so users see them in the 48h window
+  // even before the propWatcher's first fetch.
+  const sortedGames = [...games].sort((a, b) => {
     if (a.status === 'live' && b.status !== 'live') return -1;
     if (b.status === 'live' && a.status !== 'live') return 1;
     return new Date(a.startTime) - new Date(b.startTime);
   });
 
-  const liveCount = gamesWithProps.filter(g => g.status === 'live').length;
+  const liveCount = games.filter(g => g.status === 'live').length;
 
   return (
     <section className={styles.section}>
@@ -150,7 +150,7 @@ export default function LiveSlate() {
             <p className={styles.sub}>Click any game to view props and unlock AI scouting reports</p>
           </div>
           {!isLoading && !error && (
-            <span className={styles.count}>{gamesWithProps.length} {gamesWithProps.length === 1 ? 'game' : 'games'}</span>
+            <span className={styles.count}>{games.length} {games.length === 1 ? 'game' : 'games'}</span>
           )}
         </div>
 
@@ -168,11 +168,11 @@ export default function LiveSlate() {
           </div>
         )}
 
-        {!isLoading && !error && gamesWithProps.length === 0 && (
+        {!isLoading && !error && games.length === 0 && (
           <div className={styles.empty}>
-            <p className={styles.emptyTitle}>No {activeSport.toUpperCase()} games with props right now</p>
+            <p className={styles.emptyTitle}>No {activeSport.toUpperCase()} games this week</p>
             <p className={styles.emptySub}>
-              Markets update during the day. Check back shortly or tap retry.
+              Nothing on the schedule for the next 7 days — likely off-season or a bye week. The schedule refreshes each morning.
             </p>
             <button className={styles.retryBtn} onClick={refresh}>Retry</button>
           </div>

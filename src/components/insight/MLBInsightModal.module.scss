@@ -1,0 +1,864 @@
+/* MLBInsightModal.module.scss
+ *
+ * Dark, editorial. No colored left-rails on panels. Every stat uses
+ * tabular numerals so decimals align vertically down the modal.
+ * Palette is deliberately narrow:
+ *   surface   #0f1418  → modal bg
+ *   raise-1   rgba white 3%  → subtle cards
+ *   raise-2   rgba white 6%  → chips, header row backgrounds
+ *   text      #e6ebf0
+ *   text-sub  #8b96a3
+ *   good      #22c55e / muted #86a693
+ *   bad       #ef4444 / muted #c99a9a
+ *   accent    #f59e0b (only for "watch out" / caution)
+ *   neutral   #6b7280
+ *
+ * No border-radius above 14px on any panel — keeps geometry uniform.
+ * No shadows except a single elevation on the modal itself.
+ */
+
+/* ── design tokens ────────────────────────────────────────── */
+$surface:      #0f1418;
+$raise1:       rgba(255,255,255,0.035);
+$raise2:       rgba(255,255,255,0.065);
+$hairline:     rgba(255,255,255,0.08);
+$hairline2:    rgba(255,255,255,0.14);
+
+$text:         #e6ebf0;
+$text-sub:     #8b96a3;
+$text-mute:    #64748b;
+
+$good:         #22c55e;
+$good-soft:    rgba(34,197,94,0.14);
+$good-bord:    rgba(34,197,94,0.30);
+$good-muted:   #86a693;
+
+$bad:          #ef4444;
+$bad-soft:     rgba(239,68,68,0.13);
+$bad-bord:     rgba(239,68,68,0.28);
+$bad-muted:    #c99a9a;
+
+$accent:       #f59e0b;
+$accent-soft:  rgba(245,158,11,0.13);
+$info:         #60a5fa;
+$info-soft:    rgba(96,165,250,0.13);
+
+$radius-lg:    14px;
+$radius-md:    10px;
+$radius-sm:    6px;
+
+/* ── overlay + modal shell ────────────────────────────────── */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 1000;
+  animation: overlayFade 0.25s ease;
+}
+@keyframes overlayFade { from { opacity: 0; } to { opacity: 1; } }
+
+.modal {
+  --gauge-track: rgba(255,255,255,0.08);
+  position: relative;
+  width: 100%;
+  max-width: 680px;
+  max-height: min(92vh, 900px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: $surface;
+  color: $text;
+  border-radius: $radius-lg;
+  border: 0.5px solid $hairline;
+  box-shadow: 0 24px 64px -12px rgba(0,0,0,0.6), 0 0 0 0.5px $hairline;
+  font-family: 'Inter', 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-feature-settings: 'tnum' 1, 'cv02', 'cv03';
+  /* Hide scrollbar in webkit but keep functional */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.15) transparent;
+  &::-webkit-scrollbar { width: 6px; }
+  &::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+}
+
+.rail {
+  height: 3px;
+  background: $good;
+  .modalUnder & { background: $bad; }
+}
+
+/* ── header ───────────────────────────────────────────────── */
+.header {
+  /* Right padding is bumped so the absolutely-positioned close button
+   * always has clear space above the player meta row. */
+  padding: 22px 60px 6px 26px;
+}
+.headerLeft { min-width: 0; }
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: $good;
+  .modalUnder & { color: $bad; }
+}
+
+.playerName {
+  margin: 8px 0 0;
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+  color: $text;
+}
+
+/* Labeled meta row. Each cell is a tiny "field" — small-caps label on
+ * top, value below. Reads left-to-right as: what team, what prop, what
+ * the sportsbook set the line at. No jargon, no chips users have to
+ * decode. Cells share the same rhythm so they align cleanly. */
+.playerMeta {
+  display: flex;
+  align-items: flex-start;
+  gap: 22px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+.metaCell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.metaKey {
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: $text-mute;
+  line-height: 1;
+}
+.metaVal {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: $text;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.metaCellInjury {
+  .metaKey { color: $accent; }
+  .metaVal { color: #fbbf24; }
+}
+
+.sep { color: $text-mute; opacity: 0.6; }
+
+/* Close button — hoisted out of the header flow so it stays in the same
+ * top-right corner on desktop AND mobile. Absolutely positioned relative
+ * to the modal (.modal has position:relative). z-index guarantees it
+ * sits above the top rail and any header content. */
+.closeBtn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 10;
+  background: $raise2;
+  border: 0.5px solid $hairline;
+  color: $text-sub;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  &:hover { background: rgba(255,255,255,0.09); color: $text; }
+}
+
+/* Plain-language matchup strip. Sits below the header and answers
+ * "where is this player playing, and against whom" without abbreviations
+ * or symbols users have to decode. */
+.matchupStrip {
+  margin: 12px 26px 4px;
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: $raise1;
+  border: 0.5px solid $hairline;
+  border-radius: $radius-md;
+}
+.matchupStripHome { border-color: rgba(96,165,250,0.25); }
+.matchupStripAway { border-color: rgba(255,255,255,0.10); }
+
+.matchupStripIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: $raise2;
+  color: $text-sub;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.matchupStripHome .matchupStripIcon { background: rgba(96,165,250,0.12); color: #93c5fd; }
+.matchupStripAway .matchupStripIcon { background: $raise2; color: $text-sub; }
+
+.matchupStripText { min-width: 0; }
+.matchupStripMain {
+  font-size: 13.5px;
+  color: $text-sub;
+  line-height: 1.3;
+  strong { color: $text; font-weight: 500; }
+}
+.matchupStripVenue {
+  font-size: 11.5px;
+  color: $text-mute;
+  margin-top: 2px;
+}
+
+.matchupStripBadge {
+  padding: 3px 10px;
+  border-radius: $radius-sm;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.matchupStripBadgeHome {
+  background: rgba(96,165,250,0.14);
+  color: #93c5fd;
+}
+.matchupStripBadgeAway {
+  background: $raise2;
+  color: $text-sub;
+}
+
+/* ── verdict row ──────────────────────────────────────────── */
+.verdictRow {
+  padding: 16px 26px 12px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 14px;
+  align-items: stretch;
+}
+
+.verdict {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 20px 14px;
+  border-radius: $radius-lg;
+  min-height: 88px;
+  justify-content: center;
+}
+.verdictOver {
+  background: $good-soft;
+  border: 0.5px solid $good-bord;
+  color: $good;
+}
+.verdictUnder {
+  background: $bad-soft;
+  border: 0.5px solid $bad-bord;
+  color: $bad;
+}
+
+/* Small label at the top of the pill — makes it unambiguous that this
+ * is the AI's recommendation, not a status label users have to interpret. */
+.verdictEyebrow {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 500;
+  opacity: 0.85;
+}
+.verdictBody {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.verdictIcon {
+  width: 40px;
+  height: 40px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.verdictText { display: flex; flex-direction: column; gap: 2px; }
+.verdictLabel {
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1;
+}
+.verdictSub {
+  font-size: 12px;
+  color: $text-sub;
+  strong { color: $text; font-weight: 500; font-variant-numeric: tabular-nums; }
+}
+
+.verdictSupport {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.metric {
+  background: $raise1;
+  border-radius: $radius-lg;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 88px;
+}
+.metricVal { font-size: 20px; font-weight: 500; line-height: 1; }
+.metricLbl { font-size: 10.5px; color: $text-sub; margin-top: 6px; letter-spacing: 0.02em; }
+.metric_good { .metricVal { color: $good; } }
+.metric_bad  { .metricVal { color: $bad;  } }
+.metric_muted { .metricVal { color: $text-sub; } }
+
+/* Confidence gauge */
+.gauge {
+  background: $raise1;
+  border-radius: $radius-lg;
+  padding: 10px 14px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 96px;
+  color: $good;
+}
+.gauge_low  { color: $bad; }
+.gauge_mid  { color: $accent; }
+.gauge_high { color: $good; }
+.gaugeVal {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1;
+  margin-top: -6px;
+  span { font-size: 10px; margin-left: 1px; opacity: 0.7; }
+}
+.gaugeLbl {
+  font-size: 10px;
+  color: $text-sub;
+  margin-top: 4px;
+  letter-spacing: 0.03em;
+}
+
+/* Meta tags row */
+.metaTags {
+  display: flex;
+  gap: 6px;
+  padding: 0 26px 4px;
+  flex-wrap: wrap;
+}
+.tag {
+  padding: 3px 9px;
+  border-radius: $radius-sm;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+.tagHC {
+  background: rgba(34,197,94,0.12);
+  color: #4ade80;
+}
+.tagBV {
+  background: rgba(245,158,11,0.13);
+  color: #fbbf24;
+}
+.tagAI {
+  background: $raise2;
+  color: $text-sub;
+}
+
+/* ── projection bar ───────────────────────────────────────── */
+.projBar {
+  margin: 12px 26px 4px;
+  background: $raise1;
+  border-radius: $radius-lg;
+  padding: 14px 16px 22px;
+}
+.projHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 14px;
+}
+.projSub { font-size: 11px; color: $text-sub; }
+.projTrack {
+  position: relative;
+  height: 14px;
+}
+.projTrackBase {
+  position: absolute;
+  top: 4px; left: 0; right: 0;
+  height: 6px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 3px;
+}
+.projFill {
+  position: absolute;
+  top: 4px;
+  height: 6px;
+  border-radius: 3px;
+  min-width: 4px;
+}
+.projFillOver  { background: linear-gradient(90deg, rgba(34,197,94,0.35), rgba(34,197,94,0.75)); }
+.projFillUnder { background: linear-gradient(90deg, rgba(239,68,68,0.35), rgba(239,68,68,0.75)); }
+
+.projMarker {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.projMarkerLine {
+  width: 2px;
+  height: 14px;
+}
+.projMarkerLineNeutral { background: #94a3b8; }
+.projMarkerLineOver    { background: $good; }
+.projMarkerLineUnder   { background: $bad; }
+.projMarkerLabel {
+  position: absolute;
+  font-size: 10.5px;
+  white-space: nowrap;
+  color: $text-sub;
+  strong { color: $text; font-weight: 500; }
+}
+.projMarkerLabelTop    { top: -14px; }
+.projMarkerLabelBottom { bottom: -14px; }
+.projLabelOver  strong { color: $good; }
+.projLabelUnder strong { color: $bad; }
+
+/* ── recent form sparkline ────────────────────────────────── */
+.spark {
+  margin: 10px 26px 4px;
+  background: $raise1;
+  border-radius: $radius-lg;
+  padding: 14px 16px 12px;
+}
+.sparkHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 12px;
+}
+.sparkSub {
+  font-size: 11px;
+  color: $text-sub;
+  strong { color: $text; font-weight: 500; }
+}
+.sparkSubStrong { color: $good !important; }
+.sparkChart {
+  position: relative;
+  height: 62px;
+}
+.sparkLine {
+  position: absolute;
+  left: 0; right: 0;
+  height: 1px;
+  background: rgba(148,163,184,0.55);
+  z-index: 2;
+  &::before {
+    content: '';
+    position: absolute;
+    top: -2px; bottom: -2px;
+    left: 0; right: 0;
+    background:
+      repeating-linear-gradient(to right, rgba(148,163,184,0.55) 0 4px, transparent 4px 8px);
+    height: 1px;
+    top: 0;
+  }
+}
+.sparkLineLabel {
+  position: absolute;
+  left: 0;
+  top: -13px;
+  font-size: 9.5px;
+  color: #94a3b8;
+  background: $surface;
+  padding: 0 4px;
+}
+.sparkBars {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  gap: 5px;
+  z-index: 1;
+}
+.sparkBar {
+  flex: 1;
+  min-width: 8px;
+  border-radius: 3px 3px 0 0;
+  transform-origin: bottom;
+}
+.sparkBarBeat { background: $good; }
+.sparkBarMiss { background: rgba(255,255,255,0.14); }
+
+.sparkAxis {
+  display: flex;
+  gap: 5px;
+  margin-top: 6px;
+}
+.sparkAxisLbl {
+  flex: 1;
+  min-width: 8px;
+  font-size: 10px;
+  color: $text-mute;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.sparkAxisLblGood {
+  color: $good;
+  font-weight: 500;
+}
+
+/* ── matchup panel ────────────────────────────────────────── */
+.matchup {
+  margin: 10px 26px 4px;
+  background: $raise1;
+  border-radius: $radius-lg;
+  padding: 12px 16px 4px;
+}
+.matchupHeader {
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+  .eyebrow { color: $text-sub; }
+}
+
+.matchupRow {
+  display: grid;
+  grid-template-columns: 74px 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 0;
+  border-top: 0.5px solid $hairline;
+  &:first-of-type { border-top: none; }
+}
+.matchupRowLabel {
+  font-size: 11px;
+  color: $text-sub;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.matchupRowMain { min-width: 0; }
+
+.starterName {
+  font-size: 14.5px;
+  font-weight: 500;
+  color: $text;
+  line-height: 1.25;
+}
+.matchupVs {
+  color: $text-mute;
+  font-weight: 400;
+  margin: 0 6px;
+  font-size: 12px;
+}
+.matchupNote {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: $text-mute;
+  margin-left: 10px;
+  padding: 1px 8px;
+  background: $raise2;
+  border-radius: $radius-sm;
+  letter-spacing: 0.03em;
+  text-transform: lowercase;
+}
+
+.starterMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 6px;
+  font-size: 11.5px;
+  color: $text-sub;
+
+  span { display: inline-flex; align-items: baseline; gap: 4px; }
+}
+.metaLbl { color: $text-sub; }
+.metaNum { color: $text; font-weight: 500; font-variant-numeric: tabular-nums; }
+.metaNumStrong { color: $text; font-weight: 500; }
+.metaSample {
+  color: $text-mute;
+  font-size: 10.5px;
+  font-style: italic;
+}
+
+.matchupBadge {
+  padding: 3px 9px;
+  border-radius: $radius-sm;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.badge_good    { background: $good-soft; color: #4ade80; }
+.badge_bad     { background: $bad-soft;  color: #fca5a5; }
+.badge_neutral { background: $raise2;    color: $text-sub; }
+
+/* Pitcher park strip (compact) */
+.pitcherPark {
+  margin: 10px 26px 4px;
+  background: $raise1;
+  border-radius: $radius-lg;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  .eyebrow { color: $text-sub; }
+}
+.pitcherParkName { font-size: 13px; color: $text; font-weight: 500; }
+.pitcherParkFactor { font-size: 11.5px; color: $text-sub; font-variant-numeric: tabular-nums; }
+
+/* ── analysis (summary + reasons) ─────────────────────────── */
+.analysis {
+  padding: 16px 26px 8px;
+}
+.summary {
+  margin: 0 0 18px;
+  padding: 12px 16px;
+  background: rgba(255,255,255,0.025);
+  border-left: 2px solid $hairline2;
+  border-radius: 0 $radius-md $radius-md 0;
+  font-family: 'Charter', 'Georgia', serif;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: #d0d8e0;
+  font-style: italic;
+  letter-spacing: 0.005em;
+}
+
+.reasonsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  @media (max-width: 620px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+.reasons {}
+.reasonsHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+.reasonsHeadGood { color: $good; }
+.reasonsHeadBad  { color: $accent; }
+
+.reasonsList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.reasonItem {
+  display: grid;
+  grid-template-columns: 14px 1fr;
+  gap: 8px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #c8d1da;
+}
+.reasonDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  margin-top: 8px;
+  justify-self: end;
+}
+.reasonDotGood { background: $good; }
+.reasonDotBad  { background: $accent; }
+
+/* ── footer ───────────────────────────────────────────────── */
+.footer {
+  margin-top: 8px;
+  border-top: 0.5px solid $hairline;
+  background: rgba(0,0,0,0.15);
+}
+
+/* Row 1: hint text + action buttons. */
+.footerActions {
+  padding: 14px 26px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.footerActionsHint {
+  font-size: 11px;
+  color: $text-mute;
+  max-width: 220px;
+  line-height: 1.4;
+}
+.footerBtns { display: flex; gap: 8px; }
+
+/* Row 2: full legal notice. Sits at the very bottom of the modal on its
+ * own tinted band so it feels distinct from the action row above. */
+.legalNotice {
+  display: grid;
+  grid-template-columns: 16px 1fr;
+  gap: 10px;
+  padding: 12px 26px 16px;
+  background: rgba(0,0,0,0.35);
+  border-top: 0.5px solid $hairline;
+}
+.legalIcon {
+  color: $text-mute;
+  margin-top: 2px;
+}
+.legalText {
+  font-size: 10.5px;
+  color: $text-mute;
+  line-height: 1.55;
+
+  p {
+    margin: 0 0 6px;
+    &:last-child { margin-bottom: 0; }
+  }
+  strong { color: $text-sub; font-weight: 500; }
+}
+.legalLink {
+  color: $info;
+  text-decoration: none;
+  border-bottom: 0.5px dotted rgba(96,165,250,0.5);
+  &:hover { border-bottom-style: solid; }
+}
+
+.copyBtn {
+  background: $raise2;
+  border: 0.5px solid $hairline;
+  color: $text;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.15s, border-color 0.15s;
+  &:hover { background: rgba(255,255,255,0.09); border-color: $hairline2; }
+}
+.copyBtnDone {
+  background: $good-soft;
+  border-color: $good-bord;
+  color: #4ade80;
+}
+
+.doneBtn {
+  background: $good;
+  border: none;
+  color: $surface;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 8px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  &:hover  { background: #16a34a; }
+  &:active { transform: scale(0.98); }
+  .modalUnder & { background: $bad;
+    &:hover { background: #dc2626; }
+  }
+}
+
+/* ── small viewports ─────────────────────────────────────── */
+@media (max-width: 620px) {
+  .header, .verdictRow, .metaTags, .projBar, .spark, .matchup, .pitcherPark, .analysis, .footer {
+    padding-left: 18px;
+    padding-right: 18px;
+    margin-left: 0;
+    margin-right: 0;
+  }
+  /* Extra right room so the abs-positioned close button doesn't overlap
+   * the eyebrow / player name on narrow screens. */
+  .header { padding-right: 56px; }
+
+  .projBar, .spark, .matchup, .pitcherPark, .matchupStrip { margin: 10px 14px 4px; }
+
+  .verdictRow {
+    grid-template-columns: 1fr;
+    .verdictSupport {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  /* Matchup rows — stack label on top, main content + badge share the
+   * next row. The badge now sits BESIDE the primary name (auto column)
+   * instead of stealing width from the stats block below. */
+  .matchupRow {
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    gap: 4px 10px;
+    padding: 14px 0;
+  }
+  .matchupRowLabel {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: $text-sub;
+    margin-bottom: 2px;
+  }
+  .matchupRowMain {
+    grid-column: 1 / 2;
+    grid-row: 2;
+  }
+  .matchupBadge {
+    grid-column: 2 / 3;
+    grid-row: 2;
+    align-self: start;
+  }
+  .starterMeta {
+    gap: 10px 14px;
+    font-size: 11.5px;
+  }
+
+  .matchupStrip {
+    grid-template-columns: 28px 1fr;
+    grid-template-rows: auto auto;
+    .matchupStripBadge { grid-column: 1 / -1; justify-self: start; }
+  }
+  .playerName { font-size: 22px; }
+
+  /* Footer action row stacks so the buttons sit below the hint text. */
+  .footerActions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px 18px;
+    .footerBtns { align-self: flex-end; }
+  }
+  .footerActionsHint { max-width: none; }
+  .legalNotice { padding: 12px 18px 16px; }
+}

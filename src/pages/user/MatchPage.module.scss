@@ -154,26 +154,6 @@
 .metaDot      { opacity: 0.6; }
 .countAccent  { color: var(--color-accent); font-weight: 700; }
 
-.refreshBtn {
-  display: inline-flex; align-items: center; gap: 7px;
-  padding: 7px 13px;
-  background: transparent;
-  border: 1px solid var(--color-bg-border);
-  border-radius: var(--radius-full);
-  font-family: var(--font-body);
-  font-size: 0.8125rem; font-weight: 600;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  transition: border-color var(--transition-fast), color var(--transition-fast), opacity var(--transition-fast);
-  flex-shrink: 0;
-  svg { flex-shrink: 0; }
-  &:hover:not(:disabled) { border-color: var(--color-accent); color: var(--color-accent); }
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-}
-
 /* ── Mobile (≤ 640px): scoreboard-style matchup ────────────────
    Keep the 3-col grid (away | center | home) but stack each team
    vertically — logo on top, abbr below, full name caption underneath.

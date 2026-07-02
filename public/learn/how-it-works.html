@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How EdgeAI Works — AI-Powered Sports Betting Scouting Reports</title>
+<meta name="description" content="How EdgeAI generates AI scouting reports on sports player props. The full pipeline: historical stats, matchup analysis, opposing pitcher data, ballpark factors, platoon splits, and sportsbook line comparison.">
+<link rel="canonical" href="https://edgeai.bet/learn/how-it-works.html">
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+<meta property="og:title" content="How EdgeAI Works — AI-Powered Sports Betting Scouting Reports">
+<meta property="og:description" content="The full pipeline behind every EdgeAI pick: how AI analyses stats, matchups, and sportsbook lines to identify edges.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://edgeai.bet/learn/how-it-works.html">
+<meta name="theme-color" content="#22c55e">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2322c55e'/%3E%3Cpolygon points='19,3 9,18 16,18 13,29 23,14 16,14' fill='white'/%3E%3C/svg%3E">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "How EdgeAI Works — AI-Powered Sports Betting Scouting Reports",
+  "description": "The full pipeline behind every EdgeAI player prop scouting report.",
+  "author": { "@type": "Organization", "name": "EdgeAI" },
+  "publisher": { "@type": "Organization", "name": "EdgeAI", "logo": { "@type": "ImageObject", "url": "https://edgeai.bet/logo.png" } },
+  "mainEntityOfPage": "https://edgeai.bet/learn/how-it-works.html",
+  "inLanguage": "en-US"
+}
+</script>
+<style>
+body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.7;color:#0f172a;max-width:720px;margin:0 auto;padding:24px 20px 80px;background:#fafafa}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid #e5e7eb}
+.brand{font-weight:600;color:#0f172a;text-decoration:none;font-size:17px;display:inline-flex;align-items:center;gap:8px}
+.brand-mark{background:#22c55e;color:#fff;width:24px;height:24px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:600}
+nav a{color:#22c55e;text-decoration:none;font-size:14px;margin-left:16px;font-weight:500}
+.crumb{font-size:13px;color:#94a3b8;margin-bottom:8px}
+.crumb a{color:#94a3b8;text-decoration:none}
+h1{font-size:30px;margin:0 0 12px;letter-spacing:-0.02em;line-height:1.25}
+.lede{color:#475569;font-size:17px;margin:0 0 32px}
+h2{font-size:22px;margin:44px 0 14px;letter-spacing:-0.01em}
+h3{font-size:17px;margin:24px 0 8px}
+p,li{color:#334155}
+ul{padding-left:22px}
+li{margin:6px 0}
+.callout{background:#ecfdf5;border-left:3px solid #22c55e;border-radius:0 8px 8px 0;padding:14px 18px;margin:24px 0;color:#065f46}
+.cta{display:inline-block;background:#22c55e;color:#fff;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:500;margin-top:16px}
+footer{margin-top:60px;padding-top:24px;border-top:1px solid #e5e7eb;font-size:13px;color:#94a3b8}
+footer a{color:#22c55e;text-decoration:none}
+</style>
+</head>
+<body>
+<header>
+  <a href="/" class="brand"><span class="brand-mark">E</span>EdgeAI</a>
+  <nav><a href="/learn/">Learn</a><a href="/">Open app</a></nav>
+</header>
+
+<p class="crumb"><a href="/">Home</a> · <a href="/learn/">Learn</a> · How it works</p>
+<h1>How EdgeAI Works</h1>
+<p class="lede">A single EdgeAI scouting report is the result of five independent analysis passes stitched together by an AI model. Here's the whole pipeline, in the order it runs.</p>
+
+<h2>1. Pulling the raw signals</h2>
+<p>For any given player prop — say, "Aaron Judge over 1.5 total bases" — EdgeAI first collects five distinct data streams:</p>
+<ul>
+  <li><strong>Sportsbook line</strong> from The Odds API. This is what we're trying to beat.</li>
+  <li><strong>Historical game logs</strong> from the official league API (MLB Stats API, NHL API, etc.). We pull the last 30 games.</li>
+  <li><strong>Opposing starter or matchup data</strong> — for MLB this is the opposing pitcher's ERA, WHIP, K/9, and pitching hand.</li>
+  <li><strong>Situational factors</strong> — ballpark factor for MLB, back-to-backs for NBA/NHL, weather for outdoor games.</li>
+  <li><strong>Platoon splits</strong> — how the batter performs against left vs right-handed pitching, with a 30-at-bat minimum sample threshold.</li>
+</ul>
+
+<h2>2. Windowing the stats</h2>
+<p>Raw averages lie because they ignore how a player is trending right now. EdgeAI computes three overlapping windows:</p>
+<ul>
+  <li><strong>Baseline (30 games)</strong> — the long-term rate. What "normal" looks like for this player.</li>
+  <li><strong>Edge window (15 games)</strong> — the primary signal. This is what gets compared against the sportsbook line.</li>
+  <li><strong>Recent form (10 games)</strong> — the trend indicator. If recent form has shifted 20%+ from baseline, the AI is told to weight it heavier.</li>
+</ul>
+<p>Why three windows? Because a player who's averaged 1.6 hits per game for the season but 0.6 in his last 5 games is a very different bet than one who's steady. Layering the windows exposes the trend.</p>
+
+<h2>3. Computing signal confidence</h2>
+<p>Confidence is where a lot of prop-betting tools cheat. EdgeAI computes it explicitly:</p>
+<ul>
+  <li>How often did the player beat the line over the edge window?</li>
+  <li>How consistent was the pattern (versus one outlier game inflating the average)?</li>
+  <li>How large is the sample against the current matchup type (this pitcher's hand, this venue)?</li>
+</ul>
+<p>The number you see on the scouting report — 40%, 62%, 78% — is a real fraction backed by the data, not a marketing gauge.</p>
+
+<div class="callout">
+  <strong>Signal confidence is not a win probability.</strong> Even a 90% confidence pick can lose — variance in sports is huge. Confidence measures how strongly the recent data supports the lean, nothing more.
+</div>
+
+<h2>4. Handing the picture to the AI</h2>
+<p>All of the above is compressed into a structured prompt and sent to a large language model. The prompt includes:</p>
+<ul>
+  <li>The player, prop type, and current sportsbook line.</li>
+  <li>Every stat window with its sample size.</li>
+  <li>Opposing starter block: quality classification, ERA, WHIP, K/9, IP per start.</li>
+  <li>Platoon matchup: batter hand, pitcher hand, batting average vs each, sample size.</li>
+  <li>Ballpark: park factor (1.06 = 6% hitter-friendly, 0.94 = 6% pitcher-friendly).</li>
+  <li>A rule-set the AI must follow: how to weight recency, how park effects interact with pitcher K/9, when to lean UNDER on hits vs OVER on runs.</li>
+</ul>
+<p>The AI returns a structured JSON output: recommendation, confidence rating, one-line summary, list of supporting factors, list of risk factors, and a data quality tag.</p>
+
+<h2>5. Grading and post-processing</h2>
+<p>After the AI response comes back, EdgeAI does one more pass:</p>
+<ul>
+  <li>Cap extreme edge percentages (a ±500% edge on a 0.5-hit prop usually reflects a math artifact, not a real edge).</li>
+  <li>Mute the color intensity when confidence is under 60% — a huge edge with weak support should not read as a green light.</li>
+  <li>Flag the pick as <strong>Best Value</strong> if it's the strongest edge in its game, and <strong>High Confidence</strong> if statistical support is unusually strong.</li>
+  <li>Store the raw AI response and the input prompt for audit — every insight can be traced back.</li>
+</ul>
+
+<h2>What you see in the app</h2>
+<p>All of that ends up as a single-page scouting report:</p>
+<ul>
+  <li>A big OVER or UNDER recommendation.</li>
+  <li>The Model Edge and Signal Confidence numbers.</li>
+  <li>A projection-vs-line bar so you can eyeball the gap.</li>
+  <li>A recent-form sparkline showing which of the last 10 games beat the line.</li>
+  <li>The matchup panel with opposing pitcher, platoon splits, and ballpark factor.</li>
+  <li>The AI's plain-language summary, supporting factors, and risk factors.</li>
+</ul>
+
+<h2>Frequently asked</h2>
+<h3>How often is the data updated?</h3>
+<p>Sportsbook lines refresh every 10 minutes as game time approaches. Player game logs refresh every 4 hours. Once a game is within an hour of first pitch, EdgeAI polls the sportsbook line every 10 minutes to catch late line movement.</p>
+<h3>What if the sportsbook line changes after I unlock an insight?</h3>
+<p>EdgeAI shows the line as it was when the report was generated. Always verify the current line at your sportsbook before placing the bet — that's the number that actually settles.</p>
+<h3>Does EdgeAI account for injuries?</h3>
+<p>Yes. Each report checks the player's injury status. If a player is flagged Day-to-Day, Out, or IL, that's shown in the report header and factored into confidence.</p>
+<h3>Does EdgeAI take my bets?</h3>
+<p>No. EdgeAI is a decision-support tool. You see the analysis and place your own wagers with your preferred sportsbook.</p>
+
+<a href="/register" class="cta">Try EdgeAI free</a>
+
+<footer>
+  <p>AI-powered scouting to help you make more informed picks. Generated from historical stats and matchup context — no outcome is guaranteed. Verify current lines at your sportsbook before wagering, and only stake what you can afford to lose.</p>
+  <p><a href="/">Open EdgeAI</a> · <a href="/learn/">Learn</a> · <a href="/learn/glossary.html">Glossary</a> · <a href="/learn/prop-betting-guide.html">Prop guide</a></p>
+</footer>
+</body>
+</html>

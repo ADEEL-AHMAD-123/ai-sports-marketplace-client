@@ -23,9 +23,12 @@ const rootReducer = combineReducers({
   insights: insightReducer,
 });
 
-// Root persist — only auth + ui (odds and insights always fetch fresh)
+// Root persist — only auth + ui (odds and insights always fetch fresh).
+// Key is namespaced by brand; if we ever rebrand again we can add a
+// one-off migration block here that reads the previous key from
+// localStorage and rewrites under the new one.
 const persistConfig = {
-  key:      'edgeiq',
+  key:      'edgeai',
   storage,
   whitelist: ['auth', 'ui'],
 };

@@ -1,5 +1,10 @@
 // src/components/insight/InsightModal.jsx
 // Premium AI scouting report modal with structured sections
+//
+// MLB is routed to its own hand-designed component (MLBInsightModal) so
+// the sport-specific signals (opposing starter, platoon splits, ballpark
+// factor, projection-vs-line viz, recent-form sparkline) can be presented
+// without compromising the generic multi-sport layout below.
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -8,6 +13,7 @@ import {
   shouldShowWeakDataBadge,
 } from '@/config/sportConfig';
 import styles from './InsightModal.module.scss';
+import MLBInsightModal from './MLBInsightModal';
 
 const normalizeInjuryStatus = (value) => String(value || '').trim().toLowerCase();
 
@@ -19,16 +25,35 @@ const formatInjuryStatus = (value) => {
 };
 
 /**
+ * Polish raw AI text for display — trim, collapse whitespace, sentence-case
+ * the first letter, ensure terminal punctuation. Idempotent so it's safe to
+ * apply to strings that are already well-formed. Kept intentionally light so
+ * proper nouns and abbreviations already in the AI output aren't mangled.
+ */
+const polishText = (raw) => {
+  if (raw == null) return '';
+  let s = String(raw).trim().replace(/\s+/g, ' ');
+  if (!s) return '';
+  const idx = s.search(/[A-Za-z]/);
+  if (idx >= 0) s = s.slice(0, idx) + s[idx].toUpperCase() + s.slice(idx + 1);
+  if (!/[.!?]$/.test(s)) s = s + '.';
+  return s;
+};
+
+/**
  * Extract structured sections from insight.
  * AI returns JSON — use insightSummary, insightFactors, insightRisks.
  * Falls back to parsing insightText for older records.
  */
 function getInsightSections(insight) {
+  const polishList = (arr) =>
+    (arr || []).map(polishText).filter((s) => s.length > 0);
+
   if (insight.insightFactors?.length || insight.insightSummary) {
     return {
-      summary: insight.insightSummary ? [insight.insightSummary] : [],
-      factors: insight.insightFactors || [],
-      risks:   insight.insightRisks   || [],
+      summary: insight.insightSummary ? [polishText(insight.insightSummary)] : [],
+      factors: polishList(insight.insightFactors),
+      risks:   polishList(insight.insightRisks),
       raw:     [],
       isStructured: true,
     };
@@ -46,10 +71,10 @@ function getInsightSections(insight) {
     .filter(l => !/^Reasons?:\s*$/i.test(l));
 
   const riskKws = /\b(risk|concern|however|but|injury|limited|minutes|struggle|variance)/i;
-  const summary = lines.slice(0, 1);
+  const summary = polishList(lines.slice(0, 1));
   const rest    = lines.slice(1);
-  const factors = rest.filter(l => !riskKws.test(l)).slice(0, 3);
-  const risks   = rest.filter(l => riskKws.test(l)).slice(0, 2);
+  const factors = polishList(rest.filter(l => !riskKws.test(l)).slice(0, 3));
+  const risks   = polishList(rest.filter(l => riskKws.test(l)).slice(0, 2));
 
   return { summary, factors, risks, raw: [], isStructured: false };
 }
@@ -173,7 +198,7 @@ function CopyPickButton({ insight }) {
       `${insight.playerName} — ${insight.statType?.toUpperCase()} ${rec} ${insight.bettingLine}`,
       insight.insightSummary?.split('.')[0] || '',
       [edge, tags].filter(Boolean).join(' · '),
-      'via SignalDraft',
+      'via EdgeAI',
     ].filter(Boolean).join('\n');
 
     navigator.clipboard.writeText(text).then(() => {
@@ -301,14 +326,10 @@ function GameContextStrip({ insight }) {
       icon: 'Defense Matchup',
       text: <>{d.teamName} D allows <strong>{[points, threes, reb].filter(Boolean).join(' · ') || '—'}</strong>/g</>,
     };
-  } else if (insight?.sport === 'mlb' && ctx.starter?.name) {
-    const hand = ctx.starter.hand ? ` (${ctx.starter.hand}HP)` : '';
-    const era  = ctx.starter.era != null ? ` · ${ctx.starter.era} ERA` : '';
-    headline = {
-      icon: 'Starter Matchup',
-      text: <>vs <strong>{ctx.starter.name}</strong>{hand}{era}</>,
-    };
   }
+  // MLB deliberately omits a headline here — MLBSignals below shows the
+  // richer "Opposing starter · ERA · K/9" row, so a second copy in the strip
+  // would just duplicate the same fact with less info.
 
   // Tags below the headline (playoff / B2B / hot/cold goalie / platoon edge)
   const tags = [];
@@ -581,21 +602,24 @@ function StatWindows({ insight }) {
                 <span className={styles.windowTitle}>Season Baseline</span>
                 <span className={styles.windowSub}>Last {baselineCount} starts</span>
               </div>
-              <StatRow label="K/start"    value={insight.baselineStatAvg} />
-              <StatRow label="ERA"        value={insight.era} />
-              <StatRow label="WHIP"       value={insight.whip} />
-              <StatRow label="IP/start"   value={insight.ipPerStart} />
+              <StatRow label="K/start" value={insight.baselineStatAvg} />
+              {insight.era        != null && <StatRow label="ERA"      value={insight.era} />}
+              {insight.whip       != null && <StatRow label="WHIP"     value={insight.whip} />}
+              {insight.ipPerStart != null && <StatRow label="IP/start" value={insight.ipPerStart} />}
             </div>
             <div className={styles.window}>
               <div className={styles.windowHdr}>
                 <span className={styles.windowDot} style={{ background: '#22c55e' }} />
                 <span className={styles.windowTitle}>Recent Form</span>
-                <span className={styles.windowSub}>Last {formCount} starts</span>
+                <span className={styles.windowSub}>Averages</span>
               </div>
-              {/* focusStatAvg = edge window K/start (primary signal) */}
-              <StatRow label="K/start"      value={insight.focusStatAvg} />
-              <StatRow label="Form K/start" value={insight.formKPerStart} />
-              <StatRow label="K/9"          value={insight.k9} />
+              {/* focusStatAvg = edge-window K/start (primary signal);
+                  formKPerStart = form-window K/start */}
+              <StatRow label={`Last ${edgeCount} starts`} value={insight.focusStatAvg} />
+              {insight.formKPerStart != null && (
+                <StatRow label={`Last ${formCount} starts`} value={insight.formKPerStart} />
+              )}
+              {insight.k9 != null && <StatRow label="K/9 (season)" value={insight.k9} />}
             </div>
           </div>
           <MLBSignals insight={insight} />
@@ -620,23 +644,23 @@ function StatWindows({ insight }) {
               <span className={styles.windowSub}>Last {baselineCount} games</span>
             </div>
             <StatRow label={`${statLabel}/g`} value={insight.baselineStatAvg} />
-            <StatRow label="AVG"              value={insight.battingAvg} />
-            <StatRow label="OBP"              value={insight.obp} />
-            <StatRow label="SLG"              value={insight.slg} />
-            <StatRow label="OPS"              value={insight.ops} />
+            {insight.battingAvg != null && <StatRow label="AVG" value={insight.battingAvg} />}
+            {insight.obp        != null && <StatRow label="OBP" value={insight.obp} />}
+            {insight.slg        != null && <StatRow label="SLG" value={insight.slg} />}
+            {insight.ops        != null && <StatRow label="OPS" value={insight.ops} />}
           </div>
           <div className={styles.window}>
             <div className={styles.windowHdr}>
               <span className={styles.windowDot} style={{ background: '#22c55e' }} />
               <span className={styles.windowTitle}>Recent Form</span>
-              <span className={styles.windowSub}>Last {formCount} games</span>
+              <span className={styles.windowSub}>Averages</span>
             </div>
             {/* focusStatAvg = edge window avg (15g), formStatAvg = form window avg (10g) */}
-            <StatRow label={`${statLabel}/g (15g)`} value={insight.focusStatAvg} />
-            <StatRow label={`${statLabel}/g (10g)`} value={insight.formStatAvg} highlight={trendClr} />
-            <StatRow label="Hits/g"  value={insight.hitsPerG} />
-            <StatRow label="TB/g"    value={insight.tbPerG} />
-            <StatRow label="Runs/g"  value={insight.runsPerG} />
+            <StatRow label={`Last ${edgeCount} games`} value={insight.focusStatAvg} />
+            <StatRow label={`Last ${formCount} games`} value={insight.formStatAvg} highlight={trendClr} />
+            {insight.hitsPerG != null && statType !== 'hits'        && <StatRow label="Hits/g" value={insight.hitsPerG} />}
+            {insight.tbPerG   != null && statType !== 'total_bases' && <StatRow label="TB/g"   value={insight.tbPerG} />}
+            {insight.runsPerG != null && statType !== 'runs'        && <StatRow label="Runs/g" value={insight.runsPerG} />}
           </div>
         </div>
         <MLBSignals insight={insight} />
@@ -669,9 +693,11 @@ function StatWindows({ insight }) {
               <span className={styles.windowSub}>Last {baseCount} games</span>
             </div>
             <StatRow label={`${statLabel}/g`} value={insight.baselineStatAvg} />
-            <StatRow label="Goals/g"   value={insight.goalsPerG} />
-            <StatRow label="Assists/g" value={insight.assistsPerG} />
-            <StatRow label="Shots/g"   value={insight.shotsPerG} />
+            {/* Context splits — hide when null and skip whichever one this
+                prop is already about (e.g. no "Goals/g" row on a goals prop). */}
+            {statType !== 'goals'         && insight.goalsPerG   != null && <StatRow label="Goals/g"   value={insight.goalsPerG} />}
+            {statType !== 'assists'       && insight.assistsPerG != null && <StatRow label="Assists/g" value={insight.assistsPerG} />}
+            {statType !== 'shots_on_goal' && insight.shotsPerG   != null && <StatRow label="Shots/g"   value={insight.shotsPerG} />}
             {insight.lineTier && (
               <StatRow label="Line tier" value={insight.lineTier} />
             )}
@@ -680,11 +706,11 @@ function StatWindows({ insight }) {
             <div className={styles.windowHdr}>
               <span className={styles.windowDot} style={{ background: '#22c55e' }} />
               <span className={styles.windowTitle}>Recent Form</span>
-              <span className={styles.windowSub}>Last {formCount} games</span>
+              <span className={styles.windowSub}>Averages</span>
             </div>
-            <StatRow label={`${statLabel}/g (${edgeCount}g)`} value={insight.focusStatAvg} />
-            <StatRow label={`${statLabel}/g (${formCount}g)`} value={insight.formStatAvg} highlight={trendClr} />
-            <StatRow label="TOI/g"     value={insight.toiPerG != null ? `${insight.toiPerG}min` : null} />
+            <StatRow label={`Last ${edgeCount} games`} value={insight.focusStatAvg} />
+            <StatRow label={`Last ${formCount} games`} value={insight.formStatAvg} highlight={trendClr} />
+            {insight.toiPerG != null && <StatRow label="TOI/g" value={`${insight.toiPerG}min`} />}
             {showEsPp && (
               <StatRow
                 label="ES / PP goals"
@@ -744,7 +770,7 @@ function StatWindows({ insight }) {
           <div className={styles.windowHdr}>
             <span className={styles.windowDot} style={{ background: '#22c55e' }} />
             <span className={styles.windowTitle}>Recent Form</span>
-            <span className={styles.windowSub}>{statLabel} average</span>
+            <span className={styles.windowSub}>Averages</span>
           </div>
           <StatRow label={`Last ${edgeCount} matches`} value={insight.focusStatAvg} />
           <StatRow label={`Last ${formCount} matches`} value={insight.formStatAvg} highlight={trendClr} />
@@ -828,11 +854,11 @@ function StatWindows({ insight }) {
             <span className={styles.windowTitle}>Season Baseline</span>
             <span className={styles.windowSub}>Last {baselineGamesCount} games</span>
           </div>
-          <StatRow label="Season avg"  value={baselineStatAvg} />
-          <StatRow label="Minutes"     value={baselineMinutes} />
-          <StatRow label="TS%"         value={trueShootingPct != null && trueShootingPct <= 100 ? `${trueShootingPct}%` : null} />
-          <StatRow label="eFG%"        value={effectiveFGPct  != null && effectiveFGPct  <= 100 ? `${effectiveFGPct}%`  : null} />
-          <StatRow label="USG%"        value={approxUSGPct    ? `${approxUSGPct}%`    : null} />
+          <StatRow label="Season avg" value={baselineStatAvg} />
+          {baselineMinutes  != null                              && <StatRow label="Minutes" value={baselineMinutes} />}
+          {trueShootingPct  != null && trueShootingPct  <= 100   && <StatRow label="TS%"     value={`${trueShootingPct}%`} />}
+          {effectiveFGPct   != null && effectiveFGPct   <= 100   && <StatRow label="eFG%"    value={`${effectiveFGPct}%`} />}
+          {approxUSGPct     != null                              && <StatRow label="USG%"    value={`${approxUSGPct}%`} />}
         </div>
         <div className={styles.window}>
           <div className={styles.windowHdr}>
@@ -840,10 +866,16 @@ function StatWindows({ insight }) {
             <span className={styles.windowTitle}>Last {formGamesCount} Games</span>
             <span className={styles.windowSub}>Current form</span>
           </div>
-          <StatRow label="Form avg"    value={formStat}        highlight={trendClr} />
-          <StatRow label="Minutes"     value={formMinutes} />
-          <StatRow label="10-game avg" value={focusStatAvg} />
-          <StatRow label="vs Line"     value={!isNaN(formNum) && !isNaN(lineNum) ? `${trendUp ? '▲ OVER' : '▼ UNDER'} signal` : '—'} highlight={trendClr} />
+          <StatRow label="Form avg" value={formStat} highlight={trendClr} />
+          {formMinutes  != null && <StatRow label="Minutes"     value={formMinutes} />}
+          {focusStatAvg != null && <StatRow label="10-game avg" value={focusStatAvg} />}
+          {!isNaN(formNum) && !isNaN(lineNum) && (
+            <StatRow
+              label="vs Line"
+              value={`${trendUp ? '▲ OVER' : '▼ UNDER'} signal`}
+              highlight={trendClr}
+            />
+          )}
         </div>
       </div>
       <NBASignals insight={insight} />
@@ -883,6 +915,12 @@ export default function InsightModal({ isOpen, onClose, insight, prop }) {
   }, [isOpen, onClose]);
 
   if (!isOpen || !insight) return null;
+
+  // MLB has its own hand-designed modal (opposing starter + platoon + park
+  // visualizations). Route there and skip the generic layout below.
+  if ((insight?.sport || prop?.sport) === 'mlb') {
+    return <MLBInsightModal isOpen={isOpen} onClose={onClose} insight={insight} prop={prop} />;
+  }
 
   const isOver = insight.recommendation === 'over';
   const conf   = insight.confidenceScore ?? 0;
@@ -944,18 +982,31 @@ export default function InsightModal({ isOpen, onClose, insight, prop }) {
                 <Verdict rec={insight.recommendation} line={insight.bettingLine} />
               )}
 
-              {edge != null && edge !== 0 && (
-                <div
-                  className={styles.metric}
-                  title="Model Edge: Difference between the model projection and sportsbook line. Not a win probability."
-                  aria-label="Model Edge metric"
-                >
-                  <span className={styles.metricVal} style={{ color: edge > 0 ? '#22c55e' : '#ef4444' }}>
-                    {edge > 0 ? '+' : ''}{edge}%
-                  </span>
-                  <span className={styles.metricLbl}>Model Edge</span>
-                </div>
-              )}
+              {edge != null && edge !== 0 && (() => {
+                // Cap the DISPLAYED edge — extreme values (>±100%) usually
+                // come from unusually low lines (e.g. 0.5 hits) inflating the
+                // (projection - line)/line ratio, not real edge. The math
+                // stays intact on the backend; the UI just stops the number
+                // from visually dominating a card with low confidence.
+                const absE      = Math.abs(edge);
+                const capped    = absE > 100;
+                const shown     = capped ? `${edge > 0 ? '+' : '-'}100%+` : `${edge > 0 ? '+' : ''}${edge}%`;
+                // Mute the color when confidence is low — a huge edge next
+                // to a 50% confidence should not read as "green light".
+                const lowConf   = (conf ?? 0) < 60;
+                const color     = lowConf
+                  ? (edge > 0 ? '#86a693' : '#c99a9a')
+                  : (edge > 0 ? '#22c55e' : '#ef4444');
+                const tip = capped
+                  ? 'Model Edge exceeds ±100% — usually a very low prop line inflating the ratio. Confidence is the more reliable signal.'
+                  : 'Model Edge: difference between the model projection and the sportsbook line. Not a win probability.';
+                return (
+                  <div className={styles.metric} title={tip} aria-label="Model Edge metric">
+                    <span className={styles.metricVal} style={{ color }}>{shown}</span>
+                    <span className={styles.metricLbl}>Model Edge</span>
+                  </div>
+                );
+              })()}
 
               <div
                 className={styles.metric}

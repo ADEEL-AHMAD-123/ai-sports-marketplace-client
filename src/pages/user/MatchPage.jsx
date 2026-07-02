@@ -87,9 +87,9 @@ export default function MatchPage() {
     const away = firstProp?.awayTeam;
     const home = firstProp?.homeTeam;
     document.title = (away && home)
-      ? `${away} vs ${home} · Props | EdgeIQ`
-      : `${sportCfg.label} Player Props | EdgeIQ`;
-    return () => { document.title = 'EdgeIQ — AI Sports Insights'; };
+      ? `${away} vs ${home} · Props | EdgeAI`
+      : `${sportCfg.label} Player Props | EdgeAI`;
+    return () => { document.title = 'EdgeAI — AI-Powered Sports Betting Scouting'; };
   }, [firstProp, sportCfg]);
 
   const counts = {

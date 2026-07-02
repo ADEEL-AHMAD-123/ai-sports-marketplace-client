@@ -3,26 +3,191 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="AI-powered sports betting insights. Data-driven edge on every player prop." />
-    <title>EdgeIQ — AI Sports Insights</title>
-    <!-- Favicon — inline SVG bolt on green, no file needed -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2322c55e'/%3E%3Cpolygon points='19,3 9,18 16,18 13,29 23,14 16,14' fill='white'/%3E%3C/svg%3E" />
+
+    <!-- ────── Primary SEO meta ────── -->
+    <title>EdgeAI — AI-Powered Sports Betting Scouting Reports</title>
+    <meta name="description" content="EdgeAI generates AI scouting reports on player props for NBA, MLB, NHL, NFL, and soccer. Every pick is backed by 15+ games of stats, matchup analysis, opposing pitcher data, platoon splits, and ballpark factors — compared against live sportsbook lines to surface edges." />
+    <meta name="keywords" content="AI sports betting, player props AI, sports betting scouting reports, NBA player props, MLB player props, NHL player props, NFL player props, soccer player props, sportsbook edges, AI picks, prop betting analytics" />
+    <meta name="author" content="EdgeAI" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <link rel="canonical" href="https://edgeai.bet/" />
     <meta name="theme-color" content="#22c55e" />
-    <!-- Open Graph -->
-    <meta property="og:title" content="EdgeIQ — AI Sports Insights" />
-    <meta property="og:description" content="Data-driven edge on every player prop. AI analyses form, trend, and baseline to find lines the books missed." />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- Favicon — inline SVG so it works with zero build config -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2322c55e'/%3E%3Cpolygon points='19,3 9,18 16,18 13,29 23,14 16,14' fill='white'/%3E%3C/svg%3E" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <!-- ────── Open Graph (Facebook, LinkedIn, iMessage previews) ────── -->
+    <meta property="og:site_name" content="EdgeAI" />
+    <meta property="og:title" content="EdgeAI — AI-Powered Sports Betting Scouting" />
+    <meta property="og:description" content="AI scouting reports for NBA, MLB, NHL, NFL, and soccer player props. Every insight is grounded in 15+ games of stats, matchup analysis, and sportsbook line comparison." />
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://edgeai.bet/" />
+    <meta property="og:image" content="https://edgeai.bet/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="EdgeAI — AI-powered sports betting scouting reports" />
+    <meta property="og:locale" content="en_US" />
+
+    <!-- ────── Twitter / X card ────── -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@edgeai_bet" />
+    <meta name="twitter:title" content="EdgeAI — AI-Powered Sports Betting Scouting" />
+    <meta name="twitter:description" content="AI scouting reports for NBA, MLB, NHL, NFL, and soccer player props. Every insight is grounded in stats, matchup analysis, and sportsbook line comparison." />
+    <meta name="twitter:image" content="https://edgeai.bet/og-image.png" />
+
+    <!-- ────── Structured data (Google, Bing, Perplexity, ChatGPT-Search) ────── -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://edgeai.bet/#organization",
+          "name": "EdgeAI",
+          "url": "https://edgeai.bet",
+          "logo": "https://edgeai.bet/logo.png",
+          "description": "AI-powered scouting reports for sports betting player props across NBA, MLB, NHL, NFL, and soccer."
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://edgeai.bet/#website",
+          "url": "https://edgeai.bet",
+          "name": "EdgeAI",
+          "publisher": { "@id": "https://edgeai.bet/#organization" },
+          "inLanguage": "en-US",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://edgeai.bet/?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "WebApplication",
+          "name": "EdgeAI",
+          "url": "https://edgeai.bet",
+          "applicationCategory": "SportsApplication",
+          "operatingSystem": "Web",
+          "browserRequirements": "Modern browser with JavaScript enabled",
+          "description": "AI-powered sports betting scouting for NBA, MLB, NHL, NFL, and soccer player props. Uses historical stats, matchup context, opposing starter data, platoon splits, and ballpark factors to identify edges against sportsbook lines.",
+          "featureList": [
+            "AI scouting reports on player props",
+            "Multi-sport coverage: NBA, MLB, NHL, NFL, soccer",
+            "Opposing pitcher and platoon-split analysis for MLB",
+            "Signal confidence and model edge scoring",
+            "Live sportsbook line comparison"
+          ],
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD",
+            "description": "Free to browse; per-insight unlocks and subscription tiers available."
+          }
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What is EdgeAI?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "EdgeAI is an AI-powered scouting tool for sports betting player props. It analyses historical stats, matchup context, opposing pitcher or goalie data, and ballpark or venue factors, then compares its projection against the current sportsbook line to surface edges."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Which sports does EdgeAI cover?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "NBA, MLB, NHL, NFL, and soccer player props across major leagues."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Does EdgeAI place bets for me?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "No. EdgeAI is a decision-support tool. You see the AI's analysis and place your own wagers with your preferred sportsbook."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How current is the data?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Sportsbook lines refresh throughout the day, with tighter cadence in the hour before first pitch or tip-off. Player stats are pulled from official league APIs and cached for four hours."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+
+    <!-- ────── Fonts ────── -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <!--
-      Syne        → display/headings  (bold, geometric, distinctive)
-      Plus Jakarta Sans → body text   (modern, highly legible, not generic)
-      DM Mono     → numbers/stats     (monospace for tabular data)
+      Syne             → display / headings  (bold, geometric, distinctive)
+      Plus Jakarta Sans → body text         (modern, highly legible)
+      DM Mono          → numbers / stats     (monospace for tabular data)
     -->
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
   </head>
   <body>
-    <div id="root"></div>
+    <!--
+      SEO fallback content — visible to search crawlers and no-JS clients.
+      React hydrates over this on mount, so users never see it. This is
+      what fixes "the site isn't recognized" — before, the body was a
+      literal empty <div>, so bots that don't fully execute JS (Bing,
+      DuckDuckGo, most AI crawlers) saw nothing to index.
+    -->
+    <div id="root">
+      <main style="max-width: 720px; margin: 4rem auto; padding: 0 1.25rem; font-family: system-ui, sans-serif; color: #0f172a; line-height: 1.55;">
+        <h1 style="font-size: 2rem; margin: 0 0 1rem;">EdgeAI — AI-Powered Sports Betting Scouting</h1>
+        <p style="font-size: 1.05rem; color: #334155;">
+          EdgeAI generates AI scouting reports on player props for
+          <strong>NBA, MLB, NHL, NFL, and soccer</strong>. Every insight is grounded
+          in the last 15+ games of stats, matchup context, opposing pitcher or
+          goalie data, ballpark or venue factors, and platoon splits — then
+          compared against the current sportsbook line to surface edges.
+        </p>
+        <h2 style="font-size: 1.15rem; margin: 2rem 0 0.5rem;">What you get per pick</h2>
+        <ul style="color: #334155;">
+          <li>A clear <strong>OVER or UNDER</strong> recommendation with model edge and signal confidence.</li>
+          <li>A visual comparison of the sportsbook line versus the model's projection.</li>
+          <li>Recent-form sparkline showing hit rate against the line over the last 10 games.</li>
+          <li>Matchup panel with opposing starter stats, platoon splits, and ballpark factor.</li>
+          <li>Plain-language reasoning: supporting factors and risk factors, with the AI's summary.</li>
+        </ul>
+        <h2 style="font-size: 1.15rem; margin: 2rem 0 0.5rem;">Learn more</h2>
+        <p style="color: #334155;">
+          New to prop betting or AI-driven scouting? Start here:
+        </p>
+        <ul style="color: #334155;">
+          <li><a href="/learn/how-it-works.html" style="color: #22c55e; font-weight: 500;">How EdgeAI works</a> — the full analysis pipeline behind every pick.</li>
+          <li><a href="/learn/prop-betting-guide.html" style="color: #22c55e; font-weight: 500;">Player prop betting guide</a> — what props are and how to bet them smart.</li>
+          <li><a href="/learn/glossary.html" style="color: #22c55e; font-weight: 500;">Sports betting glossary</a> — every term explained plainly.</li>
+          <li><a href="/learn/compare.html" style="color: #22c55e; font-weight: 500;">EdgeAI vs OddsJam, Action Network, PropZilla, Rithmm</a> — honest comparison.</li>
+          <li><a href="/learn/mlb-props.html" style="color: #22c55e; font-weight: 500;">MLB props guide</a> · <a href="/learn/nba-props.html" style="color: #22c55e; font-weight: 500;">NBA props guide</a></li>
+        </ul>
+        <h2 style="font-size: 1.15rem; margin: 2rem 0 0.5rem;">Get started</h2>
+        <p style="color: #334155;">
+          <a href="/register" style="color: #22c55e; font-weight: 500;">Create a free account</a> or
+          <a href="/login" style="color: #22c55e; font-weight: 500;">log in</a> to unlock today's slate.
+        </p>
+        <p style="font-size: 0.85rem; color: #64748b; margin-top: 2.5rem;">
+          AI-powered scouting to help you make more informed picks. Generated from historical stats and matchup context — no outcome is guaranteed. Verify current lines at your sportsbook before wagering, and only stake what you can afford to lose.
+        </p>
+        <noscript>
+          <p style="background: #fef3c7; padding: 12px; border-radius: 6px; color: #78350f; margin-top: 1.5rem;">
+            <strong>JavaScript is required</strong> to use the interactive scouting reports. Please enable JavaScript in your browser.
+          </p>
+        </noscript>
+      </main>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

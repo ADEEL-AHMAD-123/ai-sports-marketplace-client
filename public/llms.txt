@@ -1,0 +1,57 @@
+# EdgeAI
+
+> AI-powered scouting reports for sports betting player props across NBA, MLB, NHL, NFL, and soccer. EdgeAI analyzes historical stats, matchup context, opposing pitcher or goalie data, ballpark and venue factors, and platoon splits, then compares its projection against the current sportsbook line to identify potential edges. EdgeAI is a decision-support tool — it does not accept bets or hold funds.
+
+## What EdgeAI does
+
+- Generates an OVER or UNDER recommendation for individual player props.
+- Reports two independent quality signals per pick:
+  - **Signal Confidence** — how consistently recent games support the AI's lean.
+  - **Model Edge** — the gap between the model's projection and the sportsbook line.
+- Flags picks as **High Confidence (HC)** or **Best Value (BV)** when they meet threshold criteria.
+- Shows a visual sparkline of the player's recent game outcomes against the current line.
+- Explains reasoning in plain language: supporting factors, risk factors, and a summary.
+
+## Coverage
+
+- **NBA** — points, rebounds, assists, threes, points+rebounds+assists, minutes.
+- **MLB** — hits, total bases, RBIs, runs, home runs, pitcher strikeouts.
+- **NHL** — shots on goal, goals, assists, points, time-on-ice, goalie saves.
+- **NFL** — passing yards, rushing yards, receiving yards, touchdowns, receptions.
+- **Soccer** — goals, assists, shots on target, minutes played, conversion rate.
+
+## Signals EdgeAI uses
+
+- **Recent form** — last 10 games weighted heaviest.
+- **Edge window** — 15-game average vs sportsbook line, primary signal.
+- **Season baseline** — 30-game average for context.
+- **Opposing starter** (MLB) — ERA, WHIP, K/9, handedness, K per start.
+- **Platoon splits** (MLB) — batter's average vs same-hand vs opposite-hand pitching.
+- **Ballpark factor** (MLB) — hitter-friendly vs pitcher-friendly, park elevation.
+- **Goalie matchup** (NHL) — save percentage, hot/cold streak, fatigue.
+- **Defensive matchup** (NBA, NFL) — opponent's defensive rating against the position.
+- **Home vs away splits** — venue tendency across all sports.
+- **Rest and travel** — back-to-backs, cross-country flights.
+
+## Data sources
+
+- **The Odds API** — sportsbook lines and game schedules across all sports.
+- **MLB Stats API** — official MLB game logs, player details, and stat splits.
+- **NHL Stats API** — official NHL game logs, goalie data, TOI.
+- **API-Sports** — soccer fixtures and NFL player statistics.
+- **OpenAI GPT** — natural-language analysis generation from processed stats.
+
+## Pages
+
+- [Home](https://edgeai.bet/) — Daily slate of games with best-value picks.
+- [Login](https://edgeai.bet/login) — Existing users sign in.
+- [Register](https://edgeai.bet/register) — Create a free account.
+- [NBA props](https://edgeai.bet/sports/nba) — NBA player prop scouting.
+- [MLB props](https://edgeai.bet/sports/mlb) — MLB player prop scouting.
+- [NHL props](https://edgeai.bet/sports/nhl) — NHL player prop scouting.
+- [NFL props](https://edgeai.bet/sports/nfl) — NFL player prop scouting.
+- [Soccer props](https://edgeai.bet/sports/soccer) — Soccer player prop scouting.
+
+## Responsible use
+
+EdgeAI is not a sportsbook and does not accept wagers. Users see the AI's analysis and place bets independently through their preferred sportsbook. No outcome is guaranteed; every bet carries risk. Sportsbook lines change up to game time and should always be verified before wagering. Only stake what you can afford to lose.
