@@ -1,0 +1,51 @@
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 0.5px solid rgba(245, 158, 11, 0.3);
+  border-radius: 10px;
+  color: #fbbf24;
+  font-size: 13px;
+  line-height: 1.4;
+  margin: 12px 0;
+
+  @media (max-width: 560px) {
+    flex-wrap: wrap;
+  }
+}
+.compact {
+  padding: 8px 12px;
+  font-size: 12px;
+  gap: 8px;
+}
+
+.icon {
+  flex: none;
+}
+.text {
+  flex: 1;
+  color: #fbbf24;
+  min-width: 0;
+  strong { color: #fbbf24; font-weight: 500; }
+  span   { color: rgba(251, 191, 36, 0.85); }
+}
+.action {
+  flex: none;
+  background: transparent;
+  border: 0.5px solid rgba(245, 158, 11, 0.4);
+  color: #fbbf24;
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+
+  &:hover:not(:disabled) {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.55);
+  }
+  &:disabled { opacity: 0.6; cursor: default; }
+}

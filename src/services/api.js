@@ -1,8 +1,9 @@
 // src/services/api.js
 //
-// This file is ONLY for the configured axios instance.
-// All actual API calls are made via dispatch(someThunk()) in the slices.
-// This instance is used internally by apiHelper.js.
+// Configured axios instance + Stripe payment helper functions.
+// Most read-only API calls go through Redux thunks (apiHelper.js). The
+// helpers here are for redirect-based flows (checkout, portal) where we
+// send the browser to Stripe's hosted UI and want to skip Redux entirely.
 
 import axios from 'axios';
 
@@ -15,13 +16,53 @@ const api = axios.create({
 
 export default api;
 
-// ── Stripe checkout helper (not a thunk — redirects browser) ──
-// Called directly from WalletPage, not via Redux
+// ── Auth-header helper ─────────────────────────────────────────
+// Every helper below accepts the token from Redux state and injects it
+// as an Authorization header — the axios instance itself isn't wired to
+// Redux to avoid a circular import.
+const authHeaders = (token) => (token ? { Authorization: `Bearer ${token}` } : {});
+
+// ── Stripe Checkout — creates session, returns hosted URL ─────
+// Called from useWallet. We redirect the browser (not fetch on click),
+// so the response is just { url } and the caller sets window.location.
 export const createCheckoutSession = async (packId, token) => {
   const res = await api.post(
     '/credits/checkout',
     { packId },
-    { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+    { headers: authHeaders(token) },
+  );
+  return res.data;
+};
+
+// ── Stripe Billing Portal — creates a session, returns portal URL ─
+// Same redirect pattern as checkout. Portal lets the user manage saved
+// payment methods, view Stripe-hosted invoices, and download receipts.
+export const createPortalSession = async (token) => {
+  const res = await api.post(
+    '/credits/portal',
+    {},
+    { headers: authHeaders(token) },
+  );
+  return res.data;
+};
+
+// ── Self-serve refund ──────────────────────────────────────────
+// Server enforces the 2-hour window and unlock-lockout rules; the frontend
+// just gets a friendly error message back if the request is denied.
+export const requestRefund = async (transactionId, token) => {
+  const res = await api.post(
+    `/credits/refund/${transactionId}`,
+    {},
+    { headers: authHeaders(token) },
+  );
+  return res.data;
+};
+
+// ── Spend summary (lifetime stats) ─────────────────────────────
+export const fetchSpendSummary = async (token) => {
+  const res = await api.get(
+    '/credits/summary',
+    { headers: authHeaders(token) },
   );
   return res.data;
 };

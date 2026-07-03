@@ -20,10 +20,19 @@ export const FILTERS = [
 export const CREDITS_FREE_ON_SIGNUP = 3;
 export const CREDITS_PER_INSIGHT    = 1;
 
+// Fallback packs — used only if /credits/packs fetch fails. Real values
+// come from the server so the frontend and Stripe stay in sync.
 export const CREDIT_PACKS_FALLBACK = [
-  { id: 'pack_1', credits: 1, amount: 0.99, label: '1 Credit'  },
-  { id: 'pack_6', credits: 6, amount: 4.99, label: '6 Credits' },
+  { id: 'pack_starter', credits: 3,   amount: 2.99,  label: 'Starter',     perCredit: 1.00, save: 0,  description: 'Try a few picks' },
+  { id: 'pack_10',      credits: 10,  amount: 8.99,  label: '10 Credits',  perCredit: 0.90, save: 10, description: 'A weekend slate' },
+  { id: 'pack_25',      credits: 25,  amount: 19.99, label: '25 Credits',  perCredit: 0.80, save: 20, description: 'Most popular',   highlight: true },
+  { id: 'pack_60',      credits: 60,  amount: 39.99, label: '60 Credits',  perCredit: 0.67, save: 33, description: 'Best value' },
+  { id: 'pack_150',     credits: 150, amount: 79.99, label: '150 Credits', perCredit: 0.53, save: 47, description: 'For power users' },
 ];
+
+// How long after a purchase we allow self-serve refunds via the wallet UI.
+// Must match server-side REFUND_SELF_SERVE_WINDOW_HOURS.
+export const REFUND_SELF_SERVE_WINDOW_HOURS = 2;
 
 // ── Bet direction ─────────────────────────────────────────────
 export const BET_DIRECTION = {
@@ -43,7 +52,9 @@ export const TRANSACTION_TYPE_LABELS = {
   purchase:       'Credit purchase',
   insight_unlock: 'Insight unlocked',
   refund:         'Refund',
-  admin_grant:    'Admin adjustment',
+  chargeback:     'Payment disputed',
+  admin_grant:    'Admin credit',
+  admin_deduct:   'Admin deduction',
 };
 
 // ── Admin cron jobs ───────────────────────────────────────────

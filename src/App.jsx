@@ -15,10 +15,14 @@ import HomePage           from '@/pages/user/HomePage';
 import MatchPage          from '@/pages/user/MatchPage';
 import WalletPage         from '@/pages/user/WalletPage';
 import HistoryPage        from '@/pages/user/HistoryPage';
+import PricingPage        from '@/pages/PricingPage';
+import BillingSuccessPage from '@/pages/billing/BillingSuccessPage';
+import BillingCancelPage  from '@/pages/billing/BillingCancelPage';
 import LoginPage          from '@/pages/auth/LoginPage';
 import RegisterPage       from '@/pages/auth/RegisterPage';
 import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage';
 import ResetPasswordPage  from '@/pages/auth/ResetPasswordPage';
+import EmailVerifyPage    from '@/pages/auth/EmailVerifyPage';
 import NotFoundPage       from '@/pages/NotFoundPage';
 
 import AdminDashboard    from '@/pages/admin/AdminDashboard';
@@ -53,10 +57,17 @@ export default function App() {
         {/* Public */}
         <Route path="/"                      element={<HomePage />} />
         <Route path="/match/:sport/:eventId" element={<MatchPage />} />
+        <Route path="/pricing"               element={<PricingPage />} />
         <Route path="/login"                 element={isLoggedIn ? <Navigate to="/" replace /> : <LoginPage />} />
         <Route path="/register"              element={isLoggedIn ? <Navigate to="/" replace /> : <RegisterPage />} />
         <Route path="/forgot-password"       element={<ForgotPasswordPage />} />
         <Route path="/reset-password"        element={<ResetPasswordPage />} />
+        <Route path="/verify-email"          element={<EmailVerifyPage />} />
+
+        {/* Billing landing pages — public so Stripe can redirect users
+            (webhook is the source of truth, so no auth needed to view). */}
+        <Route path="/billing/success"       element={<BillingSuccessPage />} />
+        <Route path="/billing/cancel"        element={<BillingCancelPage />} />
 
         {/* Authenticated */}
         <Route element={<ProtectedRoute />}>

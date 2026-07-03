@@ -35,6 +35,7 @@ export default function Navbar(){
                       <div className={styles.divider}/>
                       <Link to="/history" className={styles.dropItem} onClick={()=>setOpen(false)}>My Predictions</Link>
                       <Link to="/wallet" className={styles.dropItem} onClick={()=>setOpen(false)}>Wallet</Link>
+                      <Link to="/pricing" className={styles.dropItem} onClick={()=>setOpen(false)}>Pricing</Link>
                       {user?.role==='admin'&&<Link to="/admin" className={styles.dropItem} onClick={()=>setOpen(false)}>Admin Panel</Link>}
                       <div className={styles.divider}/>
                       <button className={`${styles.dropItem} ${styles.logout}`} onClick={()=>{logout();setOpen(false);}}>Log out</button>
@@ -45,6 +46,7 @@ export default function Navbar(){
             </>
           ):(
             <div className={styles.authRow}>
+              <Link to="/pricing" className={styles.loginLink}>Pricing</Link>
               <Link to="/login" className={styles.loginLink}>Log in</Link>
               <Link to="/register" className={styles.registerBtn}>
                 <span className={styles.registerLabelFull}>Get Started</span>
