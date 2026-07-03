@@ -5,7 +5,11 @@
 // Falls back to a small set of curated historical wins when the API hasn't
 // graded enough fresh insights yet (early-stage product / quiet day).
 //
-// The hit rate shown is computed by the backend over the same window.
+// We deliberately do NOT display an aggregate hit-rate on this section.
+// Sports betting hit rates are only meaningful over 100+ graded picks
+// and can mislead visitors early on. The recent wins themselves are the
+// social proof — labelled clearly as "Recent hits" so no aggregate
+// claim is being made.
 
 import React, { useEffect, useState } from 'react';
 import styles from './ScoutClosings.module.scss';
@@ -25,9 +29,6 @@ const FALLBACK_CLOSINGS = [
     matchup: 'LAL vs MIN', isSample: true,
   },
 ];
-
-const FALLBACK_HIT_RATE = null;
-const FALLBACK_TOTAL    = 0;
 
 function timeAgo(iso) {
   if (!iso) return '—';
@@ -54,10 +55,8 @@ function ResultBadge() {
 const titleize = (v) => v ? String(v).replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : '—';
 
 export default function ScoutClosings() {
-  const [items,    setItems]    = useState([]);
-  const [hitRate,  setHitRate]  = useState(FALLBACK_HIT_RATE);
-  const [total,    setTotal]    = useState(FALLBACK_TOTAL);
-  const [loading,  setLoading]  = useState(true);
+  const [items,   setItems]   = useState([]);
+  const [loading, setLoading] = useState(true);
   const [usingFallback, setUsingFallback] = useState(false);
 
   useEffect(() => {
@@ -71,8 +70,6 @@ export default function ScoutClosings() {
         if (cancelled) return;
         if (json?.success && Array.isArray(json.data) && json.data.length > 0) {
           setItems(json.data);
-          setHitRate(json.meta?.hitRate ?? null);
-          setTotal(json.meta?.total ?? json.data.length);
           setUsingFallback(false);
         } else {
           setItems(FALLBACK_CLOSINGS);
@@ -115,26 +112,20 @@ export default function ScoutClosings() {
     <section className={styles.section}>
       <div className={styles.inner}>
 
-        {/* Header */}
+        {/* Header — recent hits framing, no aggregate rate claim. */}
         <div className={styles.header}>
           <div className={styles.headerLeft}>
             <div className={styles.verifiedBadge}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
-              {usingFallback ? 'PREVIEW' : 'VERIFIED PERFORMANCE'}
+              {usingFallback ? 'PREVIEW' : 'RECENT HITS'}
             </div>
-            <h2 className={styles.title}>Recent Scout Closings</h2>
+            <h2 className={styles.title}>Scouting reports that landed</h2>
             <p className={styles.sub}>
               {usingFallback
-                ? 'Sample picks shown — live grading begins as games finalize.'
-                : `Our last ${items.length} winning AI scouting reports — live accuracy tracked in real time. No cherry-picking. No revisionist history.`}
+                ? 'Sample picks shown — real ones populate here as games finalize.'
+                : `${items.length} of our most recent winning AI scouting reports across sports. Every result is graded against the final box score — verify any of them yourself.`}
             </p>
           </div>
-          {hitRate != null && (
-            <div className={styles.hitRateBox}>
-              <span className={styles.hitRateNum}>{hitRate}%</span>
-              <span className={styles.hitRateLabel}>{total ? `LAST ${total} HIT RATE` : 'HIT RATE'}</span>
-            </div>
-          )}
         </div>
 
         {/* Desktop table */}
@@ -240,7 +231,7 @@ export default function ScoutClosings() {
         <p className={styles.disclaimer}>
           {usingFallback
             ? '* Live results will populate as games finalize and AI predictions get graded.'
-            : '* Results shown are a recent sample and should not be treated as guaranteed future performance. Always verify odds before placing bets and bet responsibly.'}
+            : '* Individual picks shown. Past results do not guarantee future performance. Always verify current lines at your sportsbook and only wager what you can afford to lose.'}
         </p>
       </div>
     </section>

@@ -4,17 +4,20 @@ import { useSelector, useDispatch } from 'react-redux';
 import toast from 'react-hot-toast';
 
 import { selectIsLoggedIn, getLoggedInUser } from '@/store/slices/authSlice';
+import { setActiveSport } from '@/store/slices/uiSlice';
 import { useTheme } from '@/hooks/useTheme';
+import api from '@/services/api';
 
 import Navbar         from '@/components/layout/Navbar';
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import AdminLayout    from '@/components/layout/AdminLayout';
 import ErrorBoundary  from '@/components/ui/ErrorBoundary';
 
-import HomePage           from '@/pages/user/HomePage';
-import MatchPage          from '@/pages/user/MatchPage';
-import WalletPage         from '@/pages/user/WalletPage';
-import HistoryPage        from '@/pages/user/HistoryPage';
+import HomePage             from '@/pages/user/HomePage';
+import MatchPage            from '@/pages/user/MatchPage';
+import WalletPage           from '@/pages/user/WalletPage';
+import TransactionDetailPage from '@/pages/user/TransactionDetailPage';
+import HistoryPage          from '@/pages/user/HistoryPage';
 import PricingPage        from '@/pages/PricingPage';
 import BillingSuccessPage from '@/pages/billing/BillingSuccessPage';
 import BillingCancelPage  from '@/pages/billing/BillingCancelPage';
@@ -39,6 +42,29 @@ export default function App() {
 
   useEffect(() => {
     if (isLoggedIn) dispatch(getLoggedInUser());
+  }, []); // eslint-disable-line
+
+  // ── Smart default sport ─────────────────────────────────────
+  // On every fresh app load, ask the backend which sports actually have
+  // games in the display window and auto-select the highest-priority one
+  // (NBA > MLB > NHL > NFL > Soccer). This keeps a user opening the app
+  // during e.g. NBA off-season from landing on an empty NBA slate.
+  //
+  // Priority order matches the app's sport lineup — NBA is the "hero"
+  // sport and the fallback when nothing else has games.
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await api.get('/odds/counts');
+        const counts = res?.data?.counts;
+        if (!counts) return;
+        const order = ['nba', 'mlb', 'nhl', 'nfl', 'soccer'];
+        const pick  = order.find((s) => (counts[s] || 0) > 0) || 'nba';
+        dispatch(setActiveSport(pick));
+      } catch {
+        // Silent fail — the app just stays on the persisted / default sport.
+      }
+    })();
   }, []); // eslint-disable-line
 
   useEffect(() => {
@@ -71,8 +97,9 @@ export default function App() {
 
         {/* Authenticated */}
         <Route element={<ProtectedRoute />}>
-          <Route path="/wallet"  element={<WalletPage />} />
-          <Route path="/history" element={<HistoryPage />} />
+          <Route path="/wallet"          element={<WalletPage />} />
+          <Route path="/wallet/tx/:txId" element={<TransactionDetailPage />} />
+          <Route path="/history"         element={<HistoryPage />} />
         </Route>
 
         {/* Admin */}

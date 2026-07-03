@@ -11,7 +11,6 @@ import { selectCredits, selectToken, getLoggedInUser } from '@/store/slices/auth
 import { createApiThunk } from '@/utils/apiHelper';
 import {
   createCheckoutSession,
-  createPortalSession,
   requestRefund,
   fetchSpendSummary,
   getErrorMsg,
@@ -61,7 +60,6 @@ export function useWallet() {
   const [isLoadingSummary, setIsLoadingSummary] = useState(false);
 
   const [isCheckingOut,    setIsCheckingOut]    = useState(false);
-  const [isOpeningPortal,  setIsOpeningPortal]  = useState(false);
   const [refundingTxId,    setRefundingTxId]    = useState(null);
 
   // ─── Load packs on mount ────────────────────────────────────
@@ -124,27 +122,6 @@ export function useWallet() {
     }
   };
 
-  // ─── Stripe Billing Portal — redirect ───────────────────────
-  const openPortal = async () => {
-    if (!token) {
-      toast.error('Please log in to manage billing.');
-      return;
-    }
-    setIsOpeningPortal(true);
-    try {
-      const data = await createPortalSession(token);
-      if (data?.url) {
-        window.location.href = data.url;
-      } else {
-        toast.error('Could not open billing portal.');
-        setIsOpeningPortal(false);
-      }
-    } catch (err) {
-      toast.error(getErrorMsg(err));
-      setIsOpeningPortal(false);
-    }
-  };
-
   // ─── Self-serve refund ──────────────────────────────────────
   const refundTransaction = async (transactionId) => {
     if (!token) return;
@@ -175,9 +152,9 @@ export function useWallet() {
     summary, isLoadingSummary,
 
     buyPack,           isCheckingOut,
-    openPortal,        isOpeningPortal,
     refundTransaction, refundingTxId,
 
     refreshBalance,
+    loadTransactions,
   };
 }

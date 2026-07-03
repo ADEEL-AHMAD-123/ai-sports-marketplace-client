@@ -1,0 +1,372 @@
+/*
+ * Transaction detail page — theme-aware, invoice-style layout.
+ * Reachable from wallet history rows. Renders differently per transaction
+ * type (purchase / refund / insight_unlock / bonus / admin).
+ */
+
+.page {
+  min-height: calc(100vh - var(--nav-height));
+  min-height: calc(100dvh - var(--nav-height));
+  padding: 32px 20px 80px;
+  background: var(--color-bg-base);
+  color: var(--color-text-primary);
+}
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+/* Breadcrumb / back link */
+.crumb {
+  margin-bottom: 18px;
+  a {
+    font-size: 13px;
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+    &:hover { color: var(--color-accent); }
+  }
+}
+
+/* Header — type + amount */
+.header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  margin-bottom: 28px;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+  }
+}
+.eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+.headerTitle {
+  font-size: 26px;
+  line-height: 1.2;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  margin: 0 0 6px;
+  color: var(--color-text-primary);
+
+  @media (max-width: 480px) { font-size: 22px; }
+}
+.headerSub {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.statusPill {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+
+  @media (max-width: 480px) {
+    display: inline-block;
+    margin: 10px 0 4px;
+  }
+}
+.statusPaid     { background: var(--color-accent-dim);  color: var(--color-accent); }
+.statusRefunded { background: var(--color-accent-dim);  color: var(--color-accent); }
+.statusCredit   { background: var(--color-accent-dim);  color: var(--color-accent); }
+.statusDebit    { background: var(--color-bg-elevated); color: var(--color-text-secondary); }
+
+.headerAmount {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+  text-align: right;
+
+  @media (max-width: 480px) {
+    text-align: left;
+    font-size: 24px;
+  }
+}
+.headerAmountSub {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  text-align: right;
+  @media (max-width: 480px) { text-align: left; }
+}
+
+/* Info cards */
+.card {
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-bg-border);
+  border-radius: var(--radius-lg);
+  padding: 20px 22px;
+  margin-bottom: 16px;
+}
+.cardHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 14px;
+}
+.cardTitle {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+.invNum {
+  font-size: 12.5px;
+  color: var(--color-text-secondary);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Invoice line items */
+.lineItems {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 12px;
+  font-variant-numeric: tabular-nums;
+
+  th {
+    padding: 8px 6px;
+    font-size: 10.5px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-align: right;
+    color: var(--color-text-muted);
+    border-bottom: 1px solid var(--color-bg-border);
+  }
+  td {
+    padding: 12px 6px;
+    font-size: 13px;
+    color: var(--color-text-primary);
+    text-align: right;
+    border-bottom: 1px solid var(--color-bg-border);
+
+    &:first-child {
+      text-align: left;
+    }
+  }
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+}
+.itemName { font-weight: 500; color: var(--color-text-primary); }
+.itemSub  { font-size: 11.5px; color: var(--color-text-muted); margin-top: 2px; }
+
+/* Totals block, right-aligned */
+.totals {
+  margin-top: 4px;
+  padding-top: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 6px;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+.totalRowFinal {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 6px 6px;
+  border-top: 1px solid var(--color-bg-border);
+  margin-top: 4px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  small {
+    font-size: 11px;
+    color: var(--color-text-muted);
+    margin-left: 4px;
+  }
+}
+
+/* Key-value grid for payment details */
+.kvGrid {
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 8px 16px;
+  font-size: 13px;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: 4px 0;
+  }
+}
+.kvLabel {
+  color: var(--color-text-muted);
+  font-size: 12.5px;
+  padding: 4px 0;
+
+  @media (max-width: 480px) {
+    padding: 8px 0 2px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-size: 10.5px;
+  }
+}
+.kvValue {
+  color: var(--color-text-primary);
+  padding: 4px 0;
+  word-break: break-all;
+  font-variant-numeric: tabular-nums;
+
+  code {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    background: var(--color-bg-hover);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--color-text-secondary);
+  }
+}
+
+/* Invoice links */
+.invoiceLinks {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-bg-border);
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.invoiceLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  color: var(--color-accent);
+  text-decoration: none;
+  font-weight: 500;
+  transition: filter var(--transition-fast);
+  &:hover { text-decoration: underline; }
+}
+
+/* Refund card — highlighted */
+.refundCard {
+  background: var(--color-bg-surface);
+  border: 1px solid rgba(var(--color-accent-rgb), 0.35);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+
+  @media (max-width: 560px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+.refundTitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  margin-bottom: 4px;
+}
+.refundSub {
+  font-size: 12.5px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+.refundBtn {
+  flex: none;
+  background: transparent;
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger);
+  padding: 9px 18px;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--transition-fast);
+  min-height: 40px;
+
+  &:hover:not(:disabled) { background: var(--color-danger-dim); }
+  &:disabled { opacity: 0.55; cursor: default; }
+
+  @media (max-width: 560px) { width: 100%; }
+}
+
+/* Support footer */
+.supportFooter {
+  margin-top: 24px;
+  padding: 16px 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  text-align: center;
+  border-top: 1px solid var(--color-bg-border);
+  line-height: 1.6;
+  a {
+    color: var(--color-accent);
+    text-decoration: none;
+    &:hover { text-decoration: underline; }
+  }
+  code {
+    font-family: var(--font-mono);
+    background: var(--color-bg-hover);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--color-text-secondary);
+    font-size: 11px;
+  }
+}
+
+.helpNote {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-md);
+  font-size: 12.5px;
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+  strong { color: var(--color-text-primary); font-weight: 500; }
+}
+
+.linkArrow {
+  display: inline-block;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-bg-border);
+  width: 100%;
+  font-size: 13px;
+  color: var(--color-accent);
+  text-decoration: none;
+  font-weight: 500;
+  &:hover { text-decoration: underline; }
+}
+
+/* Not-found state */
+.notFound {
+  text-align: center;
+  padding: 60px 20px;
+  h1 { font-size: 22px; margin: 0 0 10px; color: var(--color-text-primary); }
+  p { font-size: 14px; color: var(--color-text-secondary); margin: 0 0 20px; }
+}
+.primaryBtn {
+  background: var(--color-accent);
+  color: #ffffff;
+  border: none;
+  padding: 10px 22px;
+  border-radius: var(--radius-md);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
+  &:hover { filter: brightness(0.94); }
+}

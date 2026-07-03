@@ -1,3 +1,9 @@
+/*
+ * Navbar — sticky, glass-effect header with two nav modes:
+ *   • Desktop (≥ 641px): inline layout with credits + avatar dropdown
+ *   • Mobile  (≤ 640px): logo + theme + hamburger, slide-down menu panel
+ */
+
 .nav {
   position: sticky;
   top: 0;
@@ -11,6 +17,7 @@
 :global(.light) .nav {
   background: rgba(244, 245, 247, 0.9);
 }
+
 .inner {
   display: flex;
   align-items: center;
@@ -19,32 +26,40 @@
   max-width: var(--max-width);
   margin: 0 auto;
   padding: 0 32px;
+
+  @media (max-width: 640px) { padding: 0 16px; }
 }
+
+/* ── Logo ─────────────────────────────────────── */
 .logo {
   display: flex;
   align-items: center;
   gap: 9px;
   text-decoration: none;
 }
-.mark {
-  display: flex;
-  align-items: center;
-}
+.mark { display: flex; align-items: center; }
 .logoText {
   font-family: var(--font-display);
   font-size: 1.1875rem;
   font-weight: 800;
   color: var(--color-text-primary);
   letter-spacing: -0.04em;
+
+  @media (max-width: 480px) { font-size: 1.0625rem; }
 }
-.accent {
-  color: var(--color-accent);
-}
-.right {
+.accent { color: var(--color-accent); }
+
+/* ─────────────────────────────────────────────────
+ * DESKTOP RIGHT SIDE — hidden on mobile
+ * ───────────────────────────────────────────────── */
+.desktopRight {
   display: flex;
   align-items: center;
   gap: 10px;
+
+  @media (max-width: 640px) { display: none; }
 }
+
 .themeBtn {
   width: 36px;
   height: 36px;
@@ -56,14 +71,14 @@
   border-radius: var(--radius-full);
   color: var(--color-text-secondary);
   cursor: pointer;
-  transition:
-    border-color var(--transition-fast),
-    color var(--transition-fast);
+  transition: border-color var(--transition-fast), color var(--transition-fast);
+
   &:hover {
     border-color: var(--color-accent);
     color: var(--color-text-primary);
   }
 }
+
 .credits {
   display: flex;
   align-items: center;
@@ -73,17 +88,10 @@
   border-radius: var(--radius-full);
   padding: 6px 14px 6px 10px;
   text-decoration: none;
-  transition:
-    border-color var(--transition-fast),
-    box-shadow var(--transition-fast);
-  svg {
-    color: var(--color-accent);
-    flex-shrink: 0;
-  }
-  &:hover {
-    border-color: var(--color-accent);
-    box-shadow: var(--shadow-accent);
-  }
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+
+  svg { color: var(--color-accent); flex-shrink: 0; }
+  &:hover { border-color: var(--color-accent); box-shadow: var(--shadow-accent); }
 }
 .creditsNum {
   font-family: var(--font-mono);
@@ -95,9 +103,8 @@
   font-size: 0.75rem;
   color: var(--color-text-muted);
 }
-.avatarWrap {
-  position: relative;
-}
+
+.avatarWrap { position: relative; }
 .avatarBtn {
   width: 36px;
   height: 36px;
@@ -113,10 +120,9 @@
   align-items: center;
   justify-content: center;
   transition: border-color var(--transition-fast);
-  &:hover {
-    border-color: var(--color-accent);
-  }
+  &:hover { border-color: var(--color-accent); }
 }
+
 .dropdown {
   position: absolute;
   top: calc(100% + 10px);
@@ -128,26 +134,16 @@
   box-shadow: var(--shadow-modal);
   overflow: hidden;
 }
-.dropHead {
-  padding: 14px 16px;
-}
-.dropName {
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin-bottom: 2px;
-}
-.dropEmail {
+.dropHead   { padding: 14px 16px; }
+.dropName   { font-size: 0.9375rem; font-weight: 600; color: var(--color-text-primary); margin-bottom: 2px; }
+.dropEmail  {
   font-size: 0.8125rem;
   color: var(--color-text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.divider {
-  height: 1px;
-  background: var(--color-bg-border);
-}
+.divider    { height: 1px; background: var(--color-bg-border); }
 .dropItem {
   display: block;
   width: 100%;
@@ -160,34 +156,20 @@
   border: none;
   cursor: pointer;
   text-align: left;
-  transition:
-    background var(--transition-fast),
-    color var(--transition-fast);
-  &:hover {
-    background: var(--color-bg-hover);
-    color: var(--color-text-primary);
-  }
+  transition: background var(--transition-fast), color var(--transition-fast);
+
+  &:hover { background: var(--color-bg-hover); color: var(--color-text-primary); }
 }
-.logout {
-  color: var(--color-danger);
-  &:hover {
-    color: var(--color-danger);
-  }
-}
-.authRow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+.logout { color: var(--color-danger); &:hover { color: var(--color-danger); } }
+
+.authRow { display: flex; align-items: center; gap: 12px; }
 .loginLink {
   font-size: 0.9375rem;
   color: var(--color-text-secondary);
   text-decoration: none;
   font-weight: 400;
   transition: color var(--transition-fast);
-  &:hover {
-    color: var(--color-text-primary);
-  }
+  &:hover { color: var(--color-text-primary); }
 }
 .registerBtn {
   background: var(--color-accent);
@@ -197,77 +179,228 @@
   padding: 8px 18px;
   border-radius: var(--radius-full);
   text-decoration: none;
-  transition:
-    opacity var(--transition-fast),
-    box-shadow var(--transition-fast);
-  &:hover {
-    opacity: 0.88;
-    box-shadow: var(--shadow-accent);
-    color: var(--color-text-inverse);
-  }
+  transition: opacity var(--transition-fast), box-shadow var(--transition-fast);
+  &:hover { opacity: 0.88; box-shadow: var(--shadow-accent); color: var(--color-text-inverse); }
 }
-/* Label swap: full on desktop, short on tight phones — see media queries below */
-.registerLabelFull  { display: inline; }
-.registerLabelShort { display: none; }
-.curtain {
+
+.curtain { position: fixed; inset: 0; z-index: -1; }
+
+/* ─────────────────────────────────────────────────
+ * MOBILE RIGHT SIDE — theme + hamburger only
+ * Hidden on desktop.
+ * ───────────────────────────────────────────────── */
+.mobileRight {
+  display: none;
+  align-items: center;
+  gap: 6px;
+
+  @media (max-width: 640px) { display: flex; }
+}
+
+.themeBtnMobile {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  border-radius: var(--radius-full);
+  transition: color var(--transition-fast), background var(--transition-fast);
+
+  &:hover { color: var(--color-text-primary); background: var(--color-bg-hover); }
+}
+
+.hamburger {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  border-radius: var(--radius-full);
+  transition: background var(--transition-fast);
+
+  &:hover { background: var(--color-bg-hover); }
+}
+
+/* ─────────────────────────────────────────────────
+ * MOBILE SLIDE-DOWN MENU
+ * ───────────────────────────────────────────────── */
+.mobileBackdrop {
   position: fixed;
-  inset: 0;
-  z-index: -1;
+  inset: var(--nav-height) 0 0 0;
+  background: var(--color-overlay);
+  z-index: 99;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
-/* ── Mobile: tighten everything so logged-out CTAs fit ──────── */
-@media (max-width: 640px) {
-  .inner { padding: 0 20px; }
-  .right { gap: 8px; }
-  .authRow { gap: 10px; }
+.mobileMenu {
+  position: fixed;
+  top: var(--nav-height);
+  left: 0;
+  right: 0;
+  max-height: calc(100vh - var(--nav-height));
+  max-height: calc(100dvh - var(--nav-height));
+  overflow-y: auto;
+  background: var(--color-bg-base);
+  border-bottom: 1px solid var(--color-bg-border);
+  z-index: 100;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+
+  @media (min-width: 641px) { display: none; }
 }
 
-@media (max-width: 480px) {
-  .inner { padding: 0 16px; }
-  .right { gap: 6px; }
+/* User block — quick balance + shortcut to wallet */
+.mobileUserBlock {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--color-bg-border);
+  text-decoration: none;
+  color: inherit;
+  transition: background var(--transition-fast);
 
-  /* Smaller logo text — keep the mark prominent */
-  .logoText { font-size: 1.0625rem; }
-
-  /* Theme button — shrink to match other 32px touch targets */
-  .themeBtn {
-    width: 32px; height: 32px;
-    svg { width: 14px; height: 14px; }
-  }
-  .avatarBtn { width: 32px; height: 32px; font-size: 0.8125rem; }
-
-  /* Logged-in: hide "credits" label, just the count */
-  .creditsLbl { display: none; }
-  .credits { padding: 5px 10px 5px 8px; }
-  .creditsNum { font-size: 0.875rem; }
-
-  /* Logged-out CTAs */
-  .authRow { gap: 8px; }
-  .loginLink { font-size: 0.875rem; }
-  .registerBtn {
-    padding: 7px 14px;
-    font-size: 0.8125rem;
-  }
+  &:hover { background: var(--color-bg-hover); }
+}
+.mobileUserAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-bg-elevated);
+  border: 1.5px solid var(--color-bg-border);
+  color: var(--color-accent);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.mobileUserInfo { flex: 1; min-width: 0; }
+.mobileUserName {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mobileUserEmail {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mobileUserCredits {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  background: var(--color-accent-dim);
+  border-radius: var(--radius-full);
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-weight: 500;
+  flex: none;
+  svg { color: var(--color-accent); }
 }
 
-/* ── Smallest phones (≤ 380px) — surface only the primary CTA ───
-   Hide the "Log in" text link to make room. Users with accounts can
-   tap the primary button and switch to Log in from the sign-up screen
-   — both auth pages cross-link. */
-@media (max-width: 480px) {
-  /* Swap "Get Started" → "Sign Up" — saves ~30px of horizontal width */
-  .registerLabelFull  { display: none; }
-  .registerLabelShort { display: inline; }
+/* Menu item list */
+.mobileItems {
+  padding: 8px 0;
+}
+.mobileItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  text-decoration: none;
+  transition: background var(--transition-fast);
+  min-height: 48px;
+
+  &:hover, &:focus-visible { background: var(--color-bg-hover); }
+}
+.mobileItemArrow {
+  font-size: 1.125rem;
+  color: var(--color-text-muted);
+  font-weight: 300;
 }
 
-@media (max-width: 380px) {
-  .inner { padding: 0 12px; }
-  .logoText { font-size: 1rem; }
+/* Footer — auth CTAs or logout */
+.mobileFooter {
+  padding: 16px 20px 24px;
+  border-top: 1px solid var(--color-bg-border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.mobileLoginBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-bg-border);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  min-height: 48px;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
 
-  .loginLink { display: none; }
+  &:hover { background: var(--color-bg-hover); border-color: var(--color-accent); }
+}
+.mobileSignupBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #ffffff;
+  background: var(--color-accent);
+  border: none;
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  min-height: 48px;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
+  transition: filter var(--transition-fast);
 
-  .registerBtn {
-    padding: 7px 12px;
-    font-size: 0.75rem;
+  &:hover { filter: brightness(0.94); }
+}
+.mobileLogout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--color-danger);
+  background: transparent;
+  border: 1px solid var(--color-bg-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  min-height: 48px;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+
+  &:hover {
+    background: var(--color-danger-dim);
+    border-color: rgba(var(--color-danger-rgb), 0.4);
   }
 }

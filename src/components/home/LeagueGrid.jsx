@@ -86,12 +86,11 @@ export default function LeagueGrid() {
                   </span>
                   <span className={styles.pillBody}>
                     <span className={styles.pillName}>{s.label}</span>
-                    {s.isActive ? (
-                      <span className={`${styles.pillStatus} ${styles.pillLive}`}>
-                        <span className={styles.pillDot} />Live
-                      </span>
-                    ) : (
-                      <span className={`${styles.pillStatus} ${styles.pillSoon}`}>Soon</span>
+                    {/* "Coming soon" chip stays only on genuinely inactive
+                        sports — the old blanket "Live" tag on every active
+                        sport carried no information and cluttered the row. */}
+                    {!s.isActive && (
+                      <span className={`${styles.pillStatus} ${styles.pillSoon}`}>Coming soon</span>
                     )}
                   </span>
                 </motion.button>

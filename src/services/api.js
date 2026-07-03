@@ -34,13 +34,12 @@ export const createCheckoutSession = async (packId, token) => {
   return res.data;
 };
 
-// ── Stripe Billing Portal — creates a session, returns portal URL ─
-// Same redirect pattern as checkout. Portal lets the user manage saved
-// payment methods, view Stripe-hosted invoices, and download receipts.
-export const createPortalSession = async (token) => {
-  const res = await api.post(
-    '/credits/portal',
-    {},
+// ── Single transaction detail ─────────────────────────────────
+// Fetches one transaction (must belong to the caller) with all Stripe
+// metadata for the wallet detail page.
+export const fetchTransaction = async (transactionId, token) => {
+  const res = await api.get(
+    `/credits/transactions/${transactionId}`,
     { headers: authHeaders(token) },
   );
   return res.data;
