@@ -123,9 +123,11 @@ export function useUnlock(prop, sport) {
         return { success: false };
       }
 
+      // creditDeducted:false now only happens when the user re-opens their
+      // own previously-unlocked insight — so the copy makes that explicit.
       toast.success(payload?.creditDeducted
         ? 'Insight unlocked! 1 credit used.'
-        : 'Insight ready — no credit used.');
+        : 'You already unlocked this one — no charge.');
       // No props re-fetch here — the unlock state lives in Redux and the card
       // re-renders from it. Re-fetching the whole list caused a skeleton flash
       // that looked like a page refresh. (The odds-moved path above already
