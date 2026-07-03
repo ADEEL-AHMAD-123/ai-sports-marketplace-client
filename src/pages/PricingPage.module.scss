@@ -1,9 +1,14 @@
+/*
+ * PricingPage — theme-aware. Uses only design tokens from _themes.scss
+ * so it adapts to both light and dark modes without any hardcoded RGB.
+ */
+
 .page {
   min-height: calc(100vh - var(--nav-height));
   min-height: calc(100dvh - var(--nav-height));
   padding: 40px 20px 80px;
-  background: var(--color-bg-page, #0f1418);
-  color: var(--color-text-primary, #e6ebf0);
+  background: var(--color-bg-base);
+  color: var(--color-text-primary);
 }
 
 .container {
@@ -21,9 +26,9 @@
   align-items: center;
   gap: 6px;
   padding: 5px 12px;
-  background: rgba(34, 197, 94, 0.12);
-  color: #22c55e;
-  border-radius: 20px;
+  background: var(--color-accent-dim);
+  color: var(--color-accent);
+  border-radius: var(--radius-full);
   font-size: 11px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -36,7 +41,7 @@
   letter-spacing: -0.02em;
   margin: 0 0 14px;
   font-weight: 500;
-  color: var(--color-text-primary, #e6ebf0);
+  color: var(--color-text-primary);
 
   @media (max-width: 640px) { font-size: 32px; }
 }
@@ -45,7 +50,7 @@
   line-height: 1.55;
   max-width: 520px;
   margin: 0 auto;
-  color: var(--color-text-secondary, #8b96a3);
+  color: var(--color-text-secondary);
 }
 .balancePill {
   display: inline-flex;
@@ -53,18 +58,22 @@
   gap: 8px;
   margin-top: 20px;
   padding: 6px 14px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 0.5px solid rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-bg-border);
+  border-radius: var(--radius-full);
   font-size: 13px;
-  color: var(--color-text-secondary, #8b96a3);
-  strong { color: #22c55e; font-weight: 500; font-variant-numeric: tabular-nums; }
+  color: var(--color-text-secondary);
+  strong {
+    color: var(--color-accent);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
 }
 .balDot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #22c55e;
+  background: var(--color-accent);
   animation: pulse 2s ease-in-out infinite;
 }
 @keyframes pulse {
@@ -84,23 +93,30 @@
 
 .card {
   position: relative;
-  background: rgba(255, 255, 255, 0.03);
-  border: 0.5px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-bg-border);
+  border-radius: var(--radius-lg);
   padding: 24px 20px 22px;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  transition: transform 0.2s ease, border-color 0.2s ease;
+  transition:
+    transform var(--transition-normal),
+    border-color var(--transition-normal),
+    box-shadow var(--transition-normal);
 
   &:hover {
     transform: translateY(-2px);
-    border-color: rgba(255, 255, 255, 0.16);
+    border-color: rgba(var(--color-accent-rgb), 0.4);
+    box-shadow: var(--shadow-card);
   }
 }
 .cardHighlight {
-  border-color: rgba(34, 197, 94, 0.35);
-  background: linear-gradient(180deg, rgba(34, 197, 94, 0.06) 0%, rgba(255, 255, 255, 0.03) 100%);
+  border-color: rgba(var(--color-accent-rgb), 0.5);
+  background: linear-gradient(180deg,
+    rgba(var(--color-accent-rgb), 0.06) 0%,
+    var(--color-bg-surface) 100%
+  );
 }
 
 .badge {
@@ -108,14 +124,15 @@
   top: -10px;
   left: 50%;
   transform: translateX(-50%);
-  padding: 3px 10px;
-  background: #22c55e;
-  color: #0f1418;
-  border-radius: 12px;
+  padding: 3px 12px;
+  background: var(--color-accent);
+  color: #ffffff;
+  border-radius: var(--radius-full);
   font-size: 10.5px;
   font-weight: 500;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
   white-space: nowrap;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
 }
 
 .packLabel {
@@ -123,12 +140,13 @@
   font-weight: 500;
   letter-spacing: 0.03em;
   text-transform: uppercase;
-  color: var(--color-text-secondary, #8b96a3);
+  color: var(--color-text-secondary);
 }
 .packDesc {
   font-size: 12.5px;
-  color: var(--color-text-muted, #64748b);
+  color: var(--color-text-muted);
   margin-bottom: 12px;
+  min-height: 18px;
 }
 
 .priceRow {
@@ -140,78 +158,89 @@
 }
 .currency {
   font-size: 16px;
-  color: var(--color-text-secondary, #8b96a3);
+  color: var(--color-text-secondary);
   font-weight: 500;
 }
 .amount {
   font-size: 40px;
   font-weight: 500;
   letter-spacing: -0.02em;
-  color: var(--color-text-primary, #e6ebf0);
+  color: var(--color-text-primary);
   line-height: 1;
 }
 
 .creditsRow {
   font-size: 13px;
-  color: var(--color-text-secondary, #8b96a3);
+  color: var(--color-text-secondary);
   margin-bottom: 8px;
   strong {
-    color: var(--color-text-primary, #e6ebf0);
+    color: var(--color-text-primary);
     font-weight: 500;
     font-variant-numeric: tabular-nums;
   }
 }
 .sep {
-  color: var(--color-text-muted, #64748b);
+  color: var(--color-text-muted);
   opacity: 0.5;
   margin: 0 4px;
 }
 
 .saveTag {
   align-self: flex-start;
-  padding: 2px 8px;
-  background: rgba(245, 158, 11, 0.14);
-  color: #fbbf24;
-  border-radius: 4px;
+  padding: 3px 10px;
+  background: var(--color-accent-dim);
+  color: var(--color-accent);
+  border-radius: var(--radius-full);
   font-size: 10.5px;
-  font-weight: 500;
-  letter-spacing: 0.03em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   margin-bottom: 16px;
+  min-height: 22px;
+}
+/* Empty slot for cards without a save % — preserves vertical rhythm
+ * across the grid so buttons all sit at the same y-coordinate. */
+.saveTagPlaceholder {
+  align-self: flex-start;
+  min-height: 22px;
+  margin-bottom: 16px;
+  visibility: hidden;
 }
 
+/* All pricing buttons share the same solid green look — theme-aware,
+ * white text for legibility on both light and dark accent shades. The
+ * highlighted card differentiates itself via border + badge, not via a
+ * different button color. Docked to card bottom with margin-top: auto. */
 .buyBtn {
-  background: rgba(255, 255, 255, 0.06);
-  border: 0.5px solid rgba(255, 255, 255, 0.12);
-  color: var(--color-text-primary, #e6ebf0);
+  margin-top: auto;
+  background: var(--color-accent);
+  border: none;
+  color: #ffffff;
   padding: 10px 16px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 13.5px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  transition: filter var(--transition-fast), opacity var(--transition-fast);
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 40px;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
 
-  &:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.09);
-    border-color: rgba(255, 255, 255, 0.2);
-  }
-  &:disabled { opacity: 0.6; cursor: default; }
+  &:hover:not(:disabled)  { filter: brightness(0.94); }
+  &:active:not(:disabled) { transform: translateY(0.5px); }
+  &:disabled              { opacity: 0.6; cursor: default; }
 }
 .buyBtnHighlight {
-  background: #22c55e;
-  border-color: transparent;
-  color: #0f1418;
-  &:hover:not(:disabled) { background: #16a34a; }
+  /* Same visual as .buyBtn — reserved as a class hook. */
 }
 
 .spinner {
   width: 14px;
   height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: currentColor;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -228,8 +257,8 @@
   align-items: center;
   gap: 6px;
   font-size: 11.5px;
-  color: var(--color-text-secondary, #8b96a3);
-  svg { color: #22c55e; flex: none; }
+  color: var(--color-text-secondary);
+  svg { color: var(--color-accent); flex: none; }
 }
 
 /* ── FAQ ───────────────────────────────────────────────── */
@@ -242,13 +271,13 @@
   font-weight: 500;
   letter-spacing: -0.01em;
   margin: 0 0 16px;
-  color: var(--color-text-primary, #e6ebf0);
+  color: var(--color-text-primary);
 }
 .faqItem {
-  border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--color-bg-border);
   padding: 14px 0;
   cursor: pointer;
-  color: var(--color-text-primary, #e6ebf0);
+  color: var(--color-text-primary);
 
   summary {
     font-size: 14.5px;
@@ -257,20 +286,22 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    color: var(--color-text-primary);
+
     &::-webkit-details-marker { display: none; }
     &::after {
       content: '+';
-      color: var(--color-text-secondary, #8b96a3);
+      color: var(--color-text-secondary);
       font-size: 18px;
       font-weight: 300;
-      transition: transform 0.15s;
+      transition: transform var(--transition-fast);
     }
   }
   &[open] summary::after { content: '−'; }
   p {
     font-size: 13.5px;
     line-height: 1.55;
-    color: var(--color-text-secondary, #8b96a3);
+    color: var(--color-text-secondary);
     margin: 10px 0 4px;
   }
 }
@@ -281,20 +312,20 @@
   max-width: 640px;
   margin: 0 auto;
   padding: 24px 0;
-  border-top: 0.5px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--color-bg-border);
 }
 .trustLine {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   font-size: 12.5px;
-  color: var(--color-text-secondary, #8b96a3);
+  color: var(--color-text-secondary);
   margin-bottom: 12px;
-  svg { color: #22c55e; }
+  svg { color: var(--color-accent); }
 }
 .trustFine {
   font-size: 11px;
-  color: var(--color-text-muted, #64748b);
+  color: var(--color-text-muted);
   line-height: 1.5;
   margin: 0;
 }

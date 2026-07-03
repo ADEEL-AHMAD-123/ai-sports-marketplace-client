@@ -1,3 +1,7 @@
+/*
+ * EmailVerifyPage — theme-aware landing page for email verification links.
+ */
+
 .page {
   min-height: calc(100vh - var(--nav-height));
   min-height: calc(100dvh - var(--nav-height));
@@ -5,16 +9,16 @@
   align-items: center;
   justify-content: center;
   padding: 40px 20px;
-  background: var(--color-bg-page, #0f1418);
-  color: var(--color-text-primary, #e6ebf0);
+  background: var(--color-bg-base);
+  color: var(--color-text-primary);
 }
 
 .card {
   width: 100%;
   max-width: 480px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 0.5px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-bg-border);
+  border-radius: var(--radius-lg);
   padding: 40px 32px 32px;
   text-align: center;
 
@@ -26,20 +30,20 @@
   height: 72px;
   margin: 0 auto 20px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--color-text-secondary, #8b96a3);
+  background: var(--color-bg-hover);
+  color: var(--color-text-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.iconWrapOk    { background: rgba(34, 197, 94, 0.14);  color: #22c55e; }
-.iconWrapError { background: rgba(239, 68, 68, 0.14);  color: #ef4444; }
+.iconWrapOk    { background: var(--color-accent-dim); color: var(--color-accent); }
+.iconWrapError { background: var(--color-danger-dim); color: var(--color-danger); }
 
 .spinner {
   width: 28px;
   height: 28px;
-  border: 3px solid rgba(255, 255, 255, 0.15);
-  border-top-color: var(--color-accent, #22c55e);
+  border: 3px solid var(--color-bg-border);
+  border-top-color: var(--color-accent);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -50,15 +54,20 @@
   font-weight: 500;
   letter-spacing: -0.015em;
   margin: 0 0 10px;
+  color: var(--color-text-primary);
 }
 .sub {
   font-size: 15px;
   line-height: 1.55;
-  color: var(--color-text-secondary, #8b96a3);
+  color: var(--color-text-secondary);
   margin: 0 0 22px;
-  strong { color: var(--color-text-primary, #e6ebf0); font-weight: 500; font-variant-numeric: tabular-nums; }
+  strong {
+    color: var(--color-text-primary);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
 }
-.gained { color: #22c55e !important; }
+.gained { color: var(--color-accent) !important; }
 
 .actions {
   display: flex;
@@ -68,32 +77,37 @@
   margin-bottom: 16px;
 }
 .primaryBtn {
-  background: #22c55e;
-  color: #0f1418;
+  background: var(--color-accent);
+  color: #ffffff;
   padding: 10px 20px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 13.5px;
   font-weight: 500;
   text-decoration: none;
-  &:hover { background: #16a34a; }
+  transition: filter var(--transition-fast);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
+
+  &:hover { filter: brightness(0.94); }
 }
 .secondaryBtn {
-  background: rgba(255, 255, 255, 0.06);
-  border: 0.5px solid rgba(255, 255, 255, 0.1);
-  color: var(--color-text-primary, #e6ebf0);
+  background: var(--color-bg-hover);
+  border: 1px solid var(--color-bg-border);
+  color: var(--color-text-primary);
   padding: 10px 20px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 13.5px;
   font-weight: 500;
   text-decoration: none;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+
   &:hover {
-    background: rgba(255, 255, 255, 0.09);
-    border-color: rgba(255, 255, 255, 0.16);
+    background: var(--color-bg-elevated);
+    border-color: var(--color-text-muted);
   }
 }
 .fine {
   font-size: 12px;
   line-height: 1.5;
-  color: var(--color-text-muted, #64748b);
+  color: var(--color-text-muted);
   margin: 0;
 }

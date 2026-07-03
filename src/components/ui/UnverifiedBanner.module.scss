@@ -1,51 +1,113 @@
+/*
+ * UnverifiedBanner — matches WalletPage's card design language.
+ * Uses the existing CSS custom properties so it adapts to both light
+ * and dark themes without any bespoke color values, and has a green
+ * left accent rail (brand color) instead of an amber wash.
+ */
+
 .banner {
-  display: flex;
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  background: rgba(245, 158, 11, 0.12);
-  border: 0.5px solid rgba(245, 158, 11, 0.3);
-  border-radius: 10px;
-  color: #fbbf24;
-  font-size: 13px;
-  line-height: 1.4;
-  margin: 12px 0;
+  gap: 14px;
+  padding: 14px 18px 14px 22px;
+  margin: 16px 0 24px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-bg-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+
+  /* Left accent rail — matches the brand's green pill on other CTAs. */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 3px;
+    background: var(--color-accent);
+  }
 
   @media (max-width: 560px) {
-    flex-wrap: wrap;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    row-gap: 10px;
+    padding: 14px 16px 14px 20px;
   }
 }
+
 .compact {
-  padding: 8px 12px;
-  font-size: 12px;
-  gap: 8px;
+  padding: 10px 16px 10px 20px;
+  margin: 8px 0 14px;
 }
 
-.icon {
+/* Icon — sits in a small tinted circle to add visual weight. */
+.iconWrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-accent-dim);
+  color: var(--color-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex: none;
 }
+
 .text {
-  flex: 1;
-  color: #fbbf24;
   min-width: 0;
-  strong { color: #fbbf24; font-weight: 500; }
-  span   { color: rgba(251, 191, 36, 0.85); }
+  color: var(--color-text-secondary);
+  font-size: 13.5px;
+  line-height: 1.45;
+
+  strong {
+    display: block;
+    color: var(--color-text-primary);
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 2px;
+  }
+  span {
+    color: var(--color-text-secondary);
+  }
+
+  @media (max-width: 560px) {
+    grid-column: 2 / 3;
+  }
 }
+
+/* CTA — solid green button with white text. White reads clearly on
+ * both the bright dark-mode accent (#00e676) and the darker
+ * light-mode accent (#00a854), so it's theme-safe. */
 .action {
   flex: none;
-  background: transparent;
-  border: 0.5px solid rgba(245, 158, 11, 0.4);
-  color: #fbbf24;
-  padding: 5px 12px;
-  border-radius: 6px;
-  font-size: 12px;
+  background: var(--color-accent);
+  border: none;
+  color: #ffffff;
+  padding: 9px 20px;
+  border-radius: 8px;
+  font-size: 13.5px;
   font-weight: 500;
+  letter-spacing: 0.01em;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+  transition: filter 0.15s, opacity 0.15s;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.08); /* Tiny lift so white pops on light-mode green */
 
-  &:hover:not(:disabled) {
-    background: rgba(245, 158, 11, 0.15);
-    border-color: rgba(245, 158, 11, 0.55);
+  &:hover:not(:disabled) { filter: brightness(0.94); }
+  &:active:not(:disabled) { transform: translateY(0.5px); }
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+    background: var(--color-bg-surface);
+    color: var(--color-text-secondary);
+    text-shadow: none;
   }
-  &:disabled { opacity: 0.6; cursor: default; }
+
+  @media (max-width: 560px) {
+    grid-column: 1 / -1;
+    width: 100%;
+    padding: 11px 18px;
+  }
 }

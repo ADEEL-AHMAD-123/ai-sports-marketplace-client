@@ -133,8 +133,12 @@ export default function WalletPage() {
                     <p className={styles.packPer}>${perCredit.toFixed(2)} / credit</p>
                   )}
 
-                  {pack.save > 0 && (
+                  {/* Reserve the "Save X%" slot on every card so buttons
+                      align at the same y-coordinate across the grid. */}
+                  {pack.save > 0 ? (
                     <div className={styles.saveTag}>Save {pack.save}%</div>
+                  ) : (
+                    <div className={styles.saveTagPlaceholder} aria-hidden="true" />
                   )}
 
                   <button

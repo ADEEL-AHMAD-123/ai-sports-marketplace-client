@@ -1,3 +1,8 @@
+/*
+ * Billing pages — theme-aware. Uses design tokens from _themes.scss so
+ * both success and cancel pages render correctly in light + dark modes.
+ */
+
 .page {
   min-height: calc(100vh - var(--nav-height));
   min-height: calc(100dvh - var(--nav-height));
@@ -5,16 +10,16 @@
   align-items: center;
   justify-content: center;
   padding: 40px 20px;
-  background: var(--color-bg-page, #0f1418);
-  color: var(--color-text-primary, #e6ebf0);
+  background: var(--color-bg-base);
+  color: var(--color-text-primary);
 }
 
 .card {
   width: 100%;
   max-width: 480px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 0.5px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
+  background: var(--color-bg-surface);
+  border: 1px solid var(--color-bg-border);
+  border-radius: var(--radius-lg);
   padding: 40px 32px 32px;
   text-align: center;
 
@@ -23,7 +28,7 @@
   }
 }
 .cardMuted {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--color-bg-surface);
 }
 
 .iconWrap {
@@ -31,15 +36,15 @@
   height: 72px;
   margin: 0 auto 20px;
   border-radius: 50%;
-  background: rgba(34, 197, 94, 0.14);
-  color: #22c55e;
+  background: var(--color-accent-dim);
+  color: var(--color-accent);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .iconWrapMuted {
-  background: rgba(255, 255, 255, 0.06);
-  color: #8b96a3;
+  background: var(--color-bg-hover);
+  color: var(--color-text-secondary);
 }
 
 .title {
@@ -47,32 +52,32 @@
   font-weight: 500;
   letter-spacing: -0.015em;
   margin: 0 0 10px;
-  color: var(--color-text-primary, #e6ebf0);
+  color: var(--color-text-primary);
 }
 .sub {
   font-size: 15px;
   line-height: 1.55;
-  color: var(--color-text-secondary, #8b96a3);
+  color: var(--color-text-secondary);
   margin: 0 0 20px;
   strong {
-    color: var(--color-text-primary, #e6ebf0);
+    color: var(--color-text-primary);
     font-weight: 500;
     font-variant-numeric: tabular-nums;
   }
 }
-.gained { color: #22c55e !important; }
+.gained { color: var(--color-accent) !important; }
 
 .reference {
   font-size: 11.5px;
-  color: var(--color-text-muted, #64748b);
+  color: var(--color-text-muted);
   margin: 0 0 22px;
   code {
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--color-bg-hover);
     padding: 2px 6px;
     border-radius: 4px;
-    font-family: 'DM Mono', ui-monospace, monospace;
+    font-family: var(--font-mono);
     font-size: 11px;
-    color: var(--color-text-secondary, #8b96a3);
+    color: var(--color-text-secondary);
   }
 }
 
@@ -85,37 +90,38 @@
 }
 
 .primaryBtn {
-  background: #22c55e;
-  color: #0f1418;
+  background: var(--color-accent);
+  color: #ffffff;
   padding: 10px 20px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 13.5px;
   font-weight: 500;
   text-decoration: none;
-  transition: background 0.15s;
+  transition: filter var(--transition-fast);
   border: none;
   cursor: pointer;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
 
-  &:hover { background: #16a34a; }
+  &:hover { filter: brightness(0.94); }
 }
 .secondaryBtn {
-  background: rgba(255, 255, 255, 0.06);
-  border: 0.5px solid rgba(255, 255, 255, 0.1);
-  color: var(--color-text-primary, #e6ebf0);
+  background: var(--color-bg-hover);
+  border: 1px solid var(--color-bg-border);
+  color: var(--color-text-primary);
   padding: 10px 20px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 13.5px;
   font-weight: 500;
   text-decoration: none;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
 
   &:hover {
-    background: rgba(255, 255, 255, 0.09);
-    border-color: rgba(255, 255, 255, 0.16);
+    background: var(--color-bg-elevated);
+    border-color: var(--color-text-muted);
   }
 }
 .inlineLink {
-  color: #22c55e;
+  color: var(--color-accent);
   text-decoration: none;
   &:hover { text-decoration: underline; }
 }
@@ -123,9 +129,7 @@
 .fine {
   font-size: 11.5px;
   line-height: 1.5;
-  color: var(--color-text-muted, #64748b);
-  margin: 0;
+  color: var(--color-text-muted);
+  margin: 0 auto;
   max-width: 380px;
-  margin-left: auto;
-  margin-right: auto;
 }

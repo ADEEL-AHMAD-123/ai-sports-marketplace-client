@@ -113,8 +113,10 @@ export default function PricingPage() {
                   ${perCredit.toFixed(2)} each
                 </div>
 
-                {savePct > 0 && (
+                {savePct > 0 ? (
                   <div className={styles.saveTag}>Save {savePct}%</div>
+                ) : (
+                  <div className={styles.saveTagPlaceholder} aria-hidden="true" />
                 )}
 
                 <button

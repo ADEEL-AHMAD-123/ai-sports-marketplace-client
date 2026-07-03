@@ -82,48 +82,99 @@
   letter-spacing: 0.03em;
 }
 
-/* Pack card additions */
+/* ─── Pack cards (uniform layout — buttons align to bottom regardless
+ *      of whether "Save X%" or description is present) ─────────────── */
 .packCardHighlight {
-  border-color: rgba(34, 197, 94, 0.35) !important;
-  background: linear-gradient(180deg, rgba(34, 197, 94, 0.06) 0%, var(--color-bg-surface, rgba(255,255,255,0.03)) 100%);
+  border-color: rgba(var(--color-accent-rgb), 0.4) !important;
+  background: linear-gradient(180deg,
+    rgba(var(--color-accent-rgb), 0.06) 0%,
+    var(--color-bg-surface) 100%
+  );
 }
 .packBadge {
   position: absolute;
-  top: -9px;
+  top: -10px;
   left: 50%;
   transform: translateX(-50%);
-  padding: 3px 10px;
-  background: #22c55e;
-  color: #0f1418;
+  padding: 3px 12px;
+  background: var(--color-accent);
+  color: #ffffff;
   border-radius: 12px;
   font-size: 10.5px;
   font-weight: 500;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
   white-space: nowrap;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
 }
 .packHeader {
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 .packDesc {
-  font-size: 11.5px;
-  color: var(--color-text-muted, #64748b);
+  font-size: 12px;
+  color: var(--color-text-muted);
   margin: 4px 0 0;
+  min-height: 18px; /* Reserve height so cards without desc still align */
 }
+
+/* Save X% tag — uses the accent color instead of amber, so it looks
+ * on-brand and works in both light and dark themes. */
 .saveTag {
   align-self: flex-start;
-  padding: 2px 8px;
-  background: rgba(245, 158, 11, 0.14);
-  color: #fbbf24;
-  border-radius: 4px;
+  padding: 3px 10px;
+  background: var(--color-accent-dim);
+  color: var(--color-accent);
+  border-radius: 999px;
   font-size: 10.5px;
-  font-weight: 500;
-  margin: 6px 0 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin: 4px 0 12px;
+  min-height: 22px; /* Reserve slot for cards without a save % (Starter) */
+  min-width: 0;
+  visibility: visible;
 }
+.saveTagPlaceholder {
+  /* Empty slot for cards where no save % applies — keeps vertical
+   * rhythm identical across all cards in the grid. */
+  align-self: flex-start;
+  min-height: 22px;
+  margin: 4px 0 12px;
+  visibility: hidden;
+}
+
+/* Base Buy button — solid style used by ALL pack cards (non-highlighted
+ * used a bordered variant before which was inconsistent). Everyone now
+ * gets the same shape; the highlight variant just brightens it. */
+.buyBtn {
+  margin-top: auto; /* ← Docks to the bottom of the flex column so
+                        every card's button aligns regardless of what
+                        content sits above it. This was the layout bug. */
+  background: var(--color-accent);
+  border: none;
+  color: #ffffff;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: filter 0.15s, opacity 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.08);
+
+  &:hover:not(:disabled) { filter: brightness(0.94); }
+  &:active:not(:disabled) { transform: translateY(0.5px); }
+  &:disabled { opacity: 0.55; cursor: default; }
+}
+
+/* Highlighted (Most popular) — same solid, just slightly stronger */
 .buyBtnHighlight {
-  background: #22c55e !important;
-  color: #0f1418 !important;
-  border-color: transparent !important;
-  &:hover:not(:disabled) { background: #16a34a !important; }
+  /* Reserved for any future differentiation of the highlighted pack's
+   * button. All pack cards share the base .buyBtn look now, so highlight
+   * is achieved by the card border + gradient + Most-popular badge rather
+   * than a different button colour. */
 }
 
 /* Refund button on transaction row */
