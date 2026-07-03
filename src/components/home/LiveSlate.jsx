@@ -162,9 +162,12 @@ export default function LiveSlate() {
 
         {error && (
           <div className={styles.empty}>
-            <p className={styles.emptyTitle}>Backend offline</p>
-            <p className={styles.emptySub}>Start your server at localhost:5050 to load live games.</p>
-            <button className={styles.retryBtn} onClick={refresh}>Retry</button>
+            <p className={styles.emptyTitle}>Can't load today's games right now</p>
+            <p className={styles.emptySub}>
+              We're having trouble reaching our data. Try again in a moment — if it keeps failing,
+              our team has already been notified.
+            </p>
+            <button className={styles.retryBtn} onClick={refresh}>Try again</button>
           </div>
         )}
 
