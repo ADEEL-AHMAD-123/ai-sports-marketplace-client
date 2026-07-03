@@ -260,7 +260,7 @@ export default function AdminDashboard() {
       <section>
         <h2 className={styles.sectionTitle}>Quick Actions</h2>
         <div className={styles.quickGrid}>
-          <QuickAction to="/admin/outcomes" icon="📊" label="Outcome Audit"  sub="Per-game accuracy + lifetime archive" />
+          {/* <QuickAction to="/admin/outcomes" icon="📊" label="Outcome Audit"  sub="Per-game accuracy + lifetime archive" /> */}
           <QuickAction to="/admin/users"    icon="👥" label="Manage Users"   sub="Credits, status, transaction history" />
           <QuickAction to="/admin/jobs"     icon="⚙️" label="Run Jobs"       sub="Trigger per-sport sync manually" />
           <QuickAction to="/admin/ai-logs"  icon="📋" label="AI Logs"        sub="Inspect prompts + responses" />

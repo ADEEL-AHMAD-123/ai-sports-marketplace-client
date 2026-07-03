@@ -10,7 +10,7 @@ import styles from './AdminLayout.module.scss';
 const NAV = [
   { to: '/admin',           label: 'Dashboard', icon: '⊞',  end: true },
   { to: '/admin/users',     label: 'Users',     icon: '👥' },
-  { to: '/admin/outcomes',  label: 'Outcomes',  icon: '📊' },
+  // { to: '/admin/outcomes',  label: 'Outcomes',  icon: '📊' },
   { to: '/admin/jobs',      label: 'Jobs',      icon: '⚙️' },
 ];
 
