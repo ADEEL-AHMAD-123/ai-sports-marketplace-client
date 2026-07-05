@@ -6,7 +6,15 @@
   color: var(--color-text-primary);
   font-family: var(--font-body);
   display: flex; flex-direction: column; gap: 28px;
+  /* Guardrails against horizontal overflow: the page lives inside a flex
+     column, so it must explicitly claim the full available width and refuse
+     to be pushed wider by any child. Long strings inside tiles use ellipsis. */
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
 }
+.page > section { min-width: 0; }
 
 /* ── Header ───────────────────────────────────────────────── */
 .header {
@@ -45,10 +53,13 @@
   display: flex; justify-content: space-between; align-items: baseline;
   margin-bottom: 12px;
   gap: 12px;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 .sectionMeta {
   font-size: 0.75rem;
   color: var(--color-text-muted);
+  min-width: 0;
 }
 
 /* ── Hero metrics (3 big cards) ───────────────────────────── */
@@ -67,6 +78,7 @@
   display: flex; flex-direction: column; gap: 8px;
   position: relative; overflow: hidden;
   transition: border-color var(--transition-fast);
+  min-width: 0;
   &:hover { border-color: rgba(var(--color-accent-rgb), 0.30); }
 }
 .heroMetricAccent {
@@ -102,6 +114,10 @@
   color: var(--color-text-secondary);
   font-variant-numeric: tabular-nums;
   margin-top: 2px;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ── Compact stat tiles ───────────────────────────────────── */
@@ -120,6 +136,8 @@
   padding: 14px 14px;
   display: flex; flex-direction: column; gap: 4px;
   transition: border-color var(--transition-fast);
+  min-width: 0;
+  overflow: hidden;
   &:hover { border-color: rgba(var(--color-accent-rgb), 0.25); }
 }
 .statTile_accent  { border-color: rgba(var(--color-accent-rgb), 0.25); }
@@ -139,6 +157,10 @@
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
   line-height: 1.05;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .statTile_accent  .statTileValue { color: var(--color-accent); }
 .statTile_warning .statTileValue { color: var(--color-warning); }
@@ -234,9 +256,13 @@
 }
 .topPlayerMain {
   display: flex; align-items: center; gap: 8px;
-  flex: 1; min-width: 0;
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
 }
 .topPlayerName {
+  flex: 1 1 auto;
+  min-width: 0;
   font-size: 0.875rem; font-weight: 700;
   color: var(--color-text-primary);
   letter-spacing: -0.01em;

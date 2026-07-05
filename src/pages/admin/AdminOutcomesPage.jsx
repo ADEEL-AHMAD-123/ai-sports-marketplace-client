@@ -291,16 +291,24 @@ export default function AdminOutcomesPage() {
     };
   };
 
+  // Overall lifetime accuracy — sums ONLY sports that actually have graded
+  // outcomes. A sport that has never had a game (graded === 0) contributes
+  // nothing to either wins/losses OR the sport-count, so it can never drag
+  // the overall percentage up or down. Numerically equivalent to summing
+  // over every sport, but the explicit filter documents the rule the user
+  // asked for: "sports with no games shouldn't affect overall accuracy."
   const overall = (() => {
-    let wins = 0, losses = 0, pushes = 0;
-    for (const sp of SPORTS) {
-      const t = lifetimeFor(sp);
-      wins += t.wins; losses += t.losses; pushes += t.pushes;
-    }
+    const contributing = SPORTS
+      .map(sp => lifetimeFor(sp))
+      .filter(t => t.graded > 0);
+    const wins   = contributing.reduce((s, t) => s + t.wins,   0);
+    const losses = contributing.reduce((s, t) => s + t.losses, 0);
+    const pushes = contributing.reduce((s, t) => s + t.pushes, 0);
     const decisive = wins + losses;
     return {
       wins, losses, pushes,
       graded: wins + losses + pushes,
+      sportsWithData: contributing.length,
       winRate: decisive ? Math.round((wins * 100) / decisive) : null,
     };
   })();
