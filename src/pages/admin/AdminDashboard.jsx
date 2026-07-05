@@ -1,17 +1,20 @@
-// pages/admin/AdminDashboard.jsx — premium overview
+// pages/admin/AdminDashboard.jsx — owner-focused platform overview
 //
 // Information hierarchy (top → bottom):
-//   1. Hero metrics — 3 high-level marquee numbers (Users, Insights, Hit Rate)
-//   2. Today snapshot — a compact "what's happening right now" strip
-//   3. Per-sport accuracy — 5-up grid of sport tiles with live + lifetime
-//   4. Distribution bars — confidence / quality / over-under / outcomes
-//   5. Quick actions — 4 navigation cards
+//   1. Hero metrics — 3 marquee numbers: Users · Insights · Revenue
+//   2. Business snapshot — revenue windows, purchases, refunds, credit inventory
+//   3. Platform activity — live props, games today, insights today, HC/BV
+//   4. Sport activity — insights + unlock volume per sport
+//   5. Top players (last 7d) — most-unlocked players ranked
+//   6. Distribution bars — confidence / data quality / over-under
+//   7. Quick actions — navigation to admin subpages
 //
 // Design intent:
-//   • Restraint over density. Group related metrics into clusters.
+//   • Owner-first metrics: revenue, users, engagement — not accuracy.
+//   • Accuracy / hit rate / outcome grading lives on the Outcomes tab
+//     (developer-only route, not exposed here).
 //   • Theme tokens only — no inline colors.
 //   • Mono for tabular data, display for marquee numbers.
-//   • Responsive: hero metrics wrap to single column on mobile.
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -19,7 +22,6 @@ import { useAdminStats } from '@/hooks/useAdmin';
 import styles from './AdminDashboard.module.scss';
 
 const fmt = (n, d = 0) => n == null ? '—' : Number(n).toLocaleString('en-US', { maximumFractionDigits: d });
-const pct = (n) => n == null ? '—' : `${n}%`;
 
 function timeAgo(date) {
   const s = Math.floor((Date.now() - new Date(date)) / 1000);
@@ -54,23 +56,38 @@ function StatTile({ label, value, sub, tone }) {
   );
 }
 
-// ── Sport accuracy tile ───────────────────────────────────────────────────────
-function SportTile({ sport, summary }) {
-  const wins   = summary?.wins   || 0;
-  const losses = summary?.losses || 0;
-  const pushes = summary?.pushes || 0;
-  const decisive = wins + losses;
-  const winRate = decisive ? Math.round((wins * 100) / decisive) : null;
-  const tone = winRate == null ? '' : winRate >= 60 ? 'good' : winRate >= 40 ? 'mid' : 'bad';
+// ── Sport activity tile — shows insights + unlocks per sport ──────────────────
+function SportActivityTile({ sport, activity }) {
+  const insights = activity?.insights || 0;
+  const unlocks  = activity?.unlocks  || 0;
   return (
     <div className={`${styles.sportTile} ${styles[`sportTile_${sport}`]}`}>
       <span className={styles.sportLabel}>{SPORT_LABEL[sport]}</span>
-      <span className={`${styles.sportRate} ${tone ? styles[`sportRate_${tone}`] : ''}`}>
-        {winRate != null ? `${winRate}%` : '—'}
-      </span>
+      <span className={styles.sportRate}>{fmt(insights)}</span>
       <span className={styles.sportRecord}>
-        {decisive ? `${wins}W · ${losses}L${pushes ? ` · ${pushes}P` : ''}` : 'no data'}
+        {unlocks ? `${fmt(unlocks)} unlocks` : 'no unlocks yet'}
       </span>
+    </div>
+  );
+}
+
+// ── Top-players row ───────────────────────────────────────────────────────────
+function TopPlayerRow({ rank, name, sport, unlocks, insights }) {
+  return (
+    <div className={styles.topPlayerRow}>
+      <span className={styles.topPlayerRank}>{rank}</span>
+      <div className={styles.topPlayerMain}>
+        <span className={styles.topPlayerName}>{name}</span>
+        {sport && (
+          <span className={`${styles.topPlayerSport} ${styles[`sportTile_${sport}`]}`}>
+            {SPORT_LABEL[sport] || sport.toUpperCase()}
+          </span>
+        )}
+      </div>
+      <div className={styles.topPlayerStats}>
+        <span className={styles.topPlayerUnlocks}>{fmt(unlocks)} unlocks</span>
+        <span className={styles.topPlayerInsights}>{fmt(insights)} insights</span>
+      </div>
     </div>
   );
 }
@@ -132,7 +149,9 @@ export default function AdminDashboard() {
   const { stats: s, isLoading, lastRefresh } = useAdminStats();
 
   const insightTotal = s?.insights?.total || 0;
-  const outcomeTotal = s?.outcomes?.graded || 0;
+  const userTotal    = s?.users?.total    || 0;
+  const verifiedPct  = userTotal ? Math.round((s.users.verified / userTotal) * 100) : null;
+  const topPlayers   = s?.topPlayers || [];
 
   return (
     <div className={styles.page}>
@@ -150,11 +169,11 @@ export default function AdminDashboard() {
         </div>
       </header>
 
-      {/* Hero metrics */}
+      {/* Hero metrics — Users · Insights · Revenue */}
       <section className={styles.heroGrid}>
         <HeroMetric
           label="Total Users"
-          value={fmt(s?.users?.total)}
+          value={fmt(userTotal)}
           sub={s ? `+${s.users.newToday || 0} today · +${s.users.newThisWeek || 0} this week` : '—'}
         />
         <HeroMetric
@@ -163,16 +182,61 @@ export default function AdminDashboard() {
           sub={s ? `${s.insights.generatedToday || 0} today · ${s.insights.generatedThisWeek || 0} this week` : '—'}
         />
         <HeroMetric
-          label="Hit Rate"
-          value={pct(s?.outcomes?.winRateExPush)}
-          sub={s ? `${s.outcomes?.wins || 0}W · ${s.outcomes?.losses || 0}L · ${outcomeTotal} graded` : '—'}
+          label="Total Revenue"
+          value={`$${s?.economy?.totalRevenueUSD || '0.00'}`}
+          sub={s ? `$${s.economy.revenueTodayUSD || '0.00'} today · $${s.economy.revenueThisWeekUSD || '0.00'} this week` : '—'}
           accent
         />
       </section>
 
-      {/* Today / Live snapshot */}
+      {/* Business snapshot — money in / money out / credit inventory */}
       <section>
-        <h2 className={styles.sectionTitle}>Live snapshot</h2>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>Business snapshot</h2>
+          <span className={styles.sectionMeta}>Lifetime unless noted</span>
+        </div>
+        <div className={styles.statRow}>
+          <StatTile
+            label="Revenue Today"
+            value={`$${s?.economy?.revenueTodayUSD || '0.00'}`}
+            sub={s ? `${s.economy.purchasesToday || 0} purchase${s.economy.purchasesToday === 1 ? '' : 's'} today` : '—'}
+            tone="accent"
+          />
+          <StatTile
+            label="Purchases"
+            value={fmt(s?.economy?.purchasesTotal)}
+            sub="all-time checkouts"
+          />
+          <StatTile
+            label="Refunds"
+            value={fmt(s?.economy?.refundsTotal)}
+            sub={s ? `$${s.economy.refundsTotalUSD || '0.00'} refunded` : '—'}
+            tone={s?.economy?.refundsTotal > 0 ? 'warning' : undefined}
+          />
+          <StatTile
+            label="Credits Held"
+            value={fmt(s?.economy?.creditsHeldByUsers)}
+            sub="unspent across users"
+          />
+          <StatTile
+            label="Credits Spent"
+            value={fmt(s?.economy?.totalCreditsSpent)}
+            sub="lifetime unlocks"
+          />
+          <StatTile
+            label="Verified Users"
+            value={fmt(s?.users?.verified)}
+            sub={verifiedPct != null ? `${verifiedPct}% of total` : 'email verified'}
+          />
+        </div>
+      </section>
+
+      {/* Platform activity — live inventory + engagement pace */}
+      <section>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>Platform activity</h2>
+          <span className={styles.sectionMeta}>Live inventory + today's pace</span>
+        </div>
         <div className={styles.statRow}>
           <StatTile
             label="Live Props"
@@ -185,15 +249,14 @@ export default function AdminDashboard() {
             sub="scheduled or live"
           />
           <StatTile
-            label="Credits Spent"
-            value={fmt(s?.economy?.totalCreditsSpent)}
-            sub="all time"
+            label="Insights Today"
+            value={fmt(s?.insights?.generatedToday)}
+            sub={s ? `+${s.insights.generatedThisWeek || 0} this week` : '—'}
           />
           <StatTile
-            label="Revenue"
-            value={`$${s?.economy?.totalRevenueUSD || '0.00'}`}
-            sub="via Stripe"
-            tone="accent"
+            label="Signups Today"
+            value={fmt(s?.users?.newToday)}
+            sub={s ? `+${s.users.newThisMonth || 0} this month` : '—'}
           />
           <StatTile
             label="High Confidence"
@@ -210,23 +273,47 @@ export default function AdminDashboard() {
         </div>
       </section>
 
-      {/* Per-sport accuracy */}
+      {/* Sport activity — insight + unlock volume per sport */}
       <section>
         <div className={styles.sectionHeader}>
-          <h2 className={styles.sectionTitle}>Per-Sport Accuracy</h2>
-          <span className={styles.sectionMeta}>Window: last 30 days</span>
+          <h2 className={styles.sectionTitle}>Sport activity</h2>
+          <span className={styles.sectionMeta}>Insights generated · unlock volume</span>
         </div>
         <div className={styles.sportGrid}>
           {SPORTS.map(sp => (
-            <SportTile key={sp} sport={sp} summary={s?.outcomes?.bySport?.[sp]} />
+            <SportActivityTile key={sp} sport={sp} activity={s?.sportActivity?.[sp]} />
           ))}
         </div>
       </section>
 
-      {/* Distributions */}
+      {/* Top players (last 7d) */}
+      <section>
+        <div className={styles.sectionHeader}>
+          <h2 className={styles.sectionTitle}>Top players</h2>
+          <span className={styles.sectionMeta}>Most-unlocked · last 7 days</span>
+        </div>
+        <div className={styles.topPlayerList}>
+          {topPlayers.length > 0 ? topPlayers.map((p, i) => (
+            <TopPlayerRow
+              key={`${p.playerName}-${p.sport || i}`}
+              rank={i + 1}
+              name={p.playerName}
+              sport={p.sport}
+              unlocks={p.unlocks}
+              insights={p.insights}
+            />
+          )) : (
+            <div className={styles.topPlayerEmpty}>
+              No unlocks in the last 7 days yet.
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Distributions — accuracy stripped, kept only descriptive breakdowns */}
       {s && insightTotal > 0 && (
         <section>
-          <h2 className={styles.sectionTitle}>Distributions</h2>
+          <h2 className={styles.sectionTitle}>Insight distributions</h2>
           <div className={styles.distGrid}>
             <DistBar
               label="AI Confidence"
@@ -246,22 +333,16 @@ export default function AdminDashboard() {
               total={insightTotal}
               colorMap={{ over: 'var(--color-accent)', under: 'var(--color-info)' }}
             />
-            <DistBar
-              label="Outcome Split"
-              values={s.outcomes?.byResult}
-              total={outcomeTotal}
-              colorMap={{ win: 'var(--color-accent)', loss: 'var(--color-danger)', push: 'var(--color-warning)' }}
-            />
           </div>
         </section>
       )}
 
-      {/* Quick actions */}
+      {/* Quick actions — no Outcomes link (developer-only route) */}
       <section>
         <h2 className={styles.sectionTitle}>Quick Actions</h2>
         <div className={styles.quickGrid}>
-          {/* <QuickAction to="/admin/outcomes" icon="📊" label="Outcome Audit"  sub="Per-game accuracy + lifetime archive" /> */}
           <QuickAction to="/admin/users"    icon="👥" label="Manage Users"   sub="Credits, status, transaction history" />
+          <QuickAction to="/admin/insights" icon="🎯" label="Insights"       sub="Browse + delete generated insights" />
           <QuickAction to="/admin/jobs"     icon="⚙️" label="Run Jobs"       sub="Trigger per-sport sync manually" />
           <QuickAction to="/admin/ai-logs"  icon="📋" label="AI Logs"        sub="Inspect prompts + responses" />
         </div>
