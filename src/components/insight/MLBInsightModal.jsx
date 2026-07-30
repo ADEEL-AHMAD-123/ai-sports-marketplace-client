@@ -43,8 +43,14 @@ const fmtAvg = (v) => {
 };
 
 // Smart date+time formatter for the header. Returns Today / Tomorrow /
-// day-of-week + short date, and time in ET. Split so the modal can render
-// them on separate lines for scannability.
+// day-of-week + short date, and the kickoff time in the viewer's own
+// timezone. See utils/formatters.js for the app-wide policy.
+//
+// Both the day-diff comparison AND the labels use the browser's local
+// zone, so a viewer in Karachi sees "Sun · 4:30 AM PKT" while a viewer
+// in New York sees "Sat · 7:30 PM EDT" for the same kickoff. The tz
+// abbreviation comes from timeZoneName: 'short' so it's always the
+// viewer's own zone, never a fixed US label.
 const fmtGameDateTime = (iso) => {
   if (!iso) return { dateLabel: null, timeLabel: null };
   try {
@@ -53,14 +59,17 @@ const fmtGameDateTime = (iso) => {
     const today   = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const gameDay = new Date(d.getFullYear(),   d.getMonth(),   d.getDate());
     const dayDiff = Math.round((gameDay - today) / 86400000);
+
     const dateLabel =
       dayDiff ===  0 ? 'Today' :
       dayDiff ===  1 ? 'Tomorrow' :
       dayDiff === -1 ? 'Yesterday' :
-      d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-    const timeLabel = d.toLocaleTimeString('en-US', {
-      hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York',
-    }) + ' ET';
+      d.toLocaleDateString(undefined, {
+        weekday: 'short', month: 'short', day: 'numeric',
+      });
+    const timeLabel = d.toLocaleTimeString(undefined, {
+      hour: 'numeric', minute: '2-digit', timeZoneName: 'short',
+    });
     return { dateLabel, timeLabel };
   } catch { return { dateLabel: null, timeLabel: null }; }
 };

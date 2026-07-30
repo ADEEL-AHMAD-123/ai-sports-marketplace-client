@@ -8,10 +8,13 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import styles from './GameCard.module.css';
 
-// Format "2024-01-15T02:00:00Z" → "7:00 PM ET"
+// Format "2024-01-15T02:00:00Z" → "7:00 PM PST" / "7:00 AM PKT" / etc.
+// Rendered in the viewer's local browser timezone so every user sees the
+// kickoff in their own clock. See utils/formatters.js for the app-wide
+// timezone policy.
 const formatGameTime = (isoString) => {
   try {
-    return new Date(isoString).toLocaleTimeString('en-US', {
+    return new Date(isoString).toLocaleTimeString(undefined, {
       hour: 'numeric',
       minute: '2-digit',
       timeZoneName: 'short',

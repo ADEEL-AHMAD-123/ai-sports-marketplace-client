@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import toast from 'react-hot-toast';
 
@@ -32,6 +32,24 @@ import AdminDashboard    from '@/pages/admin/AdminDashboard';
 import AdminUsersPage    from '@/pages/admin/AdminUsersPage';
 import AdminOutcomesPage from '@/pages/admin/AdminOutcomesPage';
 import AdminJobsPage     from '@/pages/admin/AdminJobsPage';
+
+// ── /sports/:sport wrapper ────────────────────────────────────────────────
+// Renders the HomePage but switches the active sport based on the URL, so
+// URLs like /sports/nba are real, crawlable, shareable pages. Unknown sports
+// redirect home so we don't ship a soft-404 to search crawlers.
+const SUPPORTED_SPORTS = new Set(['nba', 'mlb', 'nhl', 'nfl', 'soccer']);
+function SportRoute() {
+  const { sport } = useParams();
+  const dispatch = useDispatch();
+  const key = String(sport || '').toLowerCase();
+
+  useEffect(() => {
+    if (SUPPORTED_SPORTS.has(key)) dispatch(setActiveSport(key));
+  }, [key, dispatch]);
+
+  if (!SUPPORTED_SPORTS.has(key)) return <Navigate to="/" replace />;
+  return <HomePage sportRoute={key} />;
+}
 
 export default function App() {
   const dispatch   = useDispatch();
@@ -82,6 +100,10 @@ export default function App() {
       <Routes>
         {/* Public */}
         <Route path="/"                      element={<HomePage />} />
+        {/* Sport-specific crawlable URLs. HomePage reads :sport from the
+            URL and sets it as the active sport, so search engines can
+            index /sports/nba etc. exactly as listed in sitemap.xml. */}
+        <Route path="/sports/:sport"         element={<SportRoute />} />
         <Route path="/match/:sport/:eventId" element={<MatchPage />} />
         <Route path="/pricing"               element={<PricingPage />} />
         <Route path="/login"                 element={isLoggedIn ? <Navigate to="/" replace /> : <LoginPage />} />

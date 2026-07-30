@@ -274,12 +274,13 @@ function GameContextStrip({ insight }) {
   const ctx = insight?.leagueContext;
   if (!ctx) return null;
 
+  // Kickoff time in the viewer's local timezone. See utils/formatters.js
+  // for the app-wide "always render in the viewer's zone" policy.
   const fmtTime = (iso) => {
     if (!iso) return null;
     try {
-      return new Date(iso).toLocaleTimeString('en-US', {
-        hour: 'numeric', minute: '2-digit',
-        timeZone: 'America/New_York', timeZoneName: 'short',
+      return new Date(iso).toLocaleTimeString(undefined, {
+        hour: 'numeric', minute: '2-digit', timeZoneName: 'short',
       });
     } catch { return null; }
   };

@@ -4,9 +4,19 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/Input';
+import useSEO from '@/hooks/useSEO';
 import styles from './AuthPage.module.scss';
 
 export default function RegisterPage() {
+  // Sign-up is a conversion page, not a content page. Keep it out of the
+  // index so it doesn't cannibalise the homepage's brand SERP.
+  useSEO({
+    title:       'Create an account — EdgeAI',
+    description: 'Create a free EdgeAI account and start unlocking AI-powered scouting reports on NBA, MLB, NHL, NFL, and soccer player props.',
+    canonical:   'https://edgeai.bet/register',
+    noIndex:     true,
+  });
+
   const { register, isLoggedIn, isLoading, clearError } = useAuth();
   const navigate = useNavigate();
 

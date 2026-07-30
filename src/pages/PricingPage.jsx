@@ -4,7 +4,7 @@
 // "Buy" click routes to /register for anonymous users and hits Stripe
 // checkout for authenticated users.
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { motion } from 'framer-motion';
@@ -13,6 +13,7 @@ import { selectIsLoggedIn, selectToken, selectCredits } from '@/store/slices/aut
 import { CREDIT_PACKS_FALLBACK } from '@/constants/app';
 import { createCheckoutSession, getErrorMsg } from '@/services/api';
 import api from '@/services/api';
+import useSEO from '@/hooks/useSEO';
 import styles from './PricingPage.module.scss';
 
 export default function PricingPage() {
@@ -24,8 +25,66 @@ export default function PricingPage() {
   const [packs, setPacks]           = useState(CREDIT_PACKS_FALLBACK);
   const [buyingPackId, setBuyingPackId] = useState(null);
 
+  // Per-route SEO + Product schema for each credit pack. Google Rich Results
+  // reads @type: Product blocks like these to surface pricing directly in
+  // the SERP. AggregateOffer summarises the range ("$2.99–$79.99") for the
+  // knowledge panel and llms.txt-style AI answers.
+  const productJsonLd = useMemo(() => {
+    const list = (packs || []).filter(p => p && p.amount != null && p.credits != null);
+    if (!list.length) return null;
+    const lowPrice  = Math.min(...list.map(p => Number(p.amount)));
+    const highPrice = Math.max(...list.map(p => Number(p.amount)));
+    return {
+      '@context': 'https://schema.org',
+      '@graph': [
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'EdgeAI', item: 'https://edgeai.bet/' },
+            { '@type': 'ListItem', position: 2, name: 'Pricing', item: 'https://edgeai.bet/pricing' },
+          ],
+        },
+        {
+          '@type': 'Product',
+          '@id': 'https://edgeai.bet/pricing#credits',
+          name: 'EdgeAI Insight Credits',
+          description: 'Prepaid credits that unlock AI-generated player-prop scouting reports on EdgeAI. Each credit unlocks one insight; credits never expire.',
+          brand: { '@type': 'Brand', name: 'EdgeAI' },
+          category: 'DigitalGoods',
+          url: 'https://edgeai.bet/pricing',
+          offers: {
+            '@type': 'AggregateOffer',
+            priceCurrency: 'USD',
+            lowPrice: lowPrice.toFixed(2),
+            highPrice: highPrice.toFixed(2),
+            offerCount: list.length,
+            availability: 'https://schema.org/InStock',
+            offers: list.map(p => ({
+              '@type': 'Offer',
+              name: `${p.label || p.credits + ' Credits'} — ${p.credits} insights`,
+              price: Number(p.amount).toFixed(2),
+              priceCurrency: 'USD',
+              availability: 'https://schema.org/InStock',
+              url: 'https://edgeai.bet/pricing',
+              itemOffered: {
+                '@type': 'Service',
+                name: `${p.credits} EdgeAI insight credit${p.credits === 1 ? '' : 's'}`,
+              },
+            })),
+          },
+        },
+      ],
+    };
+  }, [packs]);
+
+  useSEO({
+    title: 'Pricing — EdgeAI Insight Credits from $2.99',
+    description: 'Credit packs for EdgeAI AI-powered sports betting scouting. From $2.99 for a Starter pack up to $79.99 for 150 credits. No subscription, credits never expire — pay only for the picks you want.',
+    canonical: 'https://edgeai.bet/pricing',
+    jsonLd: productJsonLd,
+  });
+
   useEffect(() => {
-    document.title = 'Pricing · EdgeAI — Credit Packs from $2.99';
     // Fetch fresh packs from server so any Stripe price update flows through
     // without a client rebuild.
     api.get('/credits/packs')

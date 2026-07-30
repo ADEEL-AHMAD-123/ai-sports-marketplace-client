@@ -8,10 +8,21 @@ import { selectActiveSport } from '@/store/slices/uiSlice';
 import styles from './LiveSlate.module.scss';
 import { GameRowSkeleton } from '@/components/ui/Skeleton';
 
-// Team logo — backend is source of truth (homeTeam.logoUrl / awayTeam.logoUrl)
-function TeamLogo({ logoUrl, name, size = 48 }) {
+// Team logo — backend is source of truth (homeTeam.logoUrl / awayTeam.logoUrl).
+// When there's no logo, fall back to the SAME abbreviation the big text on
+// the card is using (game.homeTeam.abbreviation / awayTeam.abbreviation).
+// Previously we computed initials from the team name here (Atlanta United FC
+// → "AUF"), which disagreed with the backend abbreviation ("ATL"), so users
+// saw "AUF | ATL" on the same row. Passing abbreviation in keeps them in sync.
+function TeamLogo({ logoUrl, name, abbr, size = 48 }) {
   const [err, setErr] = useState(false);
-  const initials = (name || '?').split(' ').map(w => w[0]).join('').slice(0, 3).toUpperCase();
+  const fallbackFromName = (name || '?')
+    .split(' ')
+    .map(w => w[0])
+    .join('')
+    .slice(0, 3)
+    .toUpperCase();
+  const initials = (abbr && String(abbr).trim()) || fallbackFromName;
 
   if (!logoUrl || err) {
     return (
@@ -102,14 +113,22 @@ function GameTime({ game }) {
     return <span className={styles.timeTagSoon}>Starts in {minsFromNow}m</span>;
   }
 
+  // Both date and time render in the VIEWER'S local browser timezone
+  // (no `timeZone` override) so they can't drift apart, and every user
+  // worldwide sees the kickoff in their own clock/calendar. See
+  // utils/formatters.js for the full policy.
   try {
     return (
       <div className={styles.timeBlock}>
         <span className={styles.timeDate}>
-          {start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+          {start.toLocaleDateString(undefined, {
+            weekday: 'short', month: 'short', day: 'numeric',
+          })}
         </span>
         <span className={styles.timeTag}>
-          {start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York', timeZoneName: 'short' })}
+          {start.toLocaleTimeString(undefined, {
+            hour: 'numeric', minute: '2-digit', timeZoneName: 'short',
+          })}
         </span>
       </div>
     );
@@ -207,6 +226,7 @@ export default function LiveSlate() {
                         <TeamLogo
                           logoUrl={game.awayTeam?.logoUrl || game.awayTeam?.logo}
                           name={game.awayTeam?.name}
+                          abbr={game.awayTeam?.abbreviation}
                           size={48}
                         />
                         <div className={styles.teamInfo}>
@@ -229,6 +249,7 @@ export default function LiveSlate() {
                         <TeamLogo
                           logoUrl={game.homeTeam?.logoUrl || game.homeTeam?.logo}
                           name={game.homeTeam?.name}
+                          abbr={game.homeTeam?.abbreviation}
                           size={48}
                         />
                       </div>

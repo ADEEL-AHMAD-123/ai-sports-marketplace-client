@@ -1,11 +1,36 @@
-// utils/formatters.js — Shared formatting helpers
+// utils/formatters.js — Shared formatting helpers.
+//
+// ─── Time & date rendering policy ─────────────────────────────────────────
+// Every game time renderer in the app funnels through these helpers so we
+// have ONE place that owns the timezone rule. The rule is:
+//
+//   Render every game date + time in the VIEWER'S local browser timezone,
+//   never in a fixed US-market zone. A user in Karachi sees "Sun, Aug 2 ·
+//   4:30 AM PKT"; a user in LA sees "Sat, Aug 1 · 4:30 PM PDT"; a user in
+//   New York sees "Sat, Aug 1 · 7:30 PM EDT" — all for the same event.
+//
+// Why not force a fixed US zone? Two prior bugs came from mixing zones:
+//   (1) Date rendered in browser-local + time rendered in America/New_York
+//       gave a day/time mismatch for anyone east of NYC (a Sat 7:30 PM EDT
+//       game read "Sun · 7:30 PM EDT" in Pakistan).
+//   (2) Even when consistent, "7:30 PM EDT" is meaningless to a global
+//       user who has to do timezone math to know when to watch.
+//
+// Invariants every caller relies on:
+//   • No `timeZone` option is set anywhere → both date and time follow the
+//     browser's system zone. They CANNOT drift apart.
+//   • `timeZoneName: 'short'` on time strings so the viewer sees THEIR zone
+//     abbreviation (EDT/PST/PKT/BST/…) and knows the label matches reality.
+//   • Today/Tomorrow/Yesterday helpers compare day boundaries in the same
+//     browser-local zone, so "Today" means what the viewer's calendar says
+//     is today.
 
 /**
- * Format a game start time from ISO string → "7:00 PM ET"
+ * Format a game start time → "7:00 PM EDT" (in the viewer's local timezone).
  */
 export const formatGameTime = (isoString) => {
   try {
-    return new Date(isoString).toLocaleTimeString('en-US', {
+    return new Date(isoString).toLocaleTimeString(undefined, {
       hour: 'numeric',
       minute: '2-digit',
       timeZoneName: 'short',
@@ -16,11 +41,41 @@ export const formatGameTime = (isoString) => {
 };
 
 /**
- * Format a date → "Jan 15, 2024"
+ * Format a game start date → "Sat, Aug 1" (in the viewer's local timezone).
+ * Kept separate from time so callers can render on two lines.
+ */
+export const formatGameDate = (isoString, opts = { weekday: 'short', month: 'short', day: 'numeric' }) => {
+  try {
+    return new Date(isoString).toLocaleDateString(undefined, opts);
+  } catch {
+    return '—';
+  }
+};
+
+/**
+ * Number of calendar days between a game and now, evaluated in the
+ * viewer's local timezone. Returns:
+ *   0  → game is today
+ *   1  → tomorrow
+ *  -1  → yesterday
+ *   N  → N days away
+ * Used to produce Today/Tomorrow/Yesterday labels consistently.
+ */
+export const localDayDiff = (isoString) => {
+  const d = new Date(isoString);
+  if (Number.isNaN(d.getTime())) return null;
+  const now  = new Date();
+  const midD = new Date(d.getFullYear(),   d.getMonth(),   d.getDate());
+  const midN = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return Math.round((midD - midN) / 86400000);
+};
+
+/**
+ * Format a date → "Jan 15, 2024" (viewer's local timezone).
  */
 export const formatDate = (isoString) => {
   try {
-    return new Date(isoString).toLocaleDateString('en-US', {
+    return new Date(isoString).toLocaleDateString(undefined, {
       year: 'numeric', month: 'short', day: 'numeric',
     });
   } catch {

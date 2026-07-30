@@ -8,14 +8,19 @@ import { setActiveFilter, selectActiveFilter, resetFilter } from '@/store/slices
 import PropCard from '@/components/insight/PropCard';
 import { PropCardSkeleton } from '@/components/ui/Skeleton';
 import { getFilterDefsForSport, getSportConfig } from '@/config/sportConfig';
+import useSEO from '@/hooks/useSEO';
 import styles from './MatchPage.module.scss';
 
 const BackIcon = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>;
 
-// Team logo with initials fallback
-function TeamLogo({ logoUrl, name, size = 48 }) {
+// Team logo with initials fallback.
+// Prefer the passed-in abbreviation over derived initials so the badge
+// always matches the big text label next to it (Atlanta United FC's badge
+// was "AUF" while the label was "ATL" — same team, two different codes).
+function TeamLogo({ logoUrl, name, abbr, size = 48 }) {
   const [err, setErr] = useState(false);
-  const initials = (name || '?').split(' ').map(w => w[0]).join('').slice(0, 3).toUpperCase();
+  const fallbackFromName = (name || '?').split(' ').map(w => w[0]).join('').slice(0, 3).toUpperCase();
+  const initials = (abbr && String(abbr).trim()) || fallbackFromName;
   if (!logoUrl || err) {
     return (
       <div className={styles.logoFallback} style={{ width: size, height: size, fontSize: Math.round(size * 0.30) }}>
@@ -48,12 +53,14 @@ const deriveAbbr = (name) => {
   return last.slice(0, 3).toUpperCase();
 };
 
+// Render in the viewer's local browser timezone. See utils/formatters.js
+// for the app-wide rendering policy. (Function name kept for git-blame
+// continuity; it no longer pins to ET.)
 const fmtTimeET = (iso) => {
   if (!iso) return null;
   try {
-    return new Date(iso).toLocaleTimeString('en-US', {
-      hour: 'numeric', minute: '2-digit',
-      timeZone: 'America/New_York', timeZoneName: 'short',
+    return new Date(iso).toLocaleTimeString(undefined, {
+      hour: 'numeric', minute: '2-digit', timeZoneName: 'short',
     });
   } catch { return null; }
 };
@@ -61,9 +68,8 @@ const fmtTimeET = (iso) => {
 const fmtDateShort = (iso) => {
   if (!iso) return null;
   try {
-    return new Date(iso).toLocaleDateString('en-US', {
+    return new Date(iso).toLocaleDateString(undefined, {
       weekday: 'short', month: 'short', day: 'numeric',
-      timeZone: 'America/New_York',
     });
   } catch { return null; }
 };
@@ -112,6 +118,47 @@ export default function MatchPage() {
   const homeAbbr  = firstProp?.homeTeamAbbr || deriveAbbr(homeTeam);
   const hasContext = awayTeam && homeTeam;
 
+  // Per-match SEO — a real matchup like "Lakers vs. Warriors — NBA Player
+  // Props" ranks for the specific game long-tail. Falls back to a generic
+  // sport title while props are still loading.
+  const matchTitle = hasContext
+    ? `${awayTeam} vs ${homeTeam} — ${sportCfg.label} Player Props & AI Scouting | EdgeAI`
+    : `${sportCfg.label} Player Props | EdgeAI`;
+  const matchDesc = hasContext
+    ? `AI-powered scouting reports on every player prop for ${awayTeam} vs ${homeTeam}. Grounded in 15+ games of stats, matchup analysis, and live sportsbook line comparison.`
+    : `AI-powered scouting reports on ${sportCfg.label} player props, grounded in stats and matchup analysis.`;
+  const matchCanonical = `https://edgeai.bet/match/${sport}/${eventId}`;
+  const matchJsonLd = hasContext ? {
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'EdgeAI',            item: 'https://edgeai.bet/' },
+          { '@type': 'ListItem', position: 2, name: sportCfg.label,      item: `https://edgeai.bet/sports/${sport}` },
+          { '@type': 'ListItem', position: 3, name: `${awayTeam} vs ${homeTeam}`, item: matchCanonical },
+        ],
+      },
+      {
+        '@type': 'SportsEvent',
+        name: `${awayTeam} vs ${homeTeam}`,
+        sport: sportCfg.label,
+        startDate: firstProp?.gameStartTime || undefined,
+        competitor: [
+          { '@type': 'SportsTeam', name: awayTeam, ...(awayAbbr ? { alternateName: awayAbbr } : {}) },
+          { '@type': 'SportsTeam', name: homeTeam, ...(homeAbbr ? { alternateName: homeAbbr } : {}) },
+        ],
+        url: matchCanonical,
+      },
+    ],
+  } : null;
+  useSEO({
+    title:       matchTitle,
+    description: matchDesc,
+    canonical:   matchCanonical,
+    jsonLd:      matchJsonLd,
+  });
+
   return (
     <div className={styles.page}>
       <section className={styles.section}>
@@ -135,7 +182,7 @@ export default function MatchPage() {
               <div className={styles.matchup}>
                 {/* Away */}
                 <div className={styles.team}>
-                  <TeamLogo logoUrl={awayLogo} name={awayTeam} size={52} />
+                  <TeamLogo logoUrl={awayLogo} name={awayTeam} abbr={awayAbbr} size={52} />
                   <div className={styles.teamLabel}>
                     <span className={styles.teamAbbr}>{awayAbbr || '—'}</span>
                     <span className={styles.teamName}>{awayTeam}</span>
@@ -155,7 +202,7 @@ export default function MatchPage() {
                     <span className={styles.teamAbbr}>{homeAbbr || '—'}</span>
                     <span className={styles.teamName}>{homeTeam}</span>
                   </div>
-                  <TeamLogo logoUrl={homeLogo} name={homeTeam} size={52} />
+                  <TeamLogo logoUrl={homeLogo} name={homeTeam} abbr={homeAbbr} size={52} />
                 </div>
               </div>
             ) : (

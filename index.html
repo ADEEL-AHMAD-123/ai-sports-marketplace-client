@@ -101,7 +101,15 @@
               "name": "Which sports does EdgeAI cover?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "NBA, MLB, NHL, NFL, and soccer player props across major leagues."
+                "text": "NBA, MLB, NHL, NFL, and soccer player props across major leagues including MLS and top European soccer competitions."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does EdgeAI decide OVER or UNDER on a player prop?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "EdgeAI computes three overlapping windows on each player: a 30-game baseline, a 15-game edge window (the primary signal against the sportsbook line), and a 10-game recent-form window. It layers in the opposing pitcher or defensive matchup, platoon splits, ballpark or venue factors, and injury status, then a large language model returns a structured OVER or UNDER call with confidence and edge percentages."
               }
             },
             {
@@ -109,7 +117,15 @@
               "name": "Does EdgeAI place bets for me?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "No. EdgeAI is a decision-support tool. You see the AI's analysis and place your own wagers with your preferred sportsbook."
+                "text": "No. EdgeAI is a decision-support tool. You see the AI's analysis and place your own wagers with your preferred sportsbook. EdgeAI does not accept bets or hold funds."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How much does EdgeAI cost?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "EdgeAI uses prepaid credit packs starting at $2.99 for three insights, scaling up to $79.99 for 150 credits. There is no subscription and no monthly minimum. One credit unlocks one scouting report, and credits never expire."
               }
             },
             {
@@ -117,9 +133,49 @@
               "name": "How current is the data?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Sportsbook lines refresh throughout the day, with tighter cadence in the hour before first pitch or tip-off. Player stats are pulled from official league APIs and cached for four hours."
+                "text": "Sportsbook lines refresh throughout the day, with tighter cadence in the hour before first pitch or tip-off. Player stats are pulled from official league APIs (MLB Stats API, NHL API, NBA public data, API-Sports for soccer and NFL)."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What's the difference between Signal Confidence and Model Edge?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Signal Confidence measures how consistently the player's recent games support the AI's lean — think of it as the strength of the evidence. Model Edge measures how much the model's projection differs from the sportsbook line — think of it as the size of the mispricing. A pick can have high confidence with low edge (steady player, tight line) or high edge with low confidence (big gap, small sample) — you want both to be high."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Is EdgeAI available worldwide?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes. EdgeAI is a web app accessible from any modern browser. Game times display in each viewer's local timezone. Whether you can legally place the bets EdgeAI analyses depends on your jurisdiction — always check local regulations."
               }
             }
+          ]
+        },
+        {
+          "@type": "Product",
+          "@id": "https://edgeai.bet/#credits",
+          "name": "EdgeAI Insight Credits",
+          "description": "Prepaid credits that unlock AI-generated player-prop scouting reports on EdgeAI. Each credit unlocks one insight; credits never expire.",
+          "brand": { "@type": "Brand", "name": "EdgeAI" },
+          "category": "DigitalGoods",
+          "url": "https://edgeai.bet/pricing",
+          "offers": {
+            "@type": "AggregateOffer",
+            "priceCurrency": "USD",
+            "lowPrice":  "2.99",
+            "highPrice": "79.99",
+            "offerCount": 5,
+            "availability": "https://schema.org/InStock",
+            "url": "https://edgeai.bet/pricing"
+          }
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "EdgeAI", "item": "https://edgeai.bet/" }
           ]
         }
       ]

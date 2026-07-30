@@ -4,9 +4,19 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { Input } from '@/components/ui/Input';
+import useSEO from '@/hooks/useSEO';
 import styles from './AuthPage.module.scss';
 
 export default function LoginPage() {
+  // Log-in is a thin utility page — don't let it compete with the homepage
+  // in search results. noIndex tells Google/Bing to keep it out of the index.
+  useSEO({
+    title:       'Log in — EdgeAI',
+    description: 'Log in to your EdgeAI account to unlock AI-powered player-prop scouting reports.',
+    canonical:   'https://edgeai.bet/login',
+    noIndex:     true,
+  });
+
   const { login, isLoggedIn, isLoading, clearError } = useAuth();
   const navigate  = useNavigate();
   const location  = useLocation(); 

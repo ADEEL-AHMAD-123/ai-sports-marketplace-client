@@ -16,13 +16,25 @@
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "Article",
-  "headline": "How EdgeAI Works — AI-Powered Sports Betting Scouting Reports",
-  "description": "The full pipeline behind every EdgeAI player prop scouting report.",
-  "author": { "@type": "Organization", "name": "EdgeAI" },
-  "publisher": { "@type": "Organization", "name": "EdgeAI", "logo": { "@type": "ImageObject", "url": "https://edgeai.bet/logo.png" } },
-  "mainEntityOfPage": "https://edgeai.bet/learn/how-it-works.html",
-  "inLanguage": "en-US"
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": "How EdgeAI Works — AI-Powered Sports Betting Scouting Reports",
+      "description": "The full pipeline behind every EdgeAI player prop scouting report.",
+      "author":    { "@type": "Organization", "name": "EdgeAI" },
+      "publisher": { "@type": "Organization", "name": "EdgeAI", "logo": { "@type": "ImageObject", "url": "https://edgeai.bet/logo.png" } },
+      "mainEntityOfPage": "https://edgeai.bet/learn/how-it-works.html",
+      "inLanguage": "en-US"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "EdgeAI",       "item": "https://edgeai.bet/" },
+        { "@type": "ListItem", "position": 2, "name": "Learn",        "item": "https://edgeai.bet/learn/" },
+        { "@type": "ListItem", "position": 3, "name": "How it works", "item": "https://edgeai.bet/learn/how-it-works.html" }
+      ]
+    }
+  ]
 }
 </script>
 <style>
