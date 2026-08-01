@@ -163,6 +163,52 @@ export const CRON_JOBS = [
     when:  'Run to test Soccer lifecycle in isolation.',
     group: 'sport',
   },
+  // ── Direct scoring passes ─────────────────────────────────────
+  // Force a StrategyService.scoreAllPropsForSport() run that bypasses BullMQ.
+  // Use these when propWatcher shows "N props upserted" but HC/BV badges
+  // still don't appear on the slate — that means scoring is stuck in the
+  // queue OR the worker is down. These run inline and return counts of
+  // props that got HC-tagged, BV-tagged, or hidden (with the reason).
+  {
+    key:   'score-nba',
+    label: 'Score props — NBA',
+    icon:  '📊',
+    desc:  'Force-score every unscored/stale NBA prop synchronously (no queue). Returns HC/BV counts.',
+    when:  'Run when NBA props exist but HC/BV badges are missing.',
+    group: 'scoring',
+  },
+  {
+    key:   'score-mlb',
+    label: 'Score props — MLB',
+    icon:  '📊',
+    desc:  'Force-score every unscored/stale MLB prop synchronously (no queue). Returns HC/BV counts.',
+    when:  'Run when MLB props exist but HC/BV badges are missing.',
+    group: 'scoring',
+  },
+  {
+    key:   'score-nhl',
+    label: 'Score props — NHL',
+    icon:  '📊',
+    desc:  'Force-score every unscored/stale NHL prop synchronously (no queue). Returns HC/BV counts.',
+    when:  'Run when NHL props exist but HC/BV badges are missing.',
+    group: 'scoring',
+  },
+  {
+    key:   'score-nfl',
+    label: 'Score props — NFL',
+    icon:  '📊',
+    desc:  'Force-score every unscored/stale NFL prop synchronously (no queue). Returns HC/BV counts.',
+    when:  'Run when NFL props exist but HC/BV badges are missing.',
+    group: 'scoring',
+  },
+  {
+    key:   'score-soccer',
+    label: 'Score props — Soccer',
+    icon:  '📊',
+    desc:  'Force-score every unscored/stale Soccer prop synchronously (no queue). Returns HC/BV counts.',
+    when:  'Run when Soccer props exist but HC/BV badges are missing.',
+    group: 'scoring',
+  },
   {
     key:   'ai-log-cleanup',
     label: 'AI Log Cleanup',
@@ -176,4 +222,5 @@ export const CRON_JOBS = [
 export const CRON_GROUPS = {
   scheduled: { label: 'Scheduled Jobs',    color: 'var(--color-info)'    },
   sport:     { label: 'Per-Sport Testing', color: 'var(--color-warning)' },
+  scoring:   { label: 'Force Scoring',     color: 'var(--color-accent)'  },
 };

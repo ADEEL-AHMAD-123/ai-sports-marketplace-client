@@ -35,6 +35,28 @@ function summariseCronResult(result) {
   const parts = [];
   const warnings = [];
 
+  // score-* shape: { scored, failed, noStats, hcTagged, bvTagged,
+  //                   hiddenInsufficientGames, hiddenNoStats, totalConsidered }
+  if ('scored' in result || 'hcTagged' in result || 'totalConsidered' in result) {
+    const total = result.totalConsidered ?? 0;
+    parts.push(`${result.scored || 0}/${total} scored`);
+    if (result.hcTagged > 0) parts.push(`${result.hcTagged} High Confidence`);
+    if (result.bvTagged > 0) parts.push(`${result.bvTagged} Best Value`);
+    if (result.hiddenInsufficientGames > 0) parts.push(`${result.hiddenInsufficientGames} hidden (insufficient games)`);
+    if (result.hiddenNoStats > 0)           parts.push(`${result.hiddenNoStats} hidden (no stats)`);
+    if (result.failed > 0)                  parts.push(`${result.failed} failed`);
+
+    if (total === 0) {
+      warnings.push('No stale/unscored props found. Either scoring just ran, or there are no props to score. Trigger prop-watcher first if the slate looks empty.');
+    } else if (result.hcTagged === 0 && result.bvTagged === 0) {
+      warnings.push('Scoring finished but no prop crossed the HC (≥57 confidence + 5% edge) or BV (per-stat edge threshold) bar. This is normal for pitcher-K-only slates 2+ days out — batter markets bring wider edges when they post 12-24h before kickoff.');
+    }
+    if (result.hiddenInsufficientGames > 0 || result.hiddenNoStats > 0) {
+      const hidden = (result.hiddenInsufficientGames || 0) + (result.hiddenNoStats || 0);
+      warnings.push(`${hidden} prop${hidden === 1 ? '' : 's'} were hidden (isAvailable=false) because the player has too few games in the window OR stats couldn't be fetched. That's why some game cards show a low prop count.`);
+    }
+  }
+
   // propWatcher shape: { upserted, games, attempted, skippedByPolicy,
   //                      skippedEmpty, engaged, oddsApiQuotaRemaining }
   if ('upserted' in result) {
@@ -75,9 +97,10 @@ function summariseCronResult(result) {
     }
   }
 
-  const totalActedOn = ('upserted' in result ? result.upserted : 0)
+  const totalActedOn = ('upserted' in result ? (result.upserted || 0) : 0)
     + ('changes'  in result ? (result.changes || 0) : 0)
-    + ('deleted'  in result ? (result.deleted || 0) : 0);
+    + ('deleted'  in result ? (result.deleted || 0) : 0)
+    + ('scored'   in result ? (result.scored   || 0) : 0);
   const noopSuccess = parts.length > 0 && totalActedOn === 0 && !perSport.length;
 
   const severity = warnings.length > 0 || noopSuccess ? 'warning' : 'done';
