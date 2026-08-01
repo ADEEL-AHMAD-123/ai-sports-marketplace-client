@@ -80,17 +80,29 @@ export function useAdminStats() {
     return () => clearInterval(interval);
   }, [load]);
 
-  // Returns true on success, false on failure — used by CronPanel button state
+  // Returns the full backend payload so the caller can render the actual
+  // outcome (upserted counts, quota state, skipped reasons) instead of a
+  // blanket "success". Previously this returned a bare boolean and the UI
+  // rendered "✓ Done" even when the job accomplished nothing (0 props
+  // upserted because the Odds API key was 401, etc.).
+  //
+  // Shape returned on success:
+  //   { ok: true, job, result }         where `result` is whatever the job's
+  //                                     run() function returned
+  // On failure:
+  //   { ok: false, error: 'message' }
   const triggerCron = useCallback(async (job) => {
-    const result = await dispatch(triggerCronJob({ job }));
-    if (triggerCronJob.fulfilled.match(result)) {
-      toast.success(`${job} triggered`);
+    const action = await dispatch(triggerCronJob({ job }));
+    if (triggerCronJob.fulfilled.match(action)) {
       load(); // refresh stats after cron runs
-      return true;
-    } else {
-      toast.error(result.payload?.message || 'Cron trigger failed');
-      return false;
+      // Note: intentionally no toast — the JobCard renders the outcome
+      // inline (with warning styling when the run was a no-op), which is
+      // more useful than a generic "triggered" toast.
+      return { ok: true, job, result: action.payload?.result || null };
     }
+    const message = action.payload?.message || 'Cron trigger failed';
+    toast.error(message);
+    return { ok: false, error: message };
   }, [dispatch, load]);
 
   return { stats, isLoading, lastRefresh, triggerCron, reload: load };

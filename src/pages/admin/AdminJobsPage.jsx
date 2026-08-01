@@ -13,13 +13,78 @@ import { useAdminStats } from '@/hooks/useAdmin';
 import { CRON_JOBS, CRON_GROUPS } from '@/constants/app';
 import s from './AdminJobsPage.module.scss';
 
-// Run-button label per state
+// Run-button label per state.
+// "warning" is a distinct state from "done" — job returned success but
+// accomplished nothing (e.g. 0 props upserted because quota is exhausted).
 const RUN_STATE_LABEL = {
   idle:    '▶ Run now',
   running: '⟳ Running…',
   done:    '✓ Done',
+  warning: '⚠ Ran (0 changes)',
   error:   '✗ Failed',
 };
+
+// Interpret a job's return payload into a human-readable summary + a
+// severity so the UI can style warning vs success. Handles the shapes
+// returned by every job registered in the admin JOB_MAP.
+function summariseCronResult(result) {
+  if (!result || typeof result !== 'object') {
+    return { severity: 'done', label: 'Completed', detail: null };
+  }
+
+  const parts = [];
+  const warnings = [];
+
+  // propWatcher shape: { upserted, games, attempted, skippedByPolicy,
+  //                      skippedEmpty, engaged, oddsApiQuotaRemaining }
+  if ('upserted' in result) {
+    parts.push(`${result.upserted} prop${result.upserted === 1 ? '' : 's'} upserted`);
+    if (Number.isFinite(result.games)) parts.push(`${result.games} game${result.games === 1 ? '' : 's'} in window`);
+    if (Number.isFinite(result.attempted)) parts.push(`${result.attempted} fetched`);
+    if (Number.isFinite(result.skippedByPolicy) && result.skippedByPolicy > 0) parts.push(`${result.skippedByPolicy} skipped (interval)`);
+    if (Number.isFinite(result.skippedEmpty)   && result.skippedEmpty   > 0) parts.push(`${result.skippedEmpty} returned empty`);
+
+    if (result.oddsApiQuotaRemaining === 0) {
+      warnings.push('Odds API key is invalid or monthly quota is 0 — rotate THE_ODDS_API_KEY on Railway and restart.');
+    } else if (Number.isFinite(result.oddsApiQuotaRemaining) && result.oddsApiQuotaRemaining < 50) {
+      warnings.push(`Odds API quota LOW (${result.oddsApiQuotaRemaining} requests remaining).`);
+    }
+    if (result.upserted === 0 && result.attempted > 0 && result.skippedEmpty === result.attempted) {
+      warnings.push('Every fetch returned empty — sportsbook may have closed markets, or the adapter is quota-safed.');
+    }
+    if (result.upserted === 0 && result.attempted === 0 && result.games > 0) {
+      warnings.push('Every game was inside the polling interval — nothing to fetch this cycle. Try again in a few minutes.');
+    }
+  }
+
+  // postGameSync shape: { changes, deleted, providerFinalCount, config }
+  if ('changes' in result || 'providerFinalCount' in result) {
+    if ('providerFinalCount' in result) parts.push(`${result.providerFinalCount || 0} finals from provider`);
+    if ('changes' in result)            parts.push(`${result.changes || 0} game${result.changes === 1 ? '' : 's'} updated`);
+    if ('deleted' in result && result.deleted > 0) parts.push(`${result.deleted} deleted`);
+  }
+
+  // Orchestrator (all-sports) shape: { <sport>: { ... }, ... }
+  const sportKeys = ['nba', 'mlb', 'nhl', 'nfl', 'soccer'];
+  const perSport = sportKeys.filter(k => result[k] && typeof result[k] === 'object');
+  if (perSport.length) {
+    for (const sp of perSport) {
+      const r = result[sp];
+      const n = r?.upserted ?? r?.changes ?? 0;
+      parts.push(`${sp.toUpperCase()}: ${n}`);
+    }
+  }
+
+  const totalActedOn = ('upserted' in result ? result.upserted : 0)
+    + ('changes'  in result ? (result.changes || 0) : 0)
+    + ('deleted'  in result ? (result.deleted || 0) : 0);
+  const noopSuccess = parts.length > 0 && totalActedOn === 0 && !perSport.length;
+
+  const severity = warnings.length > 0 || noopSuccess ? 'warning' : 'done';
+  const detail = parts.length ? parts.join(' · ') : null;
+  const advisory = warnings.length ? warnings.join(' ') : null;
+  return { severity, label: severity === 'warning' ? 'Ran with warnings' : 'Completed', detail, advisory };
+}
 
 // Group meta — color tint per group
 const GROUP_TONE = {
@@ -42,11 +107,24 @@ function GroupHeader({ group, count }) {
   );
 }
 
-function JobCard({ job, status, onRun }) {
+function JobCard({ job, status, summary, onRun }) {
   const state = status || 'idle';
   const disabled = state === 'running';
+  // Map internal state → SCSS variant. "warning" reuses the existing warning
+  // tone from the module; falls back gracefully if that class doesn't exist.
+  const variantClass = s[`jobCard_${state}`] || (state === 'warning' ? s.jobCard_done : '');
+  const pillClass    = s[`statePill_${state}`] || (state === 'warning' ? s.statePill_done : '');
+  const btnClass     = s[`runBtn_${state}`]    || (state === 'warning' ? s.runBtn_done    : '');
+
+  const pillLabel =
+    state === 'idle'    ? 'Ready' :
+    state === 'running' ? 'In progress' :
+    state === 'done'    ? 'Completed' :
+    state === 'warning' ? 'Ran with warnings' :
+    state === 'error'   ? 'Errored' : 'Ready';
+
   return (
-    <article className={`${s.jobCard} ${s[`jobCard_${state}`] || ''}`}>
+    <article className={`${s.jobCard} ${variantClass}`}>
       {/* Soft accent corner glow on hover */}
       <span className={s.jobGlow} aria-hidden="true" />
 
@@ -65,14 +143,47 @@ function JobCard({ job, status, onRun }) {
 
       {job.desc && <p className={s.jobDesc}>{job.desc}</p>}
 
+      {/* Inline outcome — shows what the job actually did on the last run,
+          including a warning line when a "success" was actually a no-op.
+          Kept below the description so it doesn't push the run button. */}
+      {summary && (summary.detail || summary.advisory) && (
+        <div
+          style={{
+            marginTop: 10,
+            padding: '10px 12px',
+            borderRadius: 8,
+            background:
+              state === 'warning' ? 'rgba(var(--color-warning-rgb, 234 179 8), 0.08)'
+              : 'rgba(var(--color-accent-rgb, 34 197 94), 0.06)',
+            border: '1px solid ' + (
+              state === 'warning' ? 'rgba(var(--color-warning-rgb, 234 179 8), 0.30)'
+              : 'rgba(var(--color-accent-rgb, 34 197 94), 0.20)'
+            ),
+            fontSize: 12.5,
+            lineHeight: 1.45,
+            fontFamily: 'var(--font-mono)',
+            color: 'var(--color-text-primary)',
+          }}
+        >
+          {summary.detail && (
+            <div style={{ fontVariantNumeric: 'tabular-nums' }}>{summary.detail}</div>
+          )}
+          {summary.advisory && (
+            <div style={{
+              marginTop: summary.detail ? 6 : 0,
+              color: state === 'warning' ? 'var(--color-warning)' : 'var(--color-text-secondary)',
+              fontFamily: 'var(--font-body)',
+            }}>
+              {summary.advisory}
+            </div>
+          )}
+        </div>
+      )}
+
       <div className={s.jobFooter}>
-        <span className={`${s.statePill} ${s[`statePill_${state}`] || ''}`}>
-          {state === 'idle'    ? 'Ready' :
-           state === 'running' ? 'In progress' :
-           state === 'done'    ? 'Completed' : 'Errored'}
-        </span>
+        <span className={`${s.statePill} ${pillClass}`}>{pillLabel}</span>
         <button
-          className={`${s.runBtn} ${s[`runBtn_${state}`] || ''}`}
+          className={`${s.runBtn} ${btnClass}`}
           onClick={() => onRun(job.key)}
           disabled={disabled}
         >
@@ -85,13 +196,36 @@ function JobCard({ job, status, onRun }) {
 
 export default function AdminJobsPage() {
   const { triggerCron } = useAdminStats();
-  const [jobStatus, setJobStatus] = useState({});
+  const [jobStatus, setJobStatus]   = useState({});   // key → 'running'|'done'|'warning'|'error'
+  const [jobSummary, setJobSummary] = useState({});   // key → { severity, label, detail, advisory }
 
   const trigger = async (key) => {
-    setJobStatus(s => ({ ...s, [key]: 'running' }));
-    const ok = await triggerCron(key);
-    setJobStatus(s => ({ ...s, [key]: ok ? 'done' : 'error' }));
-    setTimeout(() => setJobStatus(s => ({ ...s, [key]: null })), 5000);
+    setJobStatus(prev  => ({ ...prev, [key]: 'running' }));
+    setJobSummary(prev => ({ ...prev, [key]: null }));
+
+    const outcome = await triggerCron(key);
+
+    if (!outcome.ok) {
+      setJobStatus(prev  => ({ ...prev, [key]: 'error' }));
+      setJobSummary(prev => ({ ...prev, [key]: { severity: 'error', detail: outcome.error, advisory: null } }));
+      // Errors linger longer so admin has time to read the message.
+      setTimeout(() => {
+        setJobStatus(prev  => ({ ...prev, [key]: null }));
+        setJobSummary(prev => ({ ...prev, [key]: null }));
+      }, 15000);
+      return;
+    }
+
+    const summary = summariseCronResult(outcome.result);
+    setJobStatus(prev  => ({ ...prev, [key]: summary.severity }));
+    setJobSummary(prev => ({ ...prev, [key]: summary }));
+
+    // Warnings stay visible longer so the admin actually reads the reason.
+    const clearMs = summary.severity === 'warning' ? 20000 : 8000;
+    setTimeout(() => {
+      setJobStatus(prev  => ({ ...prev, [key]: null }));
+      setJobSummary(prev => ({ ...prev, [key]: null }));
+    }, clearMs);
   };
 
   // Group with extra metadata
@@ -138,6 +272,7 @@ export default function AdminJobsPage() {
                 key={job.key}
                 job={job}
                 status={jobStatus[job.key]}
+                summary={jobSummary[job.key]}
                 onRun={trigger}
               />
             ))}
