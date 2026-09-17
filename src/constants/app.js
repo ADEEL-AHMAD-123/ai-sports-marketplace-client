@@ -210,11 +210,11 @@ export const CRON_JOBS = [
     group: 'scoring',
   },
   {
-    key:   'test-espn-nfl',
-    label: 'Test — ESPN NFL',
-    icon:  '🧪',
-    desc:  'Verifies the ESPN stats pipeline end-to-end (roster resolve, gamelog fetch, parser) against 4 hardcoded well-known players. No DB props required.',
-    when:  'Run after deploying NFL stats changes, or whenever you want to confirm ESPN is reachable and parsing correctly.',
+    key:   'invalidate-insights-nfl',
+    label: 'Invalidate NFL insights',
+    icon:  '♻️',
+    desc:  'Marks every NFL insight as stale. Next unlock regenerates via the current stats pipeline. Users are NOT re-charged.',
+    when:  'Run after switching stats source or when insights carry old narrative from a bad data path.',
     group: 'scoring',
   },
   {
