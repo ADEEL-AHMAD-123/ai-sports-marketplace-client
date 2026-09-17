@@ -815,8 +815,8 @@ function StatWindows({ insight }) {
             <span className={styles.windowTitle}>Season Baseline</span>
             <span className={styles.windowSub}>Last {baseCount} games</span>
           </div>
-          <StatRow label={`${statLabel}/g`} value={insight.baselineStatAvg} />
-          <StatRow label={`${statLabel}/g (${edgeCount}g)`} value={insight.focusStatAvg} />
+          <StatRow label={`Avg / game`} value={insight.baselineStatAvg} />
+          <StatRow label={`Last ${edgeCount} avg`} value={insight.focusStatAvg} />
         </div>
         <div className={styles.window}>
           <div className={styles.windowHdr}>
@@ -824,7 +824,7 @@ function StatWindows({ insight }) {
             <span className={styles.windowTitle}>Recent Form</span>
             <span className={styles.windowSub}>Last {formCount} games</span>
           </div>
-          <StatRow label={`${statLabel}/g`} value={insight.formStatAvg} highlight={formStatClr} />
+          <StatRow label={`Avg / game`} value={insight.formStatAvg} highlight={formStatClr} />
           <StatRow
             label="Model pick"
             value={insight?.recommendation
@@ -833,11 +833,15 @@ function StatWindows({ insight }) {
             highlight={trendClr}
           />
           {signalDiverges && (
-            <StatRow
-              label=""
-              value={`Recent avg differs from pick — model weights ${edgeCount}g trend + variance`}
-              highlight="#9ca3af"
-            />
+            <div style={{
+              marginTop: 8,
+              fontSize: '0.75rem',
+              lineHeight: 1.35,
+              color: '#9ca3af',
+              fontStyle: 'italic',
+            }}>
+              Recent avg trends the other way — model weights the {edgeCount}-game trend and variance.
+            </div>
           )}
         </div>
       </div>
@@ -902,11 +906,15 @@ function StatWindows({ insight }) {
             />
           )}
           {nbaSignalDiverges && (
-            <StatRow
-              label=""
-              value="Recent avg differs from pick — model weights broader trend + variance"
-              highlight="#9ca3af"
-            />
+            <div style={{
+              marginTop: 8,
+              fontSize: '0.75rem',
+              lineHeight: 1.35,
+              color: '#9ca3af',
+              fontStyle: 'italic',
+            }}>
+              Recent avg trends the other way — model weights the broader trend and variance.
+            </div>
           )}
         </div>
       </div>

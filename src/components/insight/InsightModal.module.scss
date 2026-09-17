@@ -405,8 +405,8 @@
   color: var(--m-text-primary); text-transform: uppercase;
 }
 .windowSub {
-  font-size: 0.6875rem; color: var(--m-text-muted);
-  margin-left: auto; white-space: nowrap;
+  font-size: 0.75rem; color: var(--m-text-muted);
+  margin-left: auto; white-space: nowrap; font-weight: 500;
 }
 
 .statRow {
@@ -414,7 +414,8 @@
   padding: 2px 0;
 }
 .statRowLabel {
-  font-size: 0.8125rem; color: var(--m-text-muted); white-space: nowrap;
+  font-size: 0.875rem; color: var(--m-text-secondary, var(--m-text-muted));
+  white-space: nowrap; font-weight: 500;
 }
 .statRowVal {
   font-size: 1rem; font-weight: 800;
