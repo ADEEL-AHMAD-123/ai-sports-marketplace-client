@@ -794,8 +794,18 @@ function StatWindows({ insight }) {
     const baseCount = insight?.baselineGamesCount ?? 17;
     const formNum   = parseFloat(insight.formStatAvg);
     const lineNum   = parseFloat(insight.bettingLine);
-    const trendUp   = !isNaN(formNum) && !isNaN(lineNum) && formNum > lineNum;
-    const trendClr  = (!isNaN(formNum) && !isNaN(lineNum)) ? (trendUp ? '#22c55e' : '#ef4444') : undefined;
+    // Show the MODEL'S pick as the vs-Line signal (not a naive
+    // formAvg-vs-line diff, which can contradict the model when the
+    // recent window is dominated by outliers).
+    const modelIsOver = insight?.recommendation === 'over';
+    const naiveTrendUp = !isNaN(formNum) && !isNaN(lineNum) && formNum > lineNum;
+    const signalDiverges =
+      !isNaN(formNum) && !isNaN(lineNum) && insight?.recommendation
+      && (naiveTrendUp !== modelIsOver);
+    const trendClr = modelIsOver ? '#22c55e' : '#ef4444';
+    // Recent-form stat colored by naive direction (that's the raw data
+    // signal); vs-Line row colored + labeled by the model's pick.
+    const formStatClr = naiveTrendUp ? '#22c55e' : '#ef4444';
 
     return (
       <div className={styles.windows}>
@@ -814,12 +824,21 @@ function StatWindows({ insight }) {
             <span className={styles.windowTitle}>Recent Form</span>
             <span className={styles.windowSub}>Last {formCount} games</span>
           </div>
-          <StatRow label={`${statLabel}/g`} value={insight.formStatAvg} highlight={trendClr} />
+          <StatRow label={`${statLabel}/g`} value={insight.formStatAvg} highlight={formStatClr} />
           <StatRow
-            label="vs Line"
-            value={!isNaN(formNum) && !isNaN(lineNum) ? `${trendUp ? '▲ OVER' : '▼ UNDER'} signal` : '—'}
+            label="Model pick"
+            value={insight?.recommendation
+              ? `${modelIsOver ? '▲ OVER' : '▼ UNDER'} signal`
+              : '—'}
             highlight={trendClr}
           />
+          {signalDiverges && (
+            <StatRow
+              label=""
+              value={`Recent avg differs from pick — model weights ${edgeCount}g trend + variance`}
+              highlight="#9ca3af"
+            />
+          )}
         </div>
       </div>
     );
@@ -843,8 +862,13 @@ function StatWindows({ insight }) {
   }[nbaStatType];
   const formNum  = parseFloat(formStat);
   const lineNum  = parseFloat(line);
-  const trendUp  = !isNaN(formNum) && !isNaN(lineNum) && formNum > lineNum;
-  const trendClr = (!isNaN(formNum) && !isNaN(lineNum)) ? (trendUp ? '#22c55e' : '#ef4444') : undefined;
+  const nbaModelIsOver = insight?.recommendation === 'over';
+  const nbaNaiveTrendUp = !isNaN(formNum) && !isNaN(lineNum) && formNum > lineNum;
+  const nbaSignalDiverges =
+    !isNaN(formNum) && !isNaN(lineNum) && insight?.recommendation
+    && (nbaNaiveTrendUp !== nbaModelIsOver);
+  const trendClr = nbaModelIsOver ? '#22c55e' : '#ef4444';
+  const nbaFormClr = nbaNaiveTrendUp ? '#22c55e' : '#ef4444';
 
   return (
     <>
@@ -867,14 +891,21 @@ function StatWindows({ insight }) {
             <span className={styles.windowTitle}>Last {formGamesCount} Games</span>
             <span className={styles.windowSub}>Current form</span>
           </div>
-          <StatRow label="Form avg" value={formStat} highlight={trendClr} />
+          <StatRow label="Form avg" value={formStat} highlight={nbaFormClr} />
           {formMinutes  != null && <StatRow label="Minutes"     value={formMinutes} />}
           {focusStatAvg != null && <StatRow label="10-game avg" value={focusStatAvg} />}
-          {!isNaN(formNum) && !isNaN(lineNum) && (
+          {insight?.recommendation && (
             <StatRow
-              label="vs Line"
-              value={`${trendUp ? '▲ OVER' : '▼ UNDER'} signal`}
+              label="Model pick"
+              value={`${nbaModelIsOver ? '▲ OVER' : '▼ UNDER'} signal`}
               highlight={trendClr}
+            />
+          )}
+          {nbaSignalDiverges && (
+            <StatRow
+              label=""
+              value="Recent avg differs from pick — model weights broader trend + variance"
+              highlight="#9ca3af"
             />
           )}
         </div>
@@ -984,26 +1015,30 @@ export default function InsightModal({ isOpen, onClose, insight, prop }) {
               )}
 
               {edge != null && edge !== 0 && (() => {
-                // Cap the DISPLAYED edge — extreme values (>±100%) usually
-                // come from unusually low lines (e.g. 0.5 hits) inflating the
-                // (projection - line)/line ratio, not real edge. The math
-                // stays intact on the backend; the UI just stops the number
-                // from visually dominating a card with low confidence.
+                // Extreme edges (>±100%) usually come from very low prop lines
+                // (e.g. 0.5 hits) inflating the (projection - line)/line
+                // ratio, not real edge. Show the actual value but visually
+                // de-emphasize very high values with muted color + smaller
+                // font — no "+100%+" placeholder anymore, since users
+                // rightfully asked "what's the real number?".
                 const absE      = Math.abs(edge);
-                const capped    = absE > 100;
-                const shown     = capped ? `${edge > 0 ? '+' : '-'}100%+` : `${edge > 0 ? '+' : ''}${edge}%`;
-                // Mute the color when confidence is low — a huge edge next
-                // to a 50% confidence should not read as "green light".
+                const extreme   = absE > 100;
+                const rounded   = Math.round(edge);
+                const shown     = `${edge > 0 ? '+' : ''}${rounded}%`;
+                // Mute the color when confidence is low OR the edge is
+                // implausibly high — a huge edge next to a 50% confidence
+                // should not read as "green light".
                 const lowConf   = (conf ?? 0) < 60;
-                const color     = lowConf
+                const muted     = lowConf || extreme;
+                const color     = muted
                   ? (edge > 0 ? '#86a693' : '#c99a9a')
                   : (edge > 0 ? '#22c55e' : '#ef4444');
-                const tip = capped
-                  ? 'Model Edge exceeds ±100% — usually a very low prop line inflating the ratio. Confidence is the more reliable signal.'
+                const tip = extreme
+                  ? `Model Edge of ${shown} is likely inflated by a low prop line (e.g. a 0.5 or 1.5 line). Confidence is the more reliable signal here.`
                   : 'Model Edge: difference between the model projection and the sportsbook line. Not a win probability.';
                 return (
                   <div className={styles.metric} title={tip} aria-label="Model Edge metric">
-                    <span className={styles.metricVal} style={{ color }}>{shown}</span>
+                    <span className={styles.metricVal} style={{ color, fontSize: extreme ? '0.9em' : undefined }}>{shown}</span>
                     <span className={styles.metricLbl}>Model Edge</span>
                   </div>
                 );
