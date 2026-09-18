@@ -725,6 +725,11 @@ function StatWindows({ insight }) {
             {insight.hitsPerG != null && statType !== 'hits'        && <StatRow label="Hits/g" value={insight.hitsPerG} />}
             {insight.tbPerG   != null && statType !== 'total_bases' && <StatRow label="TB/g"   value={insight.tbPerG} />}
             {insight.runsPerG != null && statType !== 'runs'        && <StatRow label="Runs/g" value={insight.runsPerG} />}
+            <Sparkline
+              values={insight?.recentStatValues}
+              line={insight?.bettingLine}
+              direction={insight?.recommendation}
+            />
           </div>
         </div>
         <MLBSignals insight={insight} />
@@ -787,6 +792,11 @@ function StatWindows({ insight }) {
                 value={`${insight.pmPerG > 0 ? '+' : ''}${insight.pmPerG}`}
               />
             )}
+            <Sparkline
+              values={insight?.recentStatValues}
+              line={insight?.bettingLine}
+              direction={insight?.recommendation}
+            />
           </div>
         </div>
         <NHLSignals insight={insight} statLabel={statLabel} />
@@ -844,6 +854,11 @@ function StatWindows({ insight }) {
           {insight.soccerConversionPct != null && (
             <StatRow label="Shot conversion" value={`${insight.soccerConversionPct}%`} />
           )}
+          <Sparkline
+            values={insight?.recentStatValues}
+            line={insight?.bettingLine}
+            direction={insight?.recommendation}
+          />
         </div>
       </div>
     );
