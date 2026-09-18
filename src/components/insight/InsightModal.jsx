@@ -265,6 +265,69 @@ function StatRow({ label, value, highlight }) {
   );
 }
 
+// ── Sparkline — last N per-game values with the line overlay ───
+// Reads insight.recentStatValues (array of numbers, oldest→newest) and
+// renders a small SVG chart. Each dot is colored by whether that game
+// went OVER (green) or UNDER (red) the sportsbook line. A dashed
+// horizontal line shows the betting line for reference.
+function Sparkline({ values, line, direction }) {
+  if (!Array.isArray(values) || values.length < 2) return null;
+  const lineNum = parseFloat(line);
+  const hasLine = Number.isFinite(lineNum);
+
+  const W = 260;
+  const H = 60;
+  const PAD_X = 8;
+  const PAD_Y = 8;
+  const usableW = W - PAD_X * 2;
+  const usableH = H - PAD_Y * 2;
+
+  const nums = values.map(v => Number(v)).filter(v => Number.isFinite(v));
+  if (nums.length < 2) return null;
+  const min = Math.min(...nums, hasLine ? lineNum : Infinity);
+  const max = Math.max(...nums, hasLine ? lineNum : -Infinity);
+  const range = max - min || 1;
+  const stepX = usableW / (nums.length - 1);
+
+  const y = (v) => PAD_Y + usableH - ((v - min) / range) * usableH;
+  const x = (i) => PAD_X + i * stepX;
+  const points = nums.map((v, i) => `${x(i)},${y(v)}`).join(' ');
+  const lineY = hasLine ? y(lineNum) : null;
+
+  const modelIsOver = direction === 'over';
+  const modelColor = modelIsOver ? '#22c55e' : '#ef4444';
+
+  return (
+    <div style={{ marginTop: 10, marginBottom: 4 }}>
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        marginBottom: 4, fontSize: '0.6875rem',
+        color: 'var(--m-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600,
+      }}>
+        <span>Last {nums.length} games</span>
+        {hasLine && <span>Line {lineNum}</span>}
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="60" style={{ display: 'block' }} preserveAspectRatio="none">
+        {hasLine && (
+          <line x1={PAD_X} x2={W - PAD_X} y1={lineY} y2={lineY}
+                stroke="var(--m-text-muted)" strokeDasharray="3 3" strokeWidth="1" opacity="0.5" />
+        )}
+        <polyline fill="none" stroke={modelColor} strokeWidth="1.5" points={points} opacity="0.7" />
+        {nums.map((v, i) => {
+          const over = hasLine ? v > lineNum : true;
+          const dotColor = hasLine ? (over ? '#22c55e' : '#ef4444') : modelColor;
+          return (
+            <g key={i}>
+              <circle cx={x(i)} cy={y(v)} r="3" fill={dotColor} />
+              <title>{`Game ${i + 1}: ${v}`}</title>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
 // ── GameContextStrip — personalizes the modal to tonight's matchup ───
 // Reads insight.leagueContext (persisted by InsightService) and renders:
 //   - Opponent + venue (HOME/AWAY) + tip-off time (ET)
@@ -843,6 +906,11 @@ function StatWindows({ insight }) {
               Recent avg trends the other way — model weights the {edgeCount}-game trend and variance.
             </div>
           )}
+          <Sparkline
+            values={insight?.recentStatValues}
+            line={insight?.bettingLine}
+            direction={insight?.recommendation}
+          />
         </div>
       </div>
     );
@@ -916,6 +984,11 @@ function StatWindows({ insight }) {
               Recent avg trends the other way — model weights the broader trend and variance.
             </div>
           )}
+          <Sparkline
+            values={insight?.recentStatValues}
+            line={insight?.bettingLine}
+            direction={insight?.recommendation}
+          />
         </div>
       </div>
       <NBASignals insight={insight} />
